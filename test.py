@@ -13,18 +13,23 @@ def round_to_nearest_10(n):
 class InputWindow:
     """A window for getting input from the user with a dimension combobox."""
 
-    def __init__(self, main_root, title, fields, callback, default_values=None):
+    def __init__(self, main_root, title, callback, default_values, options=None):
         """Initialize the InputWindow with a root, title, fields, callback, and default values."""
+        self.combobox = {}
         self.root = main_root
         self.window = tk.Toplevel(self.root)
         self.window.title(title)
-        self.fields = fields
+        self.fields = default_values.keys()
         self.entries = {}
         self.callback = callback
         self.default_values = default_values if default_values else {}
-        self.init()
+        self.init(options)
 
-    def init(self):
+    def init(self, options):
+        if options is None:
+            self.options = {"Dimension": ['800x600']}
+        else:
+            self.options = options
         """Initialize the input window layout."""
         height = 30 + len(self.fields) * 30 + 30  # Adjust height for combobox
         width = 300  # Define a minimum width for the window
@@ -32,40 +37,42 @@ class InputWindow:
         self.window.grid_columnconfigure(1, weight=1)  # Make column 1 expandable
 
         # Combobox for selecting dimensions
-        dimension_options = ['130x40', '300x40', '300x600', '400x300', '400x100', '500x40',  '600x300', '800x300', '800x600']
-
-        dimension_label = tk.Label(self.window, text="Dimension:")
-        dimension_label.grid(row=0, column=0, sticky="e")
-
-        self.dimension_combobox = ttk.Combobox(self.window, values=dimension_options)
-        self.dimension_combobox.grid(row=0, column=1, sticky="ew")
-        self.dimension_combobox.set('Select Dimension')  # Default text
+        row = 0
+        for type_option, data_option in self.options.items():
+            dimension_label = tk.Label(self.window, text=f"{type_option}:")
+            dimension_label.grid(row=0, column=0, sticky="e")
+            self.combobox[type_option] = (ttk.Combobox(self.window, values=data_option))
+            self.combobox[type_option].grid(row=row, column=1, sticky="ew")
+            self.combobox[type_option].set(f'Select {type_option}')  # Default text
+            row += 1
 
         # Create labels and entries for other fields
         for i, field in enumerate(self.fields):
             label = tk.Label(self.window, text=f"{field}:")
-            label.grid(row=i + 1, column=0, sticky="e")  # Adjust row index for other fields
+            label.grid(row=row + i + 1, column=0, sticky="e")  # Adjust row index for other fields
 
             entry = tk.Entry(self.window)
-            entry.grid(row=i + 1, column=1, sticky="ew")
+            entry.grid(row=row + i + 1, column=1, sticky="ew")
             entry.insert(0, str(self.default_values.get(field, '')))
             self.entries[field] = entry
-
         apply_btn = tk.Button(self.window, text="Apply", command=self.apply)
-        apply_btn.grid(row=len(self.fields) + 1, column=1, sticky="e")
+        apply_btn.grid(row=len(self.fields) + row + 1, column=1, sticky="e")
 
     def apply(self):
+        values = {}
         """Apply the input and close the window."""
-        dimension = self.dimension_combobox.get()
-        if dimension != 'Select Dimension':
-            width, height = dimension.split('x')
-            values = {'Width': width, 'Height': height}
-            for field, entry in self.entries.items():
-                values[field] = entry.get()
-            self.callback(values)
-            self.window.destroy()
-        else:
-            messagebox.showerror("Input Error", "Please select a valid dimension.")
+        for type_option, data_option in self.combobox.items():
+            temp_data = data_option.get()
+            if "Dimension" in type_option:
+                values['Width'], values['Height'] = temp_data.split('x')
+            elif "Type" in type_option:
+                values["Type"] = temp_data
+            else:
+                messagebox.showerror("Input Error", "Please select a valid dimension.")
+        for field, entry in self.entries.items():
+            values[field] = entry.get()
+        self.callback(values)
+        self.window.destroy()
 
 
 
