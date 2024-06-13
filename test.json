@@ -1,0 +1,22 @@
+[
+    {
+        "text": "Parent Frame 1",
+        "x": 0,
+        "y": 0,
+        "width": "1250",
+        "height": "850",
+        "parent": "root",
+        "class": "<class '__main__.RightClickMenu'>",
+        "id": "0000"
+    },
+    {
+        "text": "DD",
+        "x": 30,
+        "y": 10,
+        "width": "400",
+        "height": "300",
+        "parent": "0000",
+        "class": "<class '__main__.DraggableRightClickMenu'>",
+        "id": "7392"
+    }
+]
