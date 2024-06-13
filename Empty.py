@@ -95,7 +95,7 @@ class RightClickMenu(tk.LabelFrame):
             values["class"] = str(cls)
             values["id"] = self.db.add_element(values)
             frame = self.root.loader.create_frame(values, self)
-            frame.place(x=x, y=y)
+            frame.place(x=values["x"], y=values["y"])
 
             print(f"New widget '{values['Name']}' created at ({x}, {y})")
         except KeyError as e:

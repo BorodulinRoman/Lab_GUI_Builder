@@ -14,10 +14,34 @@
         "Height": "50",
         "Type": "function",
         "Name": "New combo",
-        "x": 400,
-        "y": 120,
+        "x": 740,
+        "y": 110,
         "parent": "0000",
         "class": "<class '__main__.ComboboxRightClickMenu'>",
         "id": "4560"
+    },
+    {
+        "Width": "130",
+        "Height": "40",
+        "Name": "New Packet",
+        "maxByte": "0",
+        "minByte": "0",
+        "maxBit": "0",
+        "minBit": "0",
+        "x": 160,
+        "y": 120,
+        "parent": "9973",
+        "class": "<class '__main__.DraggableRightClickMenu'>",
+        "id": "7913"
+    },
+    {
+        "Width": "520",
+        "Height": "400",
+        "Name": "New Widget",
+        "x": 470,
+        "y": 310,
+        "parent": "0000",
+        "class": "<class '__main__.DraggableRightClickMenu'>",
+        "id": "9973"
     }
 ]
