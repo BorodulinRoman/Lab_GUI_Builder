@@ -5,12 +5,11 @@ The GUI also parses UART data into readable slots, making it easier to analyze a
 
 Features
 Peripheral Connections: Seamlessly connect to and communicate with lab instruments, including:
-
-  -Keysight Instruments
-  -Keithley Instruments
-  -PS Lambda Power Supplies
-  -COM Ports
-  -UART Data Parsing: Efficiently parse and split UART data bits into readable slots, facilitating data analysis.
+-Keysight Instruments
+-Keithley Instruments
+-PS Lambda Power Supplies
+-COM Ports
+-UART Data Parsing: Efficiently parse and split UART data bits into readable slots, facilitating data analysis.
 
 User-Friendly Interface: Intuitive GUI built using tkinter for ease of use and improved user experience.
 
