@@ -70,7 +70,7 @@ class RightClickMenu(tk.LabelFrame):
         default_values = {'Name': 'New Widget'}  # Set the default name
         InputWindow(self.root, "Create New Widget",
                     lambda values: self.create_new_widget_with_settings(values, x, y, cls), default_values,
-                    {"Dimension": ['150x400', '320x400', '520x400', '820x600', '320x600', '620x600']})
+                    {"Dimension": ['150x400', '520x400', '820x600', '320x600', '920x200', '260x200']})
 
     def packet_label(self, x, y, cls):
         """Opens the InputWindow for user to input settings and create a new widget."""
@@ -84,7 +84,7 @@ class RightClickMenu(tk.LabelFrame):
         default_values = {'Name': 'New combo'}  # Set the default name
         InputWindow(self.root, "Create New Widget",
                     lambda values: self.create_new_widget_with_settings(values, x, y, cls), default_values,
-                    {"Dimension": ['160x50', '300x50', '600x50'], "Type": ["com_list", "function"]})
+                    {"Dimension": ['160x100', '300x100', '600x100'], "Type": ["com_list", "function"]})
 
     def create_new_widget_with_settings(self, values, x, y, cls):
         """Creates a new widget with the specified settings."""
@@ -123,10 +123,12 @@ class RightClickMenu(tk.LabelFrame):
 
     def get_info(self):
         """Print the label's information."""
-        self.db.get_info(self.gen_id)
-        print(self.db.element_data)
-        print(f"Label id '{self.gen_id}' location: ({self.winfo_x()}, {self.winfo_y()})")
-
+        element_info = self.db.get_info(self.gen_id)
+        print(element_info)  # Print the element information
+        if element_info:
+            print(f"Label id '{self.gen_id}' location: ({self.winfo_x()}, {self.winfo_y()})")
+        else:
+            print(f"No element found with id: {self.gen_id}")
 
 class DraggableRightClickMenu(RightClickMenu):
     """A label frame that can be dragged and shows a context menu on right-click."""
@@ -173,37 +175,85 @@ class DraggableRightClickMenu(RightClickMenu):
 
 
 class ComboboxRightClickMenu(DraggableRightClickMenu):
-    """A draggable label frame that includes a combobox."""
+    """A draggable label frame that includes a combobox and a toggle button."""
 
     def __init__(self, main_root, parent_info, values, gen_id="0000"):
         """Initialize the ComboboxRightClickMenu with a root, parent, label, width, and height."""
         super().__init__(main_root, parent_info, values, gen_id=gen_id)
+        self.val_list = None
+        self.top_frame = None
+        self.label = None
+        self.combobox = None
+        self.button = None
+        self.width = values.get('Width', 150)
+        self.height = values.get('Height', 100)
+        self.init_box(values, main_root)
+        self.is_started = False
+
+    def init_box(self, values, main_root):
+        self.top_frame = tk.Frame(self)
+        self.top_frame.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
 
         # Create a Label
-        self.label = tk.Label(self, text=values["Name"])
+        self.label = tk.Label(self.top_frame, text=values["Name"])
         self.label.pack(side=tk.LEFT, padx=5, pady=5)
 
         # Retrieve the list from main_root based on the type specified in values
-        self.val_list = getattr(main_root, values["Type"])
-        self.combobox = ttk.Combobox(self, values=list(self.val_list.keys()))
+        self.val_list = getattr(main_root, values["Type"], {})
+        self.combobox = ttk.Combobox(self.top_frame, values=list(self.val_list.keys()))
         self.combobox.pack(side=tk.LEFT, padx=5, pady=5)
 
         # Bind the combobox selection event to a callback function
         self.combobox.bind("<<ComboboxSelected>>", self.on_combobox_select)
 
-        # Setting default width and height if provided
-        self.width = values.get('Width', 100)
-        self.height = values.get('Height', 30)
+        # Create a toggle Button under the combobox
+        if values["Type"] == "com_list":
+            self.button = tk.Button(self, text="Start", command=self.on_com_click, font=("Arial", 10))
+
+        elif values["Type"] == "function":
+            self.button = tk.Button(self, text="Send", command=self.on_fun_click, font=("Arial", 10))
+        self.button.pack(side=tk.TOP, padx=5, pady=5)
+
         self.config(width=self.width, height=self.height)
 
         # Force the size change by using place geometry manager
         self.place_configure(width=self.width, height=self.height)
 
     def on_combobox_select(self, event):
-        """Callback function to handle combobox selection."""
-        selected_key = self.combobox.get()
-        selected_value = self.val_list[selected_key]
-        print(f"Selected item: {selected_value}")
+        """Callback function when a combobox item is selected."""
+        selected_value = self.combobox.get()
+        print(f"Selected value: {selected_value}")
+        # Add any additional functionality you need on selection
+
+    def on_fun_click(self):
+        # Send data if type is function
+        if self.val_list and callable(self.val_list.get(self.combobox.get())):
+            selected_function = self.val_list[self.combobox.get()]
+            selected_function()  # Call the function
+        else:
+            selected_value = self.combobox.get()
+            print(f"Button clicked! Current combobox selection: {selected_value}")
+            # Add any additional functionality you need on button click
+
+    def on_com_click(self):
+        """Callback function when the button is clicked."""
+        if self.is_started:
+            self.button.config(text="Start", fg="black", font=("Arial", 10))
+            self.combobox.config(state="normal")  # Enable the combobox
+            self.is_started = False
+        else:
+            self.button.config(text="Stop", fg="red", font=("Arial", 10))
+            self.combobox.config(state="disabled")  # Disable the combobox
+            self.is_started = True
+
+        # Send data if type is function
+        if self.val_list and callable(self.val_list.get(self.combobox.get())):
+            selected_function = self.val_list[self.combobox.get()]
+            selected_function()  # Call the function
+        else:
+            selected_value = self.combobox.get()
+            print(f"Button clicked! Current combobox selection: {selected_value}")
+            # Add any additional functionality you need on button click
 
 
 class SetupLoader:
@@ -292,9 +342,9 @@ class SetupLoader:
 
 # Example usage
 if __name__ == "__main__":
-    root = tk.Tk()
-    root.change_mode = False
-    json_manager = JsonManager("test.json")
-    root.loader = SetupLoader(root, json_manager)
-    root.loader.load_setup()
-    root.mainloop()
+    root_main = tk.Tk()
+    root_main.change_mode = False
+    jm = JsonManager("test.json")
+    root_main.loader = SetupLoader(root_main, jm)
+    root_main.loader.load_setup()
+    root_main.mainloop()

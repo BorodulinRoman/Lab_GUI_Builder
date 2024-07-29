@@ -3,6 +3,27 @@ from tkinter import messagebox, ttk
 import json
 import random
 
+
+def remove_duplicate_ids(file_path):
+    try:
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+    except FileNotFoundError:
+        print(f"File {file_path} not found.")
+        return
+
+    unique_elements = {}
+    for element in data:
+        unique_elements[element['id']] = element
+
+    cleaned_data = list(unique_elements.values())
+
+    with open(file_path, 'w') as file:
+        json.dump(cleaned_data, file, indent=4)
+
+    print(f"Removed duplicates. {len(data) - len(cleaned_data)} duplicates found and removed.")
+
+
 def round_to_nearest_10(n):
     if n < 0:
         return 0
@@ -75,19 +96,11 @@ class InputWindow:
         self.window.destroy()
 
 
-
 class JsonManager:
     def __init__(self, file_path: str):
         self.file_path = file_path
-        self.element_data = None
         self.data = []
         self.load()
-
-    def update(self, new_data):
-        self.get_info(new_data['id'], "remove")
-        for key, new_val in new_data.items():
-            self.element_data[key] = new_val
-        return self.add_element(self.element_data)
 
     def load(self):
         """Load the JSON data from the file."""
@@ -99,8 +112,17 @@ class JsonManager:
 
     def save(self):
         """Save the JSON data to the file."""
+        self.sanitize_data()  # Ensure data is clean before saving
         with open(self.file_path, 'w') as file:
             json.dump(self.data, file, indent=4)
+        self.load()
+
+    def sanitize_data(self):
+        """Remove duplicate elements based on ID."""
+        unique_elements = {}
+        for element in self.data:
+            unique_elements[element['id']] = element
+        self.data = list(unique_elements.values())
 
     def generate_unique_id(self):
         """Generate a unique ID between 0000 and 9999."""
@@ -119,6 +141,22 @@ class JsonManager:
         self.save()
         return element['id']
 
+    def update(self, new_data):
+        """Update an existing element by ID."""
+        element_id = new_data.get('id')
+        if not element_id:
+            raise ValueError("Element ID is required for updating.")
+
+        # Find and update the existing element
+        for element in self.data:
+            if element['id'] == element_id:
+                element.update(new_data)
+                break
+        else:
+            raise ValueError(f"No element found with ID: {element_id}")
+
+        self.save()
+
     def remove_element(self, element_id):
         """Remove an element and its children from the JSON data by its ID."""
         elements_to_remove = self._collect_all_children(element_id)
@@ -134,36 +172,14 @@ class JsonManager:
                 to_remove.update(self._collect_all_children(element['id']))
         return to_remove
 
-    def get_info(self, element_id, process='info'):
-        temp_data = []
-        self.element_data = None
+    def get_info(self, element_id):
+        """Retrieve information about a specific element."""
         for element in self.data:
-            if element['id'] != element_id:
-                temp_data.append(element)
-            else:
-                self.element_data = element
-        if process == 'remove':
-            self.data = temp_data
+            if element['id'] == element_id:
+                return element
+        return None
 
     def get_elements(self):
         return self.data
 
-
-# Example usage
-if __name__ == "__main__":
-    json_manager = JsonManager('data.json')
-
-    # Adding an element
-    new_element = {
-        "text": "New Element",
-        "x": 100,
-        "y": 100,
-        "width": 200,
-        "height": 100,
-        "parent": "0000",
-        "class": "DraggableRightClickMenu"
-    }
-    json_manager.add_element(new_element)
-
-    # Print current elements
-    print(json_manager.get_elements())
+#remove_duplicate_ids("test.json")
