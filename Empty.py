@@ -112,6 +112,7 @@ class RightClickMenu(tk.LabelFrame):
         """Build the submenu for creating new widgets."""
         drag_rcm = DraggableRightClickMenu
         comb_rcm = ComboboxRightClickMenu
+        print("loool", comb_rcm, type(comb_rcm))
         create_menu = Menu(self.menu, tearoff=0)  # Create a new submenu
         create_menu.add_command(label='Data Label', command=lambda: self.packet_label(x, y, drag_rcm))
         create_menu.add_command(label='Label', command=lambda: self.open_creation_window(x, y, drag_rcm))
@@ -216,7 +217,7 @@ class DraggableRightClickMenu(RightClickMenu):
 
     def stop_drag(self, event):
         """Stop dragging the label and save the setup."""
-        if event:
+        if event and self.root.change_mode:
             try:
                 new_element = {
                     "id": self.gen_id,
@@ -342,22 +343,22 @@ class SetupLoader:
         parent_id = element.get('parent', 'root')
 
         if element_id in self.created_elements:
-            self.logger.message(f"Create {element_id} on Parent - {parent_id}")
+            self.logger.message(f"Element {element_id} already created on Parent - {parent_id}")
             return self.created_elements[element_id]
 
         if parent_id == 'root':
-
             parent_info = self.root
             # Update the size of the root window to match the element's dimensions
             root_width = int(element.get('Width', 1250))
             root_height = int(element.get('Height', 850))
-            self.logger.message(f"{parent_id} - {root_width}x{root_height}")
+            self.logger.message(f"Setting root size to - {root_width}x{root_height}")
             self.root.geometry(f"{root_width}x{root_height}")
         else:
             if parent_id not in self.created_elements:
                 parent_element = self.elements_dict.get(parent_id)
                 if parent_element:
-                    self.logger.message(f"Element {element} set to waiting list")
+                    self.logger.message(
+                        f"Parent element {parent_id} not yet created, adding {element_id} to waiting list")
                     self.waiting_list.append(element)
                     return None
                 else:
@@ -365,40 +366,52 @@ class SetupLoader:
                     return None
             parent_info = self.created_elements[parent_id]
 
+        # Create the frame
         frame = self.create_frame(element, parent_info)
 
         if frame:
-            x = element.get('x', 0)
-            y = element.get('y', 0)
-            frame.place(x=x, y=y)
+            x = element.get('x')
+            y = element.get('y')
+
+            if x is None or y is None:
+                self.logger.message(f"Warning: Element {element_id} has no specified coordinates, placing skipped.")
+            else:
+                x = int(x)
+                y = int(y)
+                frame.place(x=x, y=y)
+                self.logger.message(f"Placed frame {frame} at position ({x},{y})")
+
+            # Store the created element
             self.created_elements[element_id] = frame
-        self.logger.message(f"Create frame {frame} on place - ({x},{y})")
+
         return frame
 
     def create_frame(self, element, parent_info):
         class_name = element.get('class', '').split(".")[-1]
         self.logger.message(f"Create {class_name})")
-        if 'Draggable' in class_name:
-            frame = DraggableRightClickMenu(
-                main_root=self.root,
-                parent_info=parent_info,
-                values=element,
-                gen_id=element.get('id', ''))
-        elif 'Combobox' in class_name:
-            frame = ComboboxRightClickMenu(
-                main_root=self.root,
-                parent_info=parent_info,
-                values=element,
-                gen_id=element.get('id', ''))
-        elif 'RightClickMenu' in class_name:
-            frame = RightClickMenu(
-                main_root=self.root,
-                parent_info=parent_info,
-                values=element,
-                gen_id=element.get('id', ''))
+
+        class_str = class_name.strip("<>").replace("class ", "").replace("'", "")
+        self.logger.message(f"Class String after cleaning: '{class_str}'")
+
+        if "." in class_str:
+            module_name, class_name = class_str.split(".")
         else:
-            return None
-        return frame
+            self.logger.message("Class string does not contain a module name, assuming '__main__'.")
+            module_name = "__main__"
+            class_name = class_str
+
+        if module_name == "__main__":
+            cls = globals().get(class_name)
+            if cls is None:
+                raise ValueError(f"Class '{class_name}' not found in globals.")
+        else:
+            try:
+                module = __import__(module_name)
+                cls = getattr(module, class_name)
+            except (ImportError, AttributeError) as e:
+                raise ImportError(f"Could not import class '{class_name}' from module '{module_name}'.") from e
+
+        return cls(main_root=self.root, parent_info=parent_info, values=element, gen_id=element.get('id', ''))
 
 
 # Example usage
