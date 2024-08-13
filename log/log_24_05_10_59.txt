@@ -1,0 +1,6 @@
+Logger started: 2024-08-05 10:59:04.594424
+10-59-06-912778: {'Width': '130', 'Height': '40', 'Name': 'New Packet', 'maxByte': '0', 'minByte': '0', 'maxBit': '0', 'minBit': '0', 'x': 10, 'y': 160, 'parent': '4098', 'class': "<class '__main__.DraggableRightClickMenu'>", 'id': '4085'}
+10-59-06-912778: Label id '4085' location: (12, 177)
+10-59-08-120561: Selected value: ASRL3::INSTR
+10-59-09-013300: Button clicked! Current combobox selection: ASRL3::INSTR
+10-59-09-713188: Button clicked! Current combobox selection: ASRL3::INSTR

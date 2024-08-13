@@ -1,8 +1,62 @@
 import tkinter as tk
 from tkinter import Menu, messagebox, ttk
 from test import InputWindow, round_to_nearest_10, JsonManager
-
+import os
+import threading
+from datetime import datetime
+from queue import Queue
+from DeviceManager import VisaDeviceManager
 PROJECT = "test.json"
+
+
+class Logger:
+    def __init__(self, name="log"):
+        # Create a log file with the current date and time
+        now = datetime.now()
+        log_filename = now.strftime(f"{name}/{name}_%y_%d_%H_%M.txt")
+        self.log_filepath = os.path.join(os.getcwd(), log_filename)
+
+        # Create the log file if it doesn't exist
+        if not os.path.exists(self.log_filepath):
+            with open(self.log_filepath, 'w') as file:
+                file.write("Logger started: {}\n".format(now.strftime("%Y-%m-%d %H:%M:%S.%f")))
+
+        # Create a queue to hold log messages
+        self.log_queue = Queue()
+
+        # Start a thread that will handle the actual logging
+        self.log_thread = threading.Thread(target=self._process_logs)
+        self.log_thread.daemon = True  # Daemonize the thread to ensure it closes when the main program exits
+        self.log_thread.start()
+
+    def message(self, message):
+        # Add the log message to the queue
+        self.log_queue.put(message)
+        print(message)
+        # todo create window info for user
+
+    def _process_logs(self):
+        while True:
+            # Retrieve a message from the queue and write it to the log file
+            message = self.log_queue.get()
+            if message is None:
+                break
+
+            # Get the current time for the log entry
+            now = datetime.now()
+            timestamp = now.strftime("%H-%M-%S-%f")
+
+            # Write the log message to the file
+            with open(self.log_filepath, 'a') as file:
+                file.write(f"{timestamp}: {message}\n")
+
+            # Mark the queue task as done
+            self.log_queue.task_done()
+
+    def close(self):
+        # Stop the logging thread by adding a None message to the queue
+        self.log_queue.put(None)
+        self.log_thread.join()
 
 
 class RightClickMenu(tk.LabelFrame):
@@ -10,15 +64,16 @@ class RightClickMenu(tk.LabelFrame):
 
     def __init__(self, main_root, parent_info, values, gen_id="0000", width=0, height=0, text=None):
         """Initialize the RightClickMenu with a root, parent, label, width, height, and optional text."""
+        self.logger = Logger()
         super().__init__(parent_info, text=text if text else values["Name"])  # Pass text or label to the LabelFrame
         self.config(width=int(values['Width']), height=int(values['Height']))
         self.label_name = None
         self.menu = None
         self.x_start = None
         self.y_start = None
-
         self.root = main_root  # Reference to the root window
-        self.root.com_list = {"COM1": "COM1", "COM4": "COM4"}
+        self.visaDevices = VisaDeviceManager(logger=self.logger)
+        self.root.com_list = self.visaDevices.find_devices()
         self.root.function = {"Relay1": "FF,AA,DD", "Relay2": "F3,FF,AA", "Relay3": "F6,F0,DA"}
         self.gen_id = gen_id
         self.parent_info = parent_info
@@ -49,9 +104,9 @@ class RightClickMenu(tk.LabelFrame):
         try:
             temp = self.db.remove_element(self.gen_id)
             self.destroy()  # This destroys the widget
-            print(f"Removed '{temp}'")
+            self.logger.message(f"Removed '{temp}'")
         except Exception as e:
-            print(f"Error removing label: {e}")
+            self.logger.message(f"Error removing label: {e}")
 
     def build_menu(self, x, y):
         """Build the submenu for creating new widgets."""
@@ -97,24 +152,24 @@ class RightClickMenu(tk.LabelFrame):
             frame = self.root.loader.create_frame(values, self)
             frame.place(x=values["x"], y=values["y"])
 
-            print(f"New widget '{values['Name']}' created at ({x}, {y})")
+            self.logger.message(f"New widget '{values['Name']}' created at ({x}, {y})")
         except KeyError as e:
-            print(f"Key error in widget settings: {e}")
+            self.logger.message(f"Key error in widget settings: {e}")
         except ValueError as e:
-            print(f"Value error in widget settings: {e}")
+            self.logger.message(f"Value error in widget settings: {e}")
 
     def confirm_enable_change_mode(self):
         """Confirm with the user before enabling change mode."""
         answer = messagebox.askyesno("Enable Change Mode", "Are you sure you want to enable change mode?")
         if answer:
             self.root.change_mode = True
-            print("Change mode enabled")
+            self.logger.message("Change mode enabled")
             self.update_menu()
 
     def disable_change_mode(self):
         """Disable change mode, save the setup, and update the menu."""
         self.root.change_mode = False
-        print("Change mode disabled")
+        self.logger.message("Change mode disabled")
         self.update_menu()
 
     def update_menu(self):
@@ -124,11 +179,11 @@ class RightClickMenu(tk.LabelFrame):
     def get_info(self):
         """Print the label's information."""
         element_info = self.db.get_info(self.gen_id)
-        print(element_info)  # Print the element information
+        self.logger.message(element_info)  # Print the element information
         if element_info:
-            print(f"Label id '{self.gen_id}' location: ({self.winfo_x()}, {self.winfo_y()})")
+            self.logger.message(f"Label id '{self.gen_id}' location: ({self.winfo_x()}, {self.winfo_y()})")
         else:
-            print(f"No element found with id: {self.gen_id}")
+            self.logger.message(f"No element found with id: {self.gen_id}")
 
 class DraggableRightClickMenu(RightClickMenu):
     """A label frame that can be dragged and shows a context menu on right-click."""
@@ -151,7 +206,7 @@ class DraggableRightClickMenu(RightClickMenu):
             self.rounded_x = round_to_nearest_10(x)
             self.rounded_y = round_to_nearest_10(y)
             self.place(x=self.rounded_x, y=self.rounded_y)
-            print(f"Dragging '{self.cget('text')}' to ({self.rounded_x}, {self.rounded_y})")
+            self.logger.message(f"Dragging '{self.cget('text')}' to ({self.rounded_x}, {self.rounded_y})")
 
     def start_drag(self, event):
         """Start dragging the label."""
@@ -169,9 +224,9 @@ class DraggableRightClickMenu(RightClickMenu):
                     "y": self.rounded_y
                 }
                 self.db.update(new_element)
-                print(f"Stopped dragging '{self.cget('text')}' at ({self.rounded_x}, {self.rounded_y})")
+                self.logger.message(f"Stopped dragging '{self.cget('text')}' at ({self.rounded_x}, {self.rounded_y})")
             except Exception as e:
-                print(f"Error updating label position: {e}")
+                self.logger.message(f"Error updating label position: {e}")
 
 
 class ComboboxRightClickMenu(DraggableRightClickMenu):
@@ -200,7 +255,7 @@ class ComboboxRightClickMenu(DraggableRightClickMenu):
 
         # Retrieve the list from main_root based on the type specified in values
         self.val_list = getattr(main_root, values["Type"], {})
-        self.combobox = ttk.Combobox(self.top_frame, values=list(self.val_list.keys()))
+        self.combobox = ttk.Combobox(self.top_frame, values=list(self.val_list))
         self.combobox.pack(side=tk.LEFT, padx=5, pady=5)
 
         # Bind the combobox selection event to a callback function
@@ -222,7 +277,7 @@ class ComboboxRightClickMenu(DraggableRightClickMenu):
     def on_combobox_select(self, event):
         """Callback function when a combobox item is selected."""
         selected_value = self.combobox.get()
-        print(f"Selected value: {selected_value}")
+        self.logger.message(f"Selected value: {selected_value}")
         # Add any additional functionality you need on selection
 
     def on_fun_click(self):
@@ -232,7 +287,7 @@ class ComboboxRightClickMenu(DraggableRightClickMenu):
             selected_function()  # Call the function
         else:
             selected_value = self.combobox.get()
-            print(f"Button clicked! Current combobox selection: {selected_value}")
+            self.logger.message(f"Button clicked! Current combobox selection: {selected_value}")
             # Add any additional functionality you need on button click
 
     def on_com_click(self):
@@ -247,18 +302,20 @@ class ComboboxRightClickMenu(DraggableRightClickMenu):
             self.is_started = True
 
         # Send data if type is function
-        if self.val_list and callable(self.val_list.get(self.combobox.get())):
-            selected_function = self.val_list[self.combobox.get()]
+        if self.val_list and callable(self.combobox.get()):
+            selected_function = self.combobox.get()
+            self.logger.message(f"Button clicked! Current combobox selection: {selected_function}")
             selected_function()  # Call the function
         else:
             selected_value = self.combobox.get()
-            print(f"Button clicked! Current combobox selection: {selected_value}")
+            self.logger.message(f"Button clicked! Current combobox selection: {selected_value}")
             # Add any additional functionality you need on button click
 
 
 class SetupLoader:
     def __init__(self, root, json_manager):
         self.root = root
+        self.logger = Logger("setup")
         self.json_manager = json_manager
         self.elements_dict = {element['id']: element for element in self.json_manager.get_elements()}
         self.created_elements = {}
@@ -285,22 +342,26 @@ class SetupLoader:
         parent_id = element.get('parent', 'root')
 
         if element_id in self.created_elements:
+            self.logger.message(f"Create {element_id} on Parent - {parent_id}")
             return self.created_elements[element_id]
 
         if parent_id == 'root':
+
             parent_info = self.root
             # Update the size of the root window to match the element's dimensions
             root_width = int(element.get('Width', 1250))
             root_height = int(element.get('Height', 850))
+            self.logger.message(f"{parent_id} - {root_width}x{root_height}")
             self.root.geometry(f"{root_width}x{root_height}")
         else:
             if parent_id not in self.created_elements:
                 parent_element = self.elements_dict.get(parent_id)
                 if parent_element:
+                    self.logger.message(f"Element {element} set to waiting list")
                     self.waiting_list.append(element)
                     return None
                 else:
-                    print(f"Warning: Parent element with ID {parent_id} not found.")
+                    self.logger.message(f"Warning: Parent element with ID {parent_id} not found.")
                     return None
             parent_info = self.created_elements[parent_id]
 
@@ -311,12 +372,12 @@ class SetupLoader:
             y = element.get('y', 0)
             frame.place(x=x, y=y)
             self.created_elements[element_id] = frame
-
+        self.logger.message(f"Create frame {frame} on place - ({x},{y})")
         return frame
 
     def create_frame(self, element, parent_info):
         class_name = element.get('class', '').split(".")[-1]
-
+        self.logger.message(f"Create {class_name})")
         if 'Draggable' in class_name:
             frame = DraggableRightClickMenu(
                 main_root=self.root,
