@@ -64,4 +64,4 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ## Drivers
 
-NI-MAX, NI-VISA, NI-488.2, TDI-Lambda
+NI-MAX, NI-VISA, NI-488.2, TDI-Lambda, MySQL-Workbench
