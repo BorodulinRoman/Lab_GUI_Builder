@@ -1,2 +1,3 @@
 tkinter
-pyvisa
+pyvisa~=1.14.1
+winshell~=0.6

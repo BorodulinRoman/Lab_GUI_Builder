@@ -112,7 +112,6 @@ class RightClickMenu(tk.LabelFrame):
         """Build the submenu for creating new widgets."""
         drag_rcm = DraggableRightClickMenu
         comb_rcm = ComboboxRightClickMenu
-        print("loool", comb_rcm, type(comb_rcm))
         create_menu = Menu(self.menu, tearoff=0)  # Create a new submenu
         create_menu.add_command(label='Data Label', command=lambda: self.packet_label(x, y, drag_rcm))
         create_menu.add_command(label='Label', command=lambda: self.open_creation_window(x, y, drag_rcm))
@@ -186,6 +185,7 @@ class RightClickMenu(tk.LabelFrame):
         else:
             self.logger.message(f"No element found with id: {self.gen_id}")
 
+
 class DraggableRightClickMenu(RightClickMenu):
     """A label frame that can be dragged and shows a context menu on right-click."""
 
@@ -236,6 +236,8 @@ class ComboboxRightClickMenu(DraggableRightClickMenu):
     def __init__(self, main_root, parent_info, values, gen_id="0000"):
         """Initialize the ComboboxRightClickMenu with a root, parent, label, width, and height."""
         super().__init__(main_root, parent_info, values, gen_id=gen_id)
+        self.checkbox_var = None
+        self.checkbox = None
         self.val_list = None
         self.top_frame = None
         self.label = None
@@ -265,9 +267,11 @@ class ComboboxRightClickMenu(DraggableRightClickMenu):
         # Create a toggle Button under the combobox
         if values["Type"] == "com_list":
             self.button = tk.Button(self, text="Start", command=self.on_com_click, font=("Arial", 10))
-
         elif values["Type"] == "function":
             self.button = tk.Button(self, text="Send", command=self.on_fun_click, font=("Arial", 10))
+            self.checkbox_var = tk.IntVar()
+            self.checkbox = tk.Checkbutton(self, text="AUTO RUN", variable=self.checkbox_var)
+            self.checkbox.pack(side=tk.LEFT, padx=5, pady=5)
         self.button.pack(side=tk.TOP, padx=5, pady=5)
 
         self.config(width=self.width, height=self.height)
@@ -277,12 +281,15 @@ class ComboboxRightClickMenu(DraggableRightClickMenu):
 
     def on_combobox_select(self, event):
         """Callback function when a combobox item is selected."""
+        print(event)
         selected_value = self.combobox.get()
         self.logger.message(f"Selected value: {selected_value}")
         # Add any additional functionality you need on selection
 
     def on_fun_click(self):
         # Send data if type is function
+        auto_run = self.checkbox_var.get()
+        self.logger.message(rf" check box is {auto_run}")
         if self.val_list and callable(self.val_list.get(self.combobox.get())):
             selected_function = self.val_list[self.combobox.get()]
             selected_function()  # Call the function

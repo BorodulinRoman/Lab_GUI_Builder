@@ -8,6 +8,19 @@ def get_start_time_in_sec():
     return datetime.now().strftime('%Y%m%d_%H%M%S')
 
 
+def get_start_time():
+    now = datetime.now()
+
+    # Get current time with hours, minutes, seconds
+    hours = now.hour
+    minutes = now.minute
+    seconds = now.second
+
+    # Get milliseconds
+    milliseconds = int(now.microsecond / 1000)
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d}.{milliseconds:03d}"
+
+
 class VisaDeviceManager:
     def __init__(self, logger):
         self.logger = logger
