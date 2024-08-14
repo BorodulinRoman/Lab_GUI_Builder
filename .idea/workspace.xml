@@ -4,194 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="03566363-8df4-4cd8-b209-5c6ef035168c" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/ReportsAndScriptRun.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/commands.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/init_report.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/init_table.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/init_test.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/$RIKU3N8.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/.vs/Test Results/v16/.suo" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/.vs/VSWorkspaceState.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/.vs/slnx.sqlite" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/img/rafael.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/img/rafael.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/jquery-3.1.1.min.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/.versions" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/LICENSE" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/README.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/accordion.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/accordion.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/accordion.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/accordion.min.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/ad.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/ad.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/api.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/api.min.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/breadcrumb.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/breadcrumb.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/button.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/button.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/card.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/card.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/checkbox.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/checkbox.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/checkbox.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/checkbox.min.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/colorize.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/colorize.min.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/comment.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/comment.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/container.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/container.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/dimmer.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/dimmer.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/dimmer.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/dimmer.min.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/divider.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/divider.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/dropdown.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/dropdown.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/dropdown.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/dropdown.min.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/embed.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/embed.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/embed.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/embed.min.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/feed.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/feed.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/flag.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/flag.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/form.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/form.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/form.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/form.min.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/grid.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/grid.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/header.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/header.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/icon.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/icon.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/image.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/image.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/input.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/input.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/item.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/item.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/label.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/label.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/list.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/list.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/loader.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/loader.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/menu.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/menu.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/message.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/message.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/modal.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/modal.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/modal.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/modal.min.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/nag.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/nag.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/nag.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/nag.min.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/placeholder.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/placeholder.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/popup.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/popup.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/popup.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/popup.min.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/progress.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/progress.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/progress.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/progress.min.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/rail.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/rail.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/rating.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/rating.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/rating.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/rating.min.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/reset.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/reset.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/reveal.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/reveal.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/search.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/search.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/search.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/search.min.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/segment.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/segment.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/shape.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/shape.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/shape.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/shape.min.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/sidebar.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/sidebar.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/sidebar.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/sidebar.min.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/site.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/site.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/site.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/site.min.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/state.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/state.min.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/statistic.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/statistic.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/step.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/step.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/sticky.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/sticky.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/sticky.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/sticky.min.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/tab.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/tab.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/tab.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/tab.min.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/table.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/table.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/transition.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/transition.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/transition.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/transition.min.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/video.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/video.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/video.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/video.min.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/visibility.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/visibility.min.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/visit.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/components/visit.min.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/package.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/package.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/semantic.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/semantic.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/semantic.min.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/semantic.min.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/themes/default/assets/fonts/brand-icons.eot" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/themes/default/assets/fonts/brand-icons.svg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/themes/default/assets/fonts/brand-icons.ttf" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/themes/default/assets/fonts/brand-icons.woff" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/themes/default/assets/fonts/brand-icons.woff2" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/themes/default/assets/fonts/icons.eot" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/themes/default/assets/fonts/icons.otf" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/themes/default/assets/fonts/icons.svg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/themes/default/assets/fonts/icons.ttf" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/themes/default/assets/fonts/icons.woff" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/themes/default/assets/fonts/icons.woff2" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/themes/default/assets/fonts/outline-icons.eot" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/themes/default/assets/fonts/outline-icons.svg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/themes/default/assets/fonts/outline-icons.ttf" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/themes/default/assets/fonts/outline-icons.woff" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/themes/default/assets/fonts/outline-icons.woff2" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/jsResources/semantic/themes/default/assets/images/flags.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/info/reports/rafael.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/Lab_GUI_Builder.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/Lab_GUI_Builder.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+    <list default="true" id="03566363-8df4-4cd8-b209-5c6ef035168c" name="Changes" comment="Add report system">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DeviceManager.py" beforeDir="false" afterPath="$PROJECT_DIR$/DeviceManager.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Empty.py" beforeDir="false" afterPath="$PROJECT_DIR$/Empty.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/log_24_05_10_59.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/setup/setup_24_05_10_59.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/test.json" beforeDir="false" afterPath="$PROJECT_DIR$/test.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -227,18 +45,18 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Python.DeviceManager.executor": "Run",
-    "Python.Empty.executor": "Run",
-    "Python.test.executor": "Run",
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "Update-Empty-ojects",
-    "ignore.virus.scanning.warn.message": "true",
-    "last_opened_file_path": "C:/Users/ROMANBO/Documents/GitHub/Lab_GUI_Builder"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python.DeviceManager.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Empty.executor&quot;: &quot;Run&quot;,
+    &quot;Python.test.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;Update-Empty-ojects&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/ROMANBO/Documents/GitHub/Lab_GUI_Builder&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\ROMANBO\Documents\GitHub\Lab_GUI_Builder" />
@@ -335,6 +153,15 @@
       <option name="presentableId" value="Default" />
       <updated>1718264507575</updated>
     </task>
+    <task id="LOCAL‎-00001" summary="Add report system">
+      <option name="closed" value="true" />
+      <created>1723554858923</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL‎-00001" />
+      <option name="project" value="LOCAL‎" />
+      <updated>1723554858923</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -348,12 +175,16 @@
       </map>
     </option>
   </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Add report system" />
+    <option name="LAST_COMMIT_MESSAGE" value="Add report system" />
+  </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/Empty.py</url>
-          <line>89</line>
+          <line>104</line>
           <option name="timeStamp" value="25" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -363,28 +194,33 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/Empty.py</url>
-          <line>412</line>
+          <line>441</line>
           <option name="timeStamp" value="27" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/Empty.py</url>
-          <line>413</line>
+          <line>442</line>
           <option name="timeStamp" value="28" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/Empty.py</url>
-          <line>270</line>
+          <line>290</line>
           <option name="timeStamp" value="29" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/Empty.py</url>
-          <line>186</line>
+          <line>204</line>
           <option name="timeStamp" value="30" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/Empty.py</url>
-          <line>321</line>
+          <line>341</line>
           <option name="timeStamp" value="31" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/Empty.py</url>
+          <line>206</line>
+          <option name="timeStamp" value="33" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

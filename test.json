@@ -1,10 +1,10 @@
 [
     {
-        "Name": "Parent Frame 1",
+        "Name": "Info",
         "x": 0,
         "y": 0,
-        "Width": "1250",
-        "Height": "850",
+        "Width": "1215",
+        "Height": "820",
         "parent": "root",
         "class": "<class '__main__.RightClickMenu'>",
         "id": "0000"
@@ -13,7 +13,7 @@
         "Width": "350",
         "Height": "600",
         "Name": "New Widget",
-        "x": 0,
+        "x": 10,
         "y": 0,
         "parent": "0000",
         "class": "<class '__main__.DraggableRightClickMenu'>",
@@ -135,8 +135,8 @@
         "minByte": "0",
         "maxBit": "0",
         "minBit": "0",
-        "x": 10,
-        "y": 450,
+        "x": 0,
+        "y": 500,
         "parent": "4098",
         "class": "<class '__main__.DraggableRightClickMenu'>",
         "id": "5097"
@@ -194,7 +194,7 @@
         "Width": "820",
         "Height": "600",
         "Name": "New Widget",
-        "x": 350,
+        "x": 0,
         "y": 0,
         "parent": "0000",
         "class": "<class '__main__.DraggableRightClickMenu'>",
@@ -245,24 +245,24 @@
         "id": "2707"
     },
     {
-        "Width": "920",
+        "Width": "900",
         "Height": "200",
-        "Name": "New Widget",
+        "Name": "Information logger",
         "x": 0,
         "y": 600,
         "parent": "0000",
-        "class": "<class '__main__.DraggableRightClickMenu'>",
-        "id": "3428"
+        "class": "<class '__main__.RightClickMenu'>",
+        "id": "info"
     },
     {
-        "Width": "260",
+        "Width": "300",
         "Height": "200",
-        "Name": "New Widget",
-        "x": 930,
+        "Name": "Script & Scope",
+        "x": 910,
         "y": 600,
         "parent": "0000",
-        "class": "<class '__main__.DraggableRightClickMenu'>",
-        "id": "6491"
+        "class": "<class '__main__.RightClickMenu'>",
+        "id": "script"
     },
     {
         "Width": "300",
@@ -299,5 +299,19 @@
         "parent": "4575",
         "class": "<class '__main__.ComboboxRightClickMenu'>",
         "id": "6243"
+    },
+    {
+        "Width": "300",
+        "Height": "40",
+        "Name": "New Packet",
+        "maxByte": "0",
+        "minByte": "0",
+        "maxBit": "0",
+        "minBit": "0",
+        "x": 150,
+        "y": 340,
+        "parent": "4098",
+        "class": "<class '__main__.DraggableRightClickMenu'>",
+        "id": "9785"
     }
 ]

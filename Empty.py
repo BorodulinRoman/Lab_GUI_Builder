@@ -6,11 +6,14 @@ import threading
 from datetime import datetime
 from queue import Queue
 from DeviceManager import VisaDeviceManager
+import time
 PROJECT = "test.json"
 
 
 class Logger:
     def __init__(self, name="log"):
+        self.scrollbar = None
+        self.text_widget = None
         # Create a log file with the current date and time
         now = datetime.now()
         log_filename = now.strftime(f"{name}/{name}_%y_%d_%H_%M.txt")
@@ -32,7 +35,6 @@ class Logger:
     def message(self, message):
         # Add the log message to the queue
         self.log_queue.put(message)
-        print(message)
         # todo create window info for user
 
     def _process_logs(self):
@@ -45,13 +47,26 @@ class Logger:
             # Get the current time for the log entry
             now = datetime.now()
             timestamp = now.strftime("%H-%M-%S-%f")
-
+            formatted_message = f"[{timestamp}] {message}\n"
             # Write the log message to the file
             with open(self.log_filepath, 'a') as file:
-                file.write(f"{timestamp}: {message}\n")
+                file.write(formatted_message)
 
             # Mark the queue task as done
             self.log_queue.task_done()
+            print(self.text_widget)
+            if self.text_widget is not None:
+                self.text_widget.after(10, self._update_text_widget, formatted_message)
+            else:
+                print(message)
+    def _update_text_widget(self, message):
+        try:
+            self.text_widget.config(state=tk.NORMAL)
+            self.text_widget.insert(tk.END, message)
+            self.text_widget.config(state=tk.DISABLED)
+            self.text_widget.see(tk.END)
+        except Exception as e:
+            print(f"Error updating text widget: {e}")
 
     def close(self):
         # Stop the logging thread by adding a None message to the queue
@@ -62,9 +77,9 @@ class Logger:
 class RightClickMenu(tk.LabelFrame):
     """A label frame that shows a context menu on right-click."""
 
-    def __init__(self, main_root, parent_info, values, gen_id="0000", width=0, height=0, text=None):
+    def __init__(self, main_root, parent_info, values, logger, gen_id="0000", width=0, height=0, text=None):
         """Initialize the RightClickMenu with a root, parent, label, width, height, and optional text."""
-        self.logger = Logger()
+        self.logger = logger
         super().__init__(parent_info, text=text if text else values["Name"])  # Pass text or label to the LabelFrame
         self.config(width=int(values['Width']), height=int(values['Height']))
         self.label_name = None
@@ -152,6 +167,9 @@ class RightClickMenu(tk.LabelFrame):
             frame = self.root.loader.create_frame(values, self)
             frame.place(x=values["x"], y=values["y"])
 
+
+
+
             self.logger.message(f"New widget '{values['Name']}' created at ({x}, {y})")
         except KeyError as e:
             self.logger.message(f"Key error in widget settings: {e}")
@@ -189,9 +207,10 @@ class RightClickMenu(tk.LabelFrame):
 class DraggableRightClickMenu(RightClickMenu):
     """A label frame that can be dragged and shows a context menu on right-click."""
 
-    def __init__(self, main_root, parent_info, values, gen_id="0000"):
+    def __init__(self, main_root, parent_info, values, logger, gen_id="0000"):
         """Initialize the DraggableRightClickMenu with a root, parent, and label."""
-        super().__init__(main_root, parent_info, values, gen_id=gen_id, text=values["Name"])
+        super().__init__(main_root, parent_info, values, logger,  gen_id=gen_id, text=values["Name"])
+        self.logger = logger
         self.label_name = values["Name"]
         self.rounded_x = 0
         self.rounded_y = 0
@@ -233,9 +252,10 @@ class DraggableRightClickMenu(RightClickMenu):
 class ComboboxRightClickMenu(DraggableRightClickMenu):
     """A draggable label frame that includes a combobox and a toggle button."""
 
-    def __init__(self, main_root, parent_info, values, gen_id="0000"):
+    def __init__(self, main_root, parent_info, values, logger, gen_id="0000"):
         """Initialize the ComboboxRightClickMenu with a root, parent, label, width, and height."""
-        super().__init__(main_root, parent_info, values, gen_id=gen_id)
+        super().__init__(main_root, parent_info, values, logger, gen_id=gen_id)
+        self.logger = logger
         self.checkbox_var = None
         self.checkbox = None
         self.val_list = None
@@ -323,7 +343,8 @@ class ComboboxRightClickMenu(DraggableRightClickMenu):
 class SetupLoader:
     def __init__(self, root, json_manager):
         self.root = root
-        self.logger = Logger("setup")
+        self.logger_setup = Logger("setup")
+        self.logger = Logger()
         self.json_manager = json_manager
         self.elements_dict = {element['id']: element for element in self.json_manager.get_elements()}
         self.created_elements = {}
@@ -345,31 +366,39 @@ class SetupLoader:
         for element in self.waiting_list:
             self.json_manager.remove_element(element['id'])
 
+    def create_info_label(self, frame):
+        text_widget = tk.Text(frame, height=10, width=108, wrap=tk.WORD, state=tk.DISABLED)
+        scrollbar = tk.Scrollbar(frame, command=text_widget.yview)
+        text_widget.config(yscrollcommand=scrollbar.set)
+        text_widget.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+        scrollbar.grid(row=0, column=1, sticky="ns")
+        self.logger.text_widget = text_widget
+
     def create_element(self, element):
         element_id = element.get('id', '')
         parent_id = element.get('parent', 'root')
 
         if element_id in self.created_elements:
-            self.logger.message(f"Element {element_id} already created on Parent - {parent_id}")
+            self.logger_setup.message(f"Element {element_id} already created on Parent - {parent_id}")
             return self.created_elements[element_id]
 
         if parent_id == 'root':
             parent_info = self.root
             # Update the size of the root window to match the element's dimensions
-            root_width = int(element.get('Width', 1250))
-            root_height = int(element.get('Height', 850))
-            self.logger.message(f"Setting root size to - {root_width}x{root_height}")
+            root_width = 1215
+            root_height = 820
+            self.logger_setup.message(f"Setting root size to - {root_width}x{root_height}")
             self.root.geometry(f"{root_width}x{root_height}")
         else:
             if parent_id not in self.created_elements:
                 parent_element = self.elements_dict.get(parent_id)
                 if parent_element:
-                    self.logger.message(
+                    self.logger_setup.message(
                         f"Parent element {parent_id} not yet created, adding {element_id} to waiting list")
                     self.waiting_list.append(element)
                     return None
                 else:
-                    self.logger.message(f"Warning: Parent element with ID {parent_id} not found.")
+                    self.logger_setup.message(f"Warning: Parent element with ID {parent_id} not found.")
                     return None
             parent_info = self.created_elements[parent_id]
 
@@ -381,12 +410,12 @@ class SetupLoader:
             y = element.get('y')
 
             if x is None or y is None:
-                self.logger.message(f"Warning: Element {element_id} has no specified coordinates, placing skipped.")
+                self.logger_setup.message(f"Warning: Element {element_id} has no specified coordinates, placing skipped.")
             else:
                 x = int(x)
                 y = int(y)
                 frame.place(x=x, y=y)
-                self.logger.message(f"Placed frame {frame} at position ({x},{y})")
+                self.logger_setup.message(f"Placed frame {frame} at position ({x},{y})")
 
             # Store the created element
             self.created_elements[element_id] = frame
@@ -395,15 +424,15 @@ class SetupLoader:
 
     def create_frame(self, element, parent_info):
         class_name = element.get('class', '').split(".")[-1]
-        self.logger.message(f"Create {class_name})")
+        self.logger_setup.message(f"Create {class_name})")
 
         class_str = class_name.strip("<>").replace("class ", "").replace("'", "")
-        self.logger.message(f"Class String after cleaning: '{class_str}'")
+        self.logger_setup.message(f"Class String after cleaning: '{class_str}'")
 
         if "." in class_str:
             module_name, class_name = class_str.split(".")
         else:
-            self.logger.message("Class string does not contain a module name, assuming '__main__'.")
+            self.logger_setup.message("Class string does not contain a module name, assuming '__main__'.")
             module_name = "__main__"
             class_name = class_str
 
@@ -417,8 +446,16 @@ class SetupLoader:
                 cls = getattr(module, class_name)
             except (ImportError, AttributeError) as e:
                 raise ImportError(f"Could not import class '{class_name}' from module '{module_name}'.") from e
+        frame_id = element.get('id', '')
 
-        return cls(main_root=self.root, parent_info=parent_info, values=element, gen_id=element.get('id', ''))
+        frame = cls(main_root=self.root,
+                    parent_info=parent_info,
+                    values=element,
+                    gen_id=element.get('id', ''),
+                    logger=self.logger)
+        if frame_id == "info":
+            self.create_info_label(frame)
+        return frame
 
 
 # Example usage
