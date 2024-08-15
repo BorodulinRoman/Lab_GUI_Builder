@@ -6,7 +6,8 @@ import threading
 from datetime import datetime
 from queue import Queue
 from DeviceManager import VisaDeviceManager
-import time
+from ReportsAndScriptRun import Script
+from tkinter import filedialog
 PROJECT = "test.json"
 
 
@@ -54,11 +55,12 @@ class Logger:
 
             # Mark the queue task as done
             self.log_queue.task_done()
-            print(self.text_widget)
+            # print(self.text_widget)
             if self.text_widget is not None:
                 self.text_widget.after(10, self._update_text_widget, formatted_message)
             else:
                 print(message)
+
     def _update_text_widget(self, message):
         try:
             self.text_widget.config(state=tk.NORMAL)
@@ -72,6 +74,96 @@ class Logger:
         # Stop the logging thread by adding a None message to the queue
         self.log_queue.put(None)
         self.log_thread.join()
+
+
+class ScriptRunnerApp:
+    def __init__(self, root, logger):
+        self.script = Script(logger)
+        self.logger = logger
+        self.load_button = None
+        self.info_label = None
+        self.start_button = None
+        self.stop_button = None
+        self.script_lines = None
+        self.root = root
+
+        self.filepath = ""
+        self.running = False
+        self.init()
+        # Create Load Button
+
+    def init(self):
+        self.load_button = tk.Button(self.root, text="Load file", command=self.load_script)
+        self.load_button.place(x=15, y=35, width=60, height=30)
+
+        # Create Label
+        self.info_label = tk.Label(self.root, text="----------------------------")
+        self.info_label.place(x=5, y=5)
+
+        # Create Start Button
+        self.start_button = tk.Button(self.root, text="Start", command=self.start_script)
+        self.start_button.place(x=85, y=35, width=60, height=30)
+        self.start_button.config(state=tk.DISABLED)
+
+        # Create Stop Button
+        self.stop_button = tk.Button(self.root, text="Abort", command=self.stop_script)
+        self.stop_button.place(x=155, y=35, width=60, height=30)
+        self.stop_button.config(state=tk.DISABLED)
+
+    def load_script(self):
+        filetypes = (("Script files", "*.script"), ("All files", "*.*"))
+        filepath = filedialog.askopenfilename(filetypes=filetypes)
+        if filepath:
+            self.filepath = filepath.split("/")[-1]
+            self.info_label.config(text=self.filepath)
+
+            with open(filepath, 'r') as file:
+                lines = file.readlines()
+            self.script_lines = [line.strip() for line in lines]
+            self.start_button.config(state=tk.NORMAL)
+
+        else:
+            self.info_label.config(text="No file selected")
+
+    def start_script(self):
+        if self.filepath:
+            self.running = True
+            self.info_label.config(text="Start " + self.filepath)
+            self.load_button.config(state=tk.DISABLED)
+            self.start_button.config(state=tk.DISABLED)
+            self.stop_button.config(state=tk.NORMAL)
+            thread = threading.Thread(target=self.run_script)
+            thread.daemon = True  # Daemonize the thread to ensure it closes when the main program exits
+            thread.start()
+        else:
+            self.info_label.config(text="Please load a script first.")
+
+    def run_script(self):
+        if self.running:
+            self.script.report.build()
+            for line in self.script_lines:
+                if not self.running:
+                    break
+                if len(line) <= 2:
+                    continue
+
+                self.logger.message(f"Run: {line}")
+                self.root.update_idletasks()
+                self.script.run(line)
+
+        self.start_button.config(state=tk.NORMAL)
+        self.load_button.config(state=tk.NORMAL)
+        self.stop_button.config(state=tk.DISABLED)
+        #todo change it to databsae save
+        self.script.report.save_report()
+        self.logger.message("Done!")
+
+    def stop_script(self):
+        self.running = False
+        self.start_button.config(state=tk.NORMAL)
+        self.load_button.config(state=tk.NORMAL)
+        self.stop_button.config(state=tk.DISABLED)
+        self.info_label.config(text=f"Script {self.filepath} stopped!")
 
 
 class RightClickMenu(tk.LabelFrame):
@@ -107,10 +199,13 @@ class RightClickMenu(tk.LabelFrame):
         self.menu = Menu(self, tearoff=0)
         if self.root.change_mode:
             self.menu.add_command(label='Disable Change Mode', command=self.disable_change_mode)
-            if self.gen_id != "0000":
+            if self.gen_id not in ["0000", "script", "info", "scope"]:
                 self.menu.add_command(label='Remove', command=self.del_label)
-            self.menu.add_cascade(label='New', menu=self.build_menu(x, y))  # Add the submenu to the main menu
+            if self.gen_id not in ["script", "info", "scope"]:
+                self.menu.add_cascade(label='New', menu=self.build_menu(x, y))  # Add the submenu to the main menu
+
         else:
+
             self.menu.add_command(label='Info', command=self.get_info)
             self.menu.add_command(label='Enable Change Mode', command=self.confirm_enable_change_mode)
 
@@ -166,9 +261,6 @@ class RightClickMenu(tk.LabelFrame):
             values["id"] = self.db.add_element(values)
             frame = self.root.loader.create_frame(values, self)
             frame.place(x=values["x"], y=values["y"])
-
-
-
 
             self.logger.message(f"New widget '{values['Name']}' created at ({x}, {y})")
         except KeyError as e:
@@ -342,6 +434,7 @@ class ComboboxRightClickMenu(DraggableRightClickMenu):
 
 class SetupLoader:
     def __init__(self, root, json_manager):
+        self.script = None
         self.root = root
         self.logger_setup = Logger("setup")
         self.logger = Logger()
@@ -373,6 +466,9 @@ class SetupLoader:
         text_widget.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
         scrollbar.grid(row=0, column=1, sticky="ns")
         self.logger.text_widget = text_widget
+
+    def create_script_label(self, frame):
+        ScriptRunnerApp(frame, self.logger,)
 
     def create_element(self, element):
         element_id = element.get('id', '')
@@ -410,7 +506,7 @@ class SetupLoader:
             y = element.get('y')
 
             if x is None or y is None:
-                self.logger_setup.message(f"Warning: Element {element_id} has no specified coordinates, placing skipped.")
+                self.logger_setup.message(f"Warning: {element_id} has no specified coordinates, placing skipped.")
             else:
                 x = int(x)
                 y = int(y)
@@ -455,6 +551,9 @@ class SetupLoader:
                     logger=self.logger)
         if frame_id == "info":
             self.create_info_label(frame)
+        elif frame_id == "script":
+            self.create_script_label(frame)
+
         return frame
 
 

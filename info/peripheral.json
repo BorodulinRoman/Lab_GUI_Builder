@@ -1,0 +1,42 @@
+{
+    "ports": {
+        "RelayCTRL": {
+            "COMM": "COM3",
+            "baud_rate": 9600,
+            "label": "",
+            "script": {
+                "Relay1_ON": "x31,x4F,x4E,x23",
+                "Relay2_ON": "x32,x4F,x4E,x23",
+                "Relay3_ON": "x33,x4F,x4E,x23",
+                "Relay4_ON": "x34,x4F,x4E,x23",
+                "Relay5_ON": "x35,x4F,x4E,x23",
+                "Relay6_ON": "x36,x4F,x4E,x23",
+                "Relay78_ON": "x37,x4F,x4E,x38,x4F,x4E,x23",
+                "Relay1_OFF": "x31,x4F,x46,x46,x23",
+                "Relay2_OFF": "x32,x4F,x46,x46,x23",
+                "Relay3_OFF": "x33,x4F,x46,x46,x23",
+                "Relay4_OFF": "x34,x4F,x46,x46,x23",
+                "Relay5_OFF": "x35,x4F,x46,x46,x23",
+                "Relay6_OFF": "x36,x4F,x46,x46,x23",
+                "Relay78_OFF": "x37,x4F,x46,x46,x38,x4F,x46,x46,x23"
+            },
+            "commands": {
+                "VSAFE_on": "x31,x4F,x4E,x23",
+                "Relay2_ON": "x32,x4F,x4E,x23",
+                "Relay3_ON": "x33,x4F,x4E,x23",
+                "Relay4_ON": "x34,x4F,x4E,x23",
+                "Relay5_ON": "x35,x4F,x4E,x23",
+                "Relay6_ON": "x36,x4F,x4E,x23",
+                "Relay78_ON": "x37,x4F,x4E,x38,x4F,x4E,x23",
+                "Relay1_OFF": "x31,x4F,x46,x46,x23",
+                "Relay2_OFF": "x32,x4F,x46,x46,x23",
+                "Relay3_OFF": "x33,x4F,x46,x46,x23",
+                "Relay4_OFF": "x34,x4F,x46,x46,x23",
+                "Relay5_OFF": "x35,x4F,x46,x46,x23",
+                "Relay6_OFF": "x36,x4F,x46,x46,x23",
+                "Relay78_OFF": "x37,x4F,x46,x46,x38,x4F,x46,x46,x23"
+            }
+        }
+    },
+    "scope": {"1": "None"}
+}

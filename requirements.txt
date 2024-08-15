@@ -1,3 +1,4 @@
 tkinter
 pyvisa~=1.14.1
 winshell~=0.6
+pywin32

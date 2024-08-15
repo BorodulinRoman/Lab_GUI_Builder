@@ -1,6 +1,6 @@
 [
     {
-        "Name": "Info",
+        "Name": "Main",
         "x": 0,
         "y": 0,
         "Width": "1215",
@@ -135,8 +135,8 @@
         "minByte": "0",
         "maxBit": "0",
         "minBit": "0",
-        "x": 0,
-        "y": 500,
+        "x": 10,
+        "y": 530,
         "parent": "4098",
         "class": "<class '__main__.DraggableRightClickMenu'>",
         "id": "5097"
@@ -184,8 +184,8 @@
         "Height": "100",
         "Type": "function",
         "Name": "New combo",
-        "x": 0,
-        "y": 480,
+        "x": 20,
+        "y": 320,
         "parent": "4575",
         "class": "<class '__main__.ComboboxRightClickMenu'>",
         "id": "9052"
@@ -194,8 +194,8 @@
         "Width": "820",
         "Height": "600",
         "Name": "New Widget",
-        "x": 0,
-        "y": 0,
+        "x": 360,
+        "y": 20,
         "parent": "0000",
         "class": "<class '__main__.DraggableRightClickMenu'>",
         "id": "4098"
@@ -205,8 +205,8 @@
         "Height": "100",
         "Type": "function",
         "Name": "New combo",
-        "x": 0,
-        "y": 380,
+        "x": 20,
+        "y": 420,
         "parent": "4575",
         "class": "<class '__main__.ComboboxRightClickMenu'>",
         "id": "4635"
@@ -251,18 +251,28 @@
         "x": 0,
         "y": 600,
         "parent": "0000",
-        "class": "<class '__main__.RightClickMenu'>",
+        "class": "<class '__main__.DraggableRightClickMenu'>",
         "id": "info"
     },
     {
-        "Width": "300",
-        "Height": "200",
-        "Name": "Script & Scope",
+        "Width": "250",
+        "Height": "100",
+        "Name": "Scrip",
         "x": 910,
         "y": 600,
         "parent": "0000",
-        "class": "<class '__main__.RightClickMenu'>",
+        "class": "<class '__main__.DraggableRightClickMenu'>",
         "id": "script"
+    },
+    {
+        "Width": "250",
+        "Height": "100",
+        "Name": "Scope",
+        "x": 910,
+        "y": 700,
+        "parent": "0000",
+        "class": "<class '__main__.DraggableRightClickMenu'>",
+        "id": "scope"
     },
     {
         "Width": "300",
@@ -313,5 +323,19 @@
         "parent": "4098",
         "class": "<class '__main__.DraggableRightClickMenu'>",
         "id": "9785"
+    },
+    {
+        "Width": "130",
+        "Height": "40",
+        "Name": "New Packet",
+        "maxByte": "0",
+        "minByte": "0",
+        "maxBit": "0",
+        "minBit": "0",
+        "x": 150,
+        "y": 350,
+        "parent": "4098",
+        "class": "<class '__main__.DraggableRightClickMenu'>",
+        "id": "5580"
     }
 ]

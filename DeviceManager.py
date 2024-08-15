@@ -155,9 +155,12 @@ class KeySightScopeUSB:
             self.logger.message(f"Can't save img error {e}")
 
     def __del__(self):
-        for resource_name in self.rm.list_resources():
-            resource_split_name = resource_name.split('::')
-            dec_list = [str(int(item, 16)) if '0x' in item else item for item in resource_split_name]
-            dec_list.remove(dec_list[-2])
-            resource_name = '::'.join(dec_list)
-            self.close_connection(resource_name)
+        try:
+            for resource_name in self.rm.list_resources():
+                resource_split_name = resource_name.split('::')
+                dec_list = [str(int(item, 16)) if '0x' in item else item for item in resource_split_name]
+                dec_list.remove(dec_list[-2])
+                resource_name = '::'.join(dec_list)
+                self.close_connection(resource_name)
+        except Exception as e:
+            self.logger.message(e)
