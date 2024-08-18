@@ -1,22 +1,22 @@
 [
     {
-        "text": "Parent Frame 1",
+        "label_name": "Parent Frame 1",
         "x": 0,
         "y": 0,
-        "width": "1250",
-        "height": "850",
+        "Width": "1250",
+        "Height": "850",
         "parent": "root",
         "class": "<class '__main__.RightClickMenu'>",
-        "id": "0000"
+        "id": 1
     },
     {
-        "text": "DD",
-        "x": 30,
-        "y": 10,
-        "width": "400",
-        "height": "300",
-        "parent": "0000",
+        "Width": "350",
+        "Height": "600",
+        "label_name": "New Widget",
+        "x": 0,
+        "y": 0,
+        "parent": 1,
         "class": "<class '__main__.DraggableRightClickMenu'>",
-        "id": "7392"
+        "id": "4575"
     }
 ]

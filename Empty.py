@@ -1,6 +1,7 @@
 import tkinter as tk
-from tkinter import Menu, messagebox
+from tkinter import Menu, messagebox, ttk
 from test import InputWindow, round_to_nearest_10, JsonManager
+from database import Database
 
 PROJECT = "test.json"
 
@@ -8,20 +9,21 @@ PROJECT = "test.json"
 class RightClickMenu(tk.LabelFrame):
     """A label frame that shows a context menu on right-click."""
 
-    def __init__(self, main_root, parent_info, label, gen_id="0000", width=100, height=30, text=None):
+    def __init__(self, main_root, values, gen_id=1, width=0, height=0, text=None):
         """Initialize the RightClickMenu with a root, parent, label, width, height, and optional text."""
-        super().__init__(parent_info, text=text if text else label)  # Pass text or label to the LabelFrame
-
+        super().__init__(text=text if text else values["label_name"])  # Pass text or label to the LabelFrame
+        self.config(width=int(values['width']), height=int(values['height']))
         self.label_name = None
         self.menu = None
         self.x_start = None
         self.y_start = None
+
         self.root = main_root  # Reference to the root window
+        self.root.com_list = {"COM1": "COM1", "COM4": "COM4"}
+        self.root.function = {"Relay1": "FF,AA,DD", "Relay2": "F3,FF,AA", "Relay3": "F6,F0,DA"}
         self.gen_id = gen_id
-        self.parent_info = parent_info
-        self.config(width=width, height=height, bg=parent_info['bg'])  # Match parent's background
         self.grid_propagate(False)
-        self.db = JsonManager(PROJECT)
+        self.db = Database("gui_conf")
         self.bind("<Button-3>", self.show_menu)
 
     def show_menu(self, event):
@@ -34,48 +36,71 @@ class RightClickMenu(tk.LabelFrame):
         self.menu = Menu(self, tearoff=0)
         if self.root.change_mode:
             self.menu.add_command(label='Disable Change Mode', command=self.disable_change_mode)
-            self.menu.add_command(label='Remove', command=lambda: self.del_label())
+            if self.gen_id != 1:
+                self.menu.add_command(label='Remove', command=self.del_label)
             self.menu.add_cascade(label='New', menu=self.build_menu(x, y))  # Add the submenu to the main menu
         else:
             self.menu.add_command(label='Info', command=self.get_info)
             self.menu.add_command(label='Enable Change Mode', command=self.confirm_enable_change_mode)
 
     def del_label(self):
-        temp = self.db.remove_element(self.gen_id)
         """Delete the label and save the setup."""
-        self.destroy()  # This destroys the widget
-        print(f"Removed '{temp}'")
+        try:
+            temp = self.db.remove_element(self.gen_id)
+            self.destroy()  # This destroys the widget
+            print(f"Removed '{temp}'")
+        except Exception as e:
+            print(f"Error removing label: {e}")
 
     def build_menu(self, x, y):
-        cls = DraggableRightClickMenu
+        """Build the submenu for creating new widgets."""
+        drag_rcm = DraggableRightClickMenu
+        comb_rcm = ComboboxRightClickMenu
         create_menu = Menu(self.menu, tearoff=0)  # Create a new submenu
-        create_menu.add_command(label='Label', command=lambda: self.open_creation_window(x, y, cls))
-        create_menu.add_command(label='Combobox', command=lambda: self.open_creation_window(x, y, cls))
-        create_menu.add_command(label='Button', command=lambda: self.open_creation_window(x, y, cls))
-        create_menu.add_command(label='Entry window', command=lambda: self.open_creation_window(x, y, cls))
+        create_menu.add_command(label='Data Label', command=lambda: self.packet_label(x, y, drag_rcm))
+        create_menu.add_command(label='Label', command=lambda: self.open_creation_window(x, y, drag_rcm))
+        create_menu.add_command(label='Combobox', command=lambda: self.open_combobox(x, y, comb_rcm))
+        create_menu.add_command(label='Button', command=lambda: self.open_creation_window(x, y, drag_rcm))
+        create_menu.add_command(label='Entry window', command=lambda: self.open_creation_window(x, y, drag_rcm))
         return create_menu
 
     def open_creation_window(self, x, y, cls):
         """Opens the InputWindow for user to input settings and create a new widget."""
-        default_values = {'Name': 'New Widget'}  # Set the default name
-        InputWindow(self.root, "Create New Widget", ['Name'],
-                    lambda values: self.create_new_widget_with_settings(values, x, y, cls), default_values)
+        default_values = {'label_name': 'New Widget'}  # Set the default name
+        InputWindow(self.root, "Create New Widget",
+                    lambda values: self.create_new_widget_with_settings(values, x, y, cls), default_values,
+                    {"Dimension": ['150x400', '520x400', '820x600', '320x600', '920x200', '260x200']})
+
+    def packet_label(self, x, y, cls):
+        """Opens the InputWindow for user to input settings and create a new widget."""
+        default_values = {'label_name': 'New Packet', 'maxByte': 0, 'minByte': 0, 'maxBit': 0, 'minBit': 0}
+        InputWindow(self.root, "Create New Widget",
+                    lambda values: self.create_new_widget_with_settings(values, x, y, cls), default_values,
+                    {"Dimension": ['130x40', '300x40', '600x40']})
+
+    def open_combobox(self, x, y, cls):
+        """Opens the InputWindow for user to input settings and create a new widget."""
+        default_values = {'label_name': 'New combo'}  # Set the default name
+        InputWindow(self.root, "Create New Widget",
+                    lambda values: self.create_new_widget_with_settings(values, x, y, cls), default_values,
+                    {"Dimension": ['160x100', '300x100', '600x100'], "Type": ["com_list", "function"]})
 
     def create_new_widget_with_settings(self, values, x, y, cls):
         """Creates a new widget with the specified settings."""
-        x = round_to_nearest_10(x - self.winfo_rootx()),
-        y = round_to_nearest_10(y - self.winfo_rooty()),
+        try:
+            values["x"] = round_to_nearest_10(x - self.winfo_rootx())
+            values["y"] = round_to_nearest_10(y - self.winfo_rooty())
+            values["parent"] = self.gen_id
+            values["class"] = str(cls)
+            values["id"] = self.db.add_element(values)
+            frame = self.root.loader.create_frame(values, self)
+            frame.place(x=values["x"], y=values["y"])
 
-        new_element = {"text": values['Name'],
-                       "x": x[0], "y": y[0],
-                       'width': values['Width'], 'height': values['Height'],
-                       "parent":  self.gen_id, "class": str(cls)}
-
-        gen_id = self.db.add_element(new_element)
-        new_widget = cls(self.root, self, values['Name'], gen_id)  # Corrected line
-        new_widget.place(x=x, y=y)
-        new_widget.config(width=int(values['Width']), height=int(values['Height']))
-        print(f"New widget '{values['Name']}' created at ({x}, {y})")
+            print(f"New widget '{values['label_name']}' created at ({x}, {y})")
+        except KeyError as e:
+            print(f"Key error in widget settings: {e}")
+        except ValueError as e:
+            print(f"Value error in widget settings: {e}")
 
     def confirm_enable_change_mode(self):
         """Confirm with the user before enabling change mode."""
@@ -97,16 +122,20 @@ class RightClickMenu(tk.LabelFrame):
 
     def get_info(self):
         """Print the label's information."""
-        self.db.get_info(self.gen_id)
-        print(self.db.element_data)
-        print(f"Label id '{self.gen_id}' location: ({self.winfo_x()}, {self.winfo_y()})")
-
+        element_info = self.db.get_info(self.gen_id)
+        print(element_info)  # Print the element information
+        if element_info:
+            print(f"Label id '{self.gen_id}' location: ({self.winfo_x()}, {self.winfo_y()})")
+        else:
+            print(f"No element found with id: {self.gen_id}")
 
 class DraggableRightClickMenu(RightClickMenu):
-    def __init__(self, main_root, parent_info, label, gen_id="0000"):
+    """A label frame that can be dragged and shows a context menu on right-click."""
+
+    def __init__(self, main_root, values, gen_id=1):
         """Initialize the DraggableRightClickMenu with a root, parent, and label."""
-        super().__init__(main_root, parent_info, label, gen_id=gen_id, text=label)
-        self.label_name = label
+        super().__init__(main_root, values, gen_id=gen_id, text=values["label_name"])
+        self.label_name = values["label_name"]
         self.rounded_x = 0
         self.rounded_y = 0
         self.bind("<Button-1>", self.start_drag)
@@ -132,73 +161,161 @@ class DraggableRightClickMenu(RightClickMenu):
     def stop_drag(self, event):
         """Stop dragging the label and save the setup."""
         if event:
-            new_element = {"id": self.gen_id,
-                           "x": self.rounded_x,
-                           "y": self.rounded_y}
-            self.db.update(new_element)
+            try:
+                new_element = {
+                    "id": self.gen_id,
+                    "x": self.rounded_x,
+                    "y": self.rounded_y
+                }
+                self.db.update(new_element)
+                print(f"Stopped dragging '{self.cget('text')}' at ({self.rounded_x}, {self.rounded_y})")
+            except Exception as e:
+                print(f"Error updating label position: {e}")
 
 
-def load_setup(json_manager, root):
-    """Create labels/frames based on the loaded JSON data."""
-    elements_dict = {element['id']: element for element in json_manager.get_elements()}
-    created_elements = {}
+class ComboboxRightClickMenu(DraggableRightClickMenu):
+    """A draggable label frame that includes a combobox and a toggle button."""
 
-    def create_element(element):
-        element_id = element.get('id', '')
-        parent_id = element.get('parent', 'root')
+    def __init__(self, main_root, values, gen_id=1):
+        """Initialize the ComboboxRightClickMenu with a root, parent, label, width, and height."""
+        super().__init__(main_root, values, gen_id=gen_id)
+        self.val_list = None
+        self.top_frame = None
+        self.label = None
+        self.combobox = None
+        self.button = None
+        self.width = values.get('width', 150)
+        self.height = values.get('height', 100)
+        self.init_box(values, main_root)
+        self.is_started = False
 
-        if element_id in created_elements:
-            return created_elements[element_id]
+    def init_box(self, values, main_root):
+        self.top_frame = tk.Frame(self)
+        self.top_frame.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
 
-        if parent_id == 'root':
-            parent_info = root
-            # Update the size of the root window to match the element's dimensions
-            root_width = int(element.get('width', 100))
-            root_height = int(element.get('height', 100))
-            root.geometry(f"{root_width}x{root_height}")
+        # Create a Label
+        self.label = tk.Label(self.top_frame, text=values["label_name"])
+        self.label.pack(side=tk.LEFT, padx=5, pady=5)
+
+        # Retrieve the list from main_root based on the type specified in values
+        self.val_list = getattr(main_root, values["Type"], {})
+        self.combobox = ttk.Combobox(self.top_frame, values=list(self.val_list.keys()))
+        self.combobox.pack(side=tk.LEFT, padx=5, pady=5)
+
+        # Bind the combobox selection event to a callback function
+        self.combobox.bind("<<ComboboxSelected>>", self.on_combobox_select)
+
+        # Create a toggle Button under the combobox
+        if values["Type"] == "com_list":
+            self.button = tk.Button(self, text="Start", command=self.on_com_click, font=("Arial", 10))
+
+        elif values["Type"] == "function":
+            self.button = tk.Button(self, text="Send", command=self.on_fun_click, font=("Arial", 10))
+        self.button.pack(side=tk.TOP, padx=5, pady=5)
+
+        self.config(width=self.width, height=self.height)
+
+        # Force the size change by using place geometry manager
+        self.place_configure(width=self.width, height=self.height)
+
+    def on_combobox_select(self, event):
+        """Callback function when a combobox item is selected."""
+        selected_value = self.combobox.get()
+        print(f"Selected value: {selected_value}")
+        # Add any additional functionality you need on selection
+
+    def on_fun_click(self):
+        # Send data if type is function
+        if self.val_list and callable(self.val_list.get(self.combobox.get())):
+            selected_function = self.val_list[self.combobox.get()]
+            selected_function()  # Call the function
         else:
-            if parent_id not in created_elements:
-                parent_element = elements_dict[parent_id]
-                created_elements[parent_id] = create_element(parent_element)
-            parent_info = created_elements[parent_id]
+            selected_value = self.combobox.get()
+            print(f"Button clicked! Current combobox selection: {selected_value}")
+            # Add any additional functionality you need on button click
 
-        class_name = element.get('class', '')
-        if 'RightClickMenu' in class_name:
-            frame = RightClickMenu(
-                main_root=root,
-                parent_info=parent_info,
-                label=element.get('text', ''),
-                gen_id=element.get('id', '')
-            )
-        elif 'DraggableRightClickMenu' in class_name:
-            frame = DraggableRightClickMenu(
-                main_root=root,
-                parent_info=parent_info,
-                label=element.get('text', ''),
-                gen_id=element.get('id', '')
-            )
+    def on_com_click(self):
+        """Callback function when the button is clicked."""
+        if self.is_started:
+            self.button.config(text="Start", fg="black", font=("Arial", 10))
+            self.combobox.config(state="normal")  # Enable the combobox
+            self.is_started = False
         else:
-            return None
+            self.button.config(text="Stop", fg="red", font=("Arial", 10))
+            self.combobox.config(state="disabled")  # Disable the combobox
+            self.is_started = True
 
-        # Retrieve position and size from the JSON element
-        x = element.get('x', [0])
-        y = element.get('y', [0])
-        width = int(element.get('width', 100))
-        height = int(element.get('height', 100))
-        frame.place(x=x, y=y, width=width, height=height)
-        frame.config(width=width, height=height)
+        # Send data if type is function
+        if self.val_list and callable(self.val_list.get(self.combobox.get())):
+            selected_function = self.val_list[self.combobox.get()]
+            selected_function()  # Call the function
+        else:
+            selected_value = self.combobox.get()
+            print(f"Button clicked! Current combobox selection: {selected_value}")
+            # Add any additional functionality you need on button click
 
-        created_elements[element_id] = frame
+
+class SetupLoader:
+    def __init__(self, root, database):
+        self.root = root
+        self.waiting_list = []
+        self.db = database
+
+    def load_setup(self):
+        """Create labels/frames based on the loaded JSON data."""
+        all_ids = self.db.get_by_feature("id")
+        for id_num in all_ids:
+            fd = self.db.find_data("label_param", id_num)
+            self.create_element(fd[0])
+        print(all_ids)
+
+    def create_element(self, element):
+        print(element)
+        element_id = element["id"]
+        parent_id = element["parent"]
+
+        if parent_id is None:
+            root_width = int(element["width"])
+            root_height = int(element["height"])
+            self.root.geometry(f"{root_width}x{root_height}")
+        frame = self.create_frame(element)
+
+        if frame:
+            x = element['x']
+            y = element['y']
+            frame.place(x=x, y=y)
+
         return frame
 
-    for element in json_manager.get_elements():
-        create_element(element)
+    def create_frame(self, element):
+        class_name = element["class"]
+
+        if 'Draggable' in class_name:
+            frame = DraggableRightClickMenu(
+                main_root=self.root,
+                values=element,
+                gen_id=element.get('id', ''))
+        elif 'Combobox' in class_name:
+            frame = ComboboxRightClickMenu(
+                main_root=self.root,
+
+                values=element,
+                gen_id=element.get('id', ''))
+        elif 'RightClickMenu' in class_name:
+            frame = RightClickMenu(
+                main_root=self.root,
+                values=element,
+                gen_id=element.get('id', ''))
+        else:
+            return None
+        return frame
 
 
 # Example usage
 if __name__ == "__main__":
-    root = tk.Tk()
-    root.change_mode = False
-    json_manager = JsonManager("test.json")
-    load_setup(json_manager, root)
-    root.mainloop()
+    root_main = tk.Tk()
+    root_main.change_mode = False
+    db = Database("gui_conf")
+    root_main.loader = SetupLoader(root_main, db)
+    root_main.loader.load_setup()
+    root_main.mainloop()

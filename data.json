@@ -1,0 +1,12 @@
+[
+    {
+        "text": "New Element",
+        "x": 100,
+        "y": 100,
+        "width": 200,
+        "height": 100,
+        "parent": "0000",
+        "class": "DraggableRightClickMenu",
+        "id": "6008"
+    }
+]
