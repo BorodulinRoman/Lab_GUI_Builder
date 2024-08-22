@@ -1,0 +1,36 @@
+Logger started: 2024-08-22 15:29:06.271420
+[15-29-23-970965] Parent element 14626 not yet created, adding 23632 to waiting list
+[15-29-23-974965] Parent element 19676 not yet created, adding 29425 to waiting list
+[15-29-23-985968] Setting root size to - 1250x850
+[15-29-23-997964] Create RightClickMenu'>)
+[15-29-24-008964] Class String after cleaning: 'RightClickMenu'
+[15-29-24-011964] Class string does not contain a module name, assuming '__main__'.
+[15-29-24-727524] Placed frame .!rightclickmenu at position (0,0)
+[15-29-24-734537] Create DraggableRightClickMenu'>)
+[15-29-24-741532] Class String after cleaning: 'DraggableRightClickMenu'
+[15-29-24-747522] Class string does not contain a module name, assuming '__main__'.
+[15-29-24-864524] Placed frame .!rightclickmenu.!draggablerightclickmenu at position (970,610)
+[15-29-24-866524] Create DraggableRightClickMenu'>)
+[15-29-24-868525] Class String after cleaning: 'DraggableRightClickMenu'
+[15-29-24-871532] Class string does not contain a module name, assuming '__main__'.
+[15-29-24-926524] Placed frame .!rightclickmenu.!draggablerightclickmenu2 at position (20,610)
+[15-29-24-928528] Create DraggableRightClickMenu'>)
+[15-29-24-930528] Class String after cleaning: 'DraggableRightClickMenu'
+[15-29-24-933595] Class string does not contain a module name, assuming '__main__'.
+[15-29-24-993267] Placed frame .!rightclickmenu.!draggablerightclickmenu3 at position (970,710)
+[15-29-24-996265] Create DraggableRightClickMenu'>)
+[15-29-24-999266] Class String after cleaning: 'DraggableRightClickMenu'
+[15-29-25-002264] Class string does not contain a module name, assuming '__main__'.
+[15-29-25-074312] Placed frame .!rightclickmenu.!draggablerightclickmenu4 at position (540,0)
+[15-29-25-077266] Create DraggableRightClickMenu'>)
+[15-29-25-081285] Class String after cleaning: 'DraggableRightClickMenu'
+[15-29-25-085264] Class string does not contain a module name, assuming '__main__'.
+[15-29-25-154264] Placed frame .!rightclickmenu.!draggablerightclickmenu5 at position (10,0)
+[15-29-25-158268] Create ComboboxRightClickMenu'>)
+[15-29-25-161267] Class String after cleaning: 'ComboboxRightClickMenu'
+[15-29-25-164266] Class string does not contain a module name, assuming '__main__'.
+[15-29-25-241264] Placed frame .!rightclickmenu.!draggablerightclickmenu4.!comboboxrightclickmenu at position (0,10)
+[15-29-25-244264] Create DraggableRightClickMenu'>)
+[15-29-25-247273] Class String after cleaning: 'DraggableRightClickMenu'
+[15-29-25-250275] Class string does not contain a module name, assuming '__main__'.
+[15-29-25-316285] Placed frame .!rightclickmenu.!draggablerightclickmenu5.!draggablerightclickmenu at position (10,0)

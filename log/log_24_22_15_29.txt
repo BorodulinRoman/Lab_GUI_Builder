@@ -1,0 +1,53 @@
+Logger started: 2024-08-22 15:29:23.661967
+[15-29-23-918965] Connected to MySQL Server version 8.0.37
+[15-29-23-922975] You're connected to database: ('gui_conf',)
+[15-29-23-925965] list features [23632, 29425, 1, 2, 3, 4, 14626, 19676, 23632, 29425]
+[15-29-23-929967] Data found in com_info: [{'id': 23632, 'Type': 'com_list', 'last_conn_info': 'None', 'func': 'None'}]
+[15-29-23-932967] Data found in frs_info: []
+[15-29-23-935964] Data found in label_param: [{'id': 23632, 'parent': 14626, 'x': 0, 'y': 10, 'Width': 160, 'Height': 100, 'label_name': 'Main', 'class': "<class '__main__.ComboboxRightClickMenu'>", 'info_table': None}]
+[15-29-23-940966] Data found in com_info: []
+[15-29-23-943966] Data found in frs_info: [{'id': 29425, 'maxByte': 1, 'minByte': 1, 'maxBit': 7, 'minBit': 0}]
+[15-29-23-946965] Data found in label_param: [{'id': 29425, 'parent': 19676, 'x': 10, 'y': 0, 'Width': 130, 'Height': 40, 'label_name': 'Haeder', 'class': "<class '__main__.DraggableRightClickMenu'>", 'info_table': None}]
+[15-29-23-950965] Data found in com_info: []
+[15-29-23-953968] Data found in frs_info: []
+[15-29-23-956965] Data found in label_param: [{'id': 1, 'parent': 0, 'x': 0, 'y': 0, 'Width': 1250, 'Height': 850, 'label_name': 'Main', 'class': "<class '__main__.RightClickMenu'>", 'info_table': None}]
+[15-29-23-960965] Data found in com_info: []
+[15-29-23-963964] Data found in frs_info: []
+[15-29-23-966968] Data found in label_param: [{'id': 2, 'parent': 1, 'x': 970, 'y': 610, 'Width': 250, 'Height': 100, 'label_name': 'Script', 'class': "<class '__main__.DraggableRightClickMenu'>", 'info_table': 'script'}]
+[15-29-23-970965] Data found in com_info: []
+[15-29-23-974965] Data found in frs_info: []
+[15-29-23-977965] Data found in label_param: [{'id': 3, 'parent': 1, 'x': 20, 'y': 610, 'Width': 900, 'Height': 200, 'label_name': 'Information logger', 'class': "<class '__main__.DraggableRightClickMenu'>", 'info_table': ''}]
+[15-29-23-981965] Data found in com_info: []
+[15-29-23-984965] Data found in frs_info: []
+[15-29-23-988968] Data found in label_param: [{'id': 4, 'parent': 1, 'x': 970, 'y': 710, 'Width': 250, 'Height': 100, 'label_name': 'Scope', 'class': "<class '__main__.DraggableRightClickMenu'>", 'info_table': ''}]
+[15-29-23-992965] Data found in com_info: []
+[15-29-23-996964] Data found in frs_info: []
+[15-29-24-000964] Data found in label_param: [{'id': 14626, 'parent': 1, 'x': 540, 'y': 0, 'Width': 150, 'Height': 400, 'label_name': 'COM', 'class': "<class '__main__.DraggableRightClickMenu'>", 'info_table': None}]
+[15-29-24-003964] Data found in com_info: []
+[15-29-24-006983] Data found in frs_info: []
+[15-29-24-010965] Data found in label_param: [{'id': 19676, 'parent': 1, 'x': 10, 'y': 0, 'Width': 520, 'Height': 400, 'label_name': 'FRS', 'class': "<class '__main__.DraggableRightClickMenu'>", 'info_table': None}]
+[15-29-24-013968] Data found in com_info: [{'id': 23632, 'Type': 'com_list', 'last_conn_info': 'None', 'func': 'None'}]
+[15-29-24-016967] Data found in frs_info: []
+[15-29-24-019967] Data found in label_param: [{'id': 23632, 'parent': 14626, 'x': 0, 'y': 10, 'Width': 160, 'Height': 100, 'label_name': 'Main', 'class': "<class '__main__.ComboboxRightClickMenu'>", 'info_table': None}]
+[15-29-24-022967] Data found in com_info: []
+[15-29-24-025964] Data found in frs_info: [{'id': 29425, 'maxByte': 1, 'minByte': 1, 'maxBit': 7, 'minBit': 0}]
+[15-29-24-028989] Data found in label_param: [{'id': 29425, 'parent': 19676, 'x': 10, 'y': 0, 'Width': 130, 'Height': 40, 'label_name': 'Haeder', 'class': "<class '__main__.DraggableRightClickMenu'>", 'info_table': None}]
+[15-29-24-727524] Connected to MySQL Server version 8.0.37
+[15-29-24-729523] You're connected to database: ('gui_conf',)
+[15-29-24-797522] Connected to MySQL Server version 8.0.37
+[15-29-24-799524] You're connected to database: ('gui_conf',)
+[15-29-24-850595] VI_ERROR_RSRC_NFOUND (-1073807343): Insufficient location information or the requested device or resource is not present in the system.
+[15-29-24-853543] VI_ERROR_RSRC_NFOUND (-1073807343): Insufficient location information or the requested device or resource is not present in the system.
+[15-29-24-923575] Connected to MySQL Server version 8.0.37
+[15-29-24-925579] You're connected to database: ('gui_conf',)
+[15-29-25-371263] Connected to MySQL Server version 8.0.37
+[15-29-25-400264] You're connected to database: ('gui_conf',)
+[15-29-25-414266] Connected to MySQL Server version 8.0.37
+[15-29-25-423263] You're connected to database: ('gui_conf',)
+[15-29-25-429265] Connected to MySQL Server version 8.0.37
+[15-29-25-438264] You're connected to database: ('gui_conf',)
+[15-29-25-443265] Connected to MySQL Server version 8.0.37
+[15-29-25-449264] You're connected to database: ('gui_conf',)
+[15-29-25-460263] Connected to MySQL Server version 8.0.37
+[15-29-25-466273] You're connected to database: ('gui_conf',)
+[15-29-28-178358] 'INSTR'
