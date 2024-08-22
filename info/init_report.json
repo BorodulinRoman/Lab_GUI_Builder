@@ -1,0 +1,11 @@
+{
+    "ResultStatus": 0,
+    "project_name": "Some_project",
+    "test_name": "UART.SCRIPT",
+    "workOrder": "12345",
+    "model": "CARD1",
+    "gui_type": "Test",
+    "gui_ver": "1.0",
+    "StartTimeFormatted": "",
+    "GroupResults": []
+}
