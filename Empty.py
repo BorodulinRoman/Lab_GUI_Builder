@@ -1,79 +1,12 @@
 import tkinter as tk
 from tkinter import Menu, messagebox, ttk
-from test import InputWindow, round_to_nearest_10, JsonManager
-import os
+from test import InputWindow, round_to_nearest_10
 import threading
-from datetime import datetime
-from queue import Queue
 from DeviceManager import VisaDeviceManager
+from database import Database, Logger
 from ReportsAndScriptRun import Script
 from tkinter import filedialog
 PROJECT = "test.json"
-
-
-class Logger:
-    def __init__(self, name="log"):
-        self.scrollbar = None
-        self.text_widget = None
-        # Create a log file with the current date and time
-        now = datetime.now()
-        log_filename = now.strftime(f"{name}/{name}_%y_%d_%H_%M.txt")
-        self.log_filepath = os.path.join(os.getcwd(), log_filename)
-
-        # Create the log file if it doesn't exist
-        if not os.path.exists(self.log_filepath):
-            with open(self.log_filepath, 'w') as file:
-                file.write("Logger started: {}\n".format(now.strftime("%Y-%m-%d %H:%M:%S.%f")))
-
-        # Create a queue to hold log messages
-        self.log_queue = Queue()
-
-        # Start a thread that will handle the actual logging
-        self.log_thread = threading.Thread(target=self._process_logs)
-        self.log_thread.daemon = True  # Daemonize the thread to ensure it closes when the main program exits
-        self.log_thread.start()
-
-    def message(self, message):
-        # Add the log message to the queue
-        self.log_queue.put(message)
-        # todo create window info for user
-
-    def _process_logs(self):
-        while True:
-            # Retrieve a message from the queue and write it to the log file
-            message = self.log_queue.get()
-            if message is None:
-                break
-
-            # Get the current time for the log entry
-            now = datetime.now()
-            timestamp = now.strftime("%H-%M-%S-%f")
-            formatted_message = f"[{timestamp}] {message}\n"
-            # Write the log message to the file
-            with open(self.log_filepath, 'a') as file:
-                file.write(formatted_message)
-
-            # Mark the queue task as done
-            self.log_queue.task_done()
-            # print(self.text_widget)
-            if self.text_widget is not None:
-                self.text_widget.after(10, self._update_text_widget, formatted_message)
-            else:
-                print(message)
-
-    def _update_text_widget(self, message):
-        try:
-            self.text_widget.config(state=tk.NORMAL)
-            self.text_widget.insert(tk.END, message)
-            self.text_widget.config(state=tk.DISABLED)
-            self.text_widget.see(tk.END)
-        except Exception as e:
-            print(f"Error updating text widget: {e}")
-
-    def close(self):
-        # Stop the logging thread by adding a None message to the queue
-        self.log_queue.put(None)
-        self.log_thread.join()
 
 
 class ScriptRunnerApp:
@@ -154,7 +87,7 @@ class ScriptRunnerApp:
         self.start_button.config(state=tk.NORMAL)
         self.load_button.config(state=tk.NORMAL)
         self.stop_button.config(state=tk.DISABLED)
-        #todo change it to databsae save
+        # todo change it to Database save
         self.script.report.save_report()
         self.logger.message("Done!")
 
@@ -172,7 +105,7 @@ class RightClickMenu(tk.LabelFrame):
     def __init__(self, main_root, parent_info, values, logger, gen_id="0000", width=0, height=0, text=None):
         """Initialize the RightClickMenu with a root, parent, label, width, height, and optional text."""
         self.logger = logger
-        super().__init__(parent_info, text=text if text else values["Name"])  # Pass text or label to the LabelFrame
+        super().__init__(parent_info, text=text if text else values["label_name"])
         self.config(width=int(values['Width']), height=int(values['Height']))
         self.label_name = None
         self.menu = None
@@ -186,7 +119,7 @@ class RightClickMenu(tk.LabelFrame):
         self.parent_info = parent_info
         self.config(width=width, height=height, bg=parent_info['bg'])  # Match parent's background
         self.grid_propagate(False)
-        self.db = JsonManager(PROJECT)
+        self.db = Database("gui_conf", self.logger)
         self.bind("<Button-3>", self.show_menu)
 
     def show_menu(self, event):
@@ -199,13 +132,12 @@ class RightClickMenu(tk.LabelFrame):
         self.menu = Menu(self, tearoff=0)
         if self.root.change_mode:
             self.menu.add_command(label='Disable Change Mode', command=self.disable_change_mode)
-            if self.gen_id not in ["0000", "script", "info", "scope"]:
+            if self.gen_id not in [0, 2, 3, 4]:
                 self.menu.add_command(label='Remove', command=self.del_label)
-            if self.gen_id not in ["script", "info", "scope"]:
+            if self.gen_id not in [2, 3, 4]:
                 self.menu.add_cascade(label='New', menu=self.build_menu(x, y))  # Add the submenu to the main menu
 
         else:
-
             self.menu.add_command(label='Info', command=self.get_info)
             self.menu.add_command(label='Enable Change Mode', command=self.confirm_enable_change_mode)
 
@@ -232,21 +164,21 @@ class RightClickMenu(tk.LabelFrame):
 
     def open_creation_window(self, x, y, cls):
         """Opens the InputWindow for user to input settings and create a new widget."""
-        default_values = {'Name': 'New Widget'}  # Set the default name
+        default_values = {'label_name': 'New Widget'}  # Set the default name
         InputWindow(self.root, "Create New Widget",
                     lambda values: self.create_new_widget_with_settings(values, x, y, cls), default_values,
                     {"Dimension": ['150x400', '520x400', '820x600', '320x600', '920x200', '260x200']})
 
     def packet_label(self, x, y, cls):
         """Opens the InputWindow for user to input settings and create a new widget."""
-        default_values = {'Name': 'New Packet', 'maxByte': 0, 'minByte': 0, 'maxBit': 0, 'minBit': 0}
+        default_values = {'label_name': 'New Packet', 'maxByte': 0, 'minByte': 0, 'maxBit': 0, 'minBit': 0}
         InputWindow(self.root, "Create New Widget",
                     lambda values: self.create_new_widget_with_settings(values, x, y, cls), default_values,
                     {"Dimension": ['130x40', '300x40', '600x40']})
 
     def open_combobox(self, x, y, cls):
         """Opens the InputWindow for user to input settings and create a new widget."""
-        default_values = {'Name': 'New combo'}  # Set the default name
+        default_values = {'label_name': 'New combo', "last_conn_info": None, "func": None}  # Set the default name
         InputWindow(self.root, "Create New Widget",
                     lambda values: self.create_new_widget_with_settings(values, x, y, cls), default_values,
                     {"Dimension": ['160x100', '300x100', '600x100'], "Type": ["com_list", "function"]})
@@ -258,11 +190,12 @@ class RightClickMenu(tk.LabelFrame):
             values["y"] = round_to_nearest_10(y - self.winfo_rooty())
             values["parent"] = self.gen_id
             values["class"] = str(cls)
+            values["info_table"] = None
             values["id"] = self.db.add_element(values)
             frame = self.root.loader.create_frame(values, self)
             frame.place(x=values["x"], y=values["y"])
 
-            self.logger.message(f"New widget '{values['Name']}' created at ({x}, {y})")
+            self.logger.message(f"New widget '{values['label_name']}' created at ({x}, {y})")
         except KeyError as e:
             self.logger.message(f"Key error in widget settings: {e}")
         except ValueError as e:
@@ -301,9 +234,9 @@ class DraggableRightClickMenu(RightClickMenu):
 
     def __init__(self, main_root, parent_info, values, logger, gen_id="0000"):
         """Initialize the DraggableRightClickMenu with a root, parent, and label."""
-        super().__init__(main_root, parent_info, values, logger,  gen_id=gen_id, text=values["Name"])
+        super().__init__(main_root, parent_info, values, logger,  gen_id=gen_id, text=values["label_name"])
         self.logger = logger
-        self.label_name = values["Name"]
+        self.label_name = values["label_name"]
         self.rounded_x = 0
         self.rounded_y = 0
         self.bind("<Button-1>", self.start_drag)
@@ -365,7 +298,7 @@ class ComboboxRightClickMenu(DraggableRightClickMenu):
         self.top_frame.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
 
         # Create a Label
-        self.label = tk.Label(self.top_frame, text=values["Name"])
+        self.label = tk.Label(self.top_frame, text=values["label_name"])
         self.label.pack(side=tk.LEFT, padx=5, pady=5)
 
         # Retrieve the list from main_root based on the type specified in values
@@ -379,6 +312,7 @@ class ComboboxRightClickMenu(DraggableRightClickMenu):
         # Create a toggle Button under the combobox
         if values["Type"] == "com_list":
             self.button = tk.Button(self, text="Start", command=self.on_com_click, font=("Arial", 10))
+
         elif values["Type"] == "function":
             self.button = tk.Button(self, text="Send", command=self.on_fun_click, font=("Arial", 10))
             self.checkbox_var = tk.IntVar()
@@ -433,15 +367,22 @@ class ComboboxRightClickMenu(DraggableRightClickMenu):
 
 
 class SetupLoader:
-    def __init__(self, root, json_manager):
+    def __init__(self, root):
         self.script = None
         self.root = root
         self.logger_setup = Logger("setup")
         self.logger = Logger()
-        self.json_manager = json_manager
-        self.elements_dict = {element['id']: element for element in self.json_manager.get_elements()}
+        self.db = Database("gui_conf", self.logger)
+        self.elements_dict = {}
         self.created_elements = {}
         self.waiting_list = []
+        self.init()
+
+    def init(self):
+        num_ids = self.db.get_by_feature("id")
+        for num_id in num_ids:
+            self.elements_dict[num_id] = self.db.get_info(num_id)
+        print(self.elements_dict)
 
     def load_setup(self):
         """Create labels/frames based on the loaded JSON data."""
@@ -454,10 +395,6 @@ class SetupLoader:
             self.waiting_list.clear()
             for element in waiting_list_copy:
                 self.create_element(element)
-
-        # Remove any elements that are still waiting for a parent
-        for element in self.waiting_list:
-            self.json_manager.remove_element(element['id'])
 
     def create_info_label(self, frame):
         text_widget = tk.Text(frame, height=10, width=108, wrap=tk.WORD, state=tk.DISABLED)
@@ -478,11 +415,11 @@ class SetupLoader:
             self.logger_setup.message(f"Element {element_id} already created on Parent - {parent_id}")
             return self.created_elements[element_id]
 
-        if parent_id == 'root':
+        if parent_id == 0:
             parent_info = self.root
             # Update the size of the root window to match the element's dimensions
-            root_width = 1215
-            root_height = 820
+            root_width = int(element.get('Width', 1250))
+            root_height = int(element.get('Height', 850))
             self.logger_setup.message(f"Setting root size to - {root_width}x{root_height}")
             self.root.geometry(f"{root_width}x{root_height}")
         else:
@@ -549,9 +486,9 @@ class SetupLoader:
                     values=element,
                     gen_id=element.get('id', ''),
                     logger=self.logger)
-        if frame_id == "info":
+        if frame_id == 3:
             self.create_info_label(frame)
-        elif frame_id == "script":
+        elif frame_id == 2:
             self.create_script_label(frame)
 
         return frame
@@ -561,7 +498,6 @@ class SetupLoader:
 if __name__ == "__main__":
     root_main = tk.Tk()
     root_main.change_mode = False
-    jm = JsonManager("test.json")
-    root_main.loader = SetupLoader(root_main, jm)
+    root_main.loader = SetupLoader(root_main)
     root_main.loader.load_setup()
     root_main.mainloop()
