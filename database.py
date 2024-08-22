@@ -4,7 +4,8 @@ import random
 
 
 class Database:
-    def __init__(self, database, host="localhost", user="root", passwd="Aa123456"):
+    def __init__(self, database, logger, host="localhost", user="root", passwd="Aa123456"):
+        self.logger = logger
         self.cursor = None
         self.host = host
         self.user = user
@@ -23,18 +24,18 @@ class Database:
             )
             if self.connection.is_connected():
                 db_info = self.connection.get_server_info()
-                print(f"Connected to MySQL Server version {db_info}")
+                self.logger.message(f"Connected to MySQL Server version {db_info}")
                 self.cursor = self.connection.cursor()
                 self.cursor.execute("select database();")
                 record = self.cursor.fetchone()
-                print(f"You're connected to database: {record}")
+                self.logger.message(f"You're connected to database: {record}")
         except Error as e:
-            print(f"Error while connecting to MySQL: {e}")
+            self.logger.message(f"Error while connecting to MySQL: {e}")
 
     def disconnect(self):
         if self.connection and self.connection.is_connected():
             self.connection.close()
-            print(f"Disconnected from {self.database}")
+            self.logger.message(f"Disconnected from {self.database}")
 
     def create_table(self, table_name, columns):
         try:
@@ -42,16 +43,16 @@ class Database:
             columns_str = ', '.join([f"{col_name} {data_type}" for col_name, data_type in columns.items()])
             cursor.execute(f"CREATE TABLE {table_name} ({columns_str})")
             self.connection.commit()
-            print(f"Table {table_name} created successfully with columns {columns_str}.")
+            self.logger.message(f"Table {table_name} created successfully with columns {columns_str}.")
         except Error as e:
-            print(f"Failed to create table {table_name}: {e}")
+            self.logger.message(f"Failed to create table {table_name}: {e}")
 
     def delete_table(self, table_name):
         try:
             self.cursor.execute(f"DROP TABLE IF EXISTS {table_name}")
-            print(f"Table {table_name} deleted successfully.")
+            self.logger.message(f"Table {table_name} deleted successfully.")
         except Error as e:
-            print(f"Failed to delete table {table_name}: {e}")
+            self.logger.message(f"Failed to delete table {table_name}: {e}")
 
     def add_data_to_table(self, table_name, data):
         try:
@@ -60,9 +61,9 @@ class Database:
             sql = f"INSERT INTO {table_name} ( {columns} ) VALUES ( {placeholders} )"
             self.cursor.execute(sql, list(data.values()))
             self.connection.commit()
-            print(f"Data added to {table_name} successfully.")
+            self.logger.message(f"Data added to {table_name} successfully.")
         except Error as e:
-            print(f"Failed to add data to {table_name}: {e}")
+            self.logger.message(f"Failed to add data to {table_name}: {e}")
 
     def get_all_table_names(self):
         try:
@@ -71,8 +72,15 @@ class Database:
             tables = self.cursor.fetchall()
             return [table[0] for table in tables]
         except Error as e:
-            print(f"Failed to get table names: {e}")
+            self.logger.message(f"Failed to get table names: {e}")
             return []
+
+    def get_columns(self, table_name):
+        self.cursor.execute(f"DESCRIBE {table_name}")
+        temp_column_name_list = []
+        for column_info in self.cursor.fetchall():
+            temp_column_name_list.append(column_info[0])
+        return temp_column_name_list
 
     def remove_data_by_id(self, id_value):
         try:
@@ -80,14 +88,13 @@ class Database:
             table_names = self.get_all_table_names()
             for table_name in table_names:
                 # Check if the table has a column named "ID"
-                self.cursor.execute(f"DESCRIBE {table_name}")
-                columns = self.cursor.fetchall()
-                if any(column[0].lower() == "id" for column in columns):
+                columns = self.get_columns(table_name)
+                if "id" in columns:
                     # Execute the delete command
                     self.cursor.execute(f"DELETE FROM {table_name} WHERE ID = %s", (id_value,))
-                    print(f"Data with ID {id_value} removed from {table_name}.")
+                    self.logger.message(f"Data with ID {id_value} removed from {table_name}.")
         except Error as e:
-            print(f"Failed to remove data: {e}")
+            self.logger.message(f"Failed to remove data: {e}")
 
     def find_data(self, table_name, num_id):
         try:
@@ -96,11 +103,11 @@ class Database:
             columns = self.cursor.column_names
             records = self.cursor.fetchall()
             result = [dict(zip(columns, row)) for row in records]
-            print(f"Data found in {table_name}: {result}")
+            self.logger.message(f"Data found in {table_name}: {result}")
 
             return result
         except Error as e:
-            print(f"Failed to find data in {table_name}: {e}")
+            self.logger.message(f"Failed to find data in {table_name}: {e}")
 
     def update(self, info):
         try:
@@ -112,7 +119,7 @@ class Database:
                 # Find the data based on the provided ID
                 records = self.find_data(table_name, id_value)
                 if not records:
-                    print(f"No data found with ID {id_value} in {table_name}.")
+                    self.logger.message(f"No data found with ID {id_value} in {table_name}.")
 
 
                 # Prepare the update statement
@@ -124,26 +131,41 @@ class Database:
                     self.cursor.execute(f"UPDATE {table_name} SET {update_columns} WHERE id = %s",
                                         update_values + [id_value])
                     self.connection.commit()
-                    print(f"Data with ID {id_value} updated in {table_name}.")
+                    self.logger.message(f"Data with ID {id_value} updated in {table_name}.")
                 except Exception as e:
-                    print(f"Failed to update data in {table_name}: {e}")
+                    self.logger.message(f"Failed to update data in {table_name}: {e}")
+                    pass
         except Error as e:
-            print(f"Failed to update data in: {e}")
+            self.logger.message(f"Failed to update data in: {e}")
 
     def remove_element(self,id):
-        print(f"Remove element {id}")
+        self.logger.message(f"Remove element {id}")
 
-    def add_element(self,values):
-        print(values["parent"], type(values["parent"]))
-        values['id'] = int(1 + int(values["parent"])/1000)*1000 + self.generate_unique_id()
-        self.add_data_to_table("label_param", values)
+    def add_element(self, values):
+        table_names = self.get_all_table_names()
+        values['id'] = int(1 + int(values["parent"]) / 10000) * 10000 + self.generate_unique_id()
+        for table_name in table_names:
+            temp_values = {}
+            columns = self.get_columns(table_name)
+            for column in columns:
+                try:
+                    temp_values[column] = values[column]
+                except Exception as e:
+                    self.logger.message(e)
+                    temp_values = {}
+                    break
+            if temp_values:
+                self.add_data_to_table(table_name, temp_values)
         return values['id']
 
     def get_info(self, id_num):
         tables = self.get_all_table_names()
         table_info = {}
         for table in tables:
-            table_info[table] = self.find_data(table, id_num)
+            temp_table_info = self.find_data(table, id_num)
+            if temp_table_info:
+                for column, info in temp_table_info[0].items():
+                    table_info[column] = info
         return table_info
 
     def get_by_feature(self, feature):
@@ -153,13 +175,11 @@ class Database:
             query = f"SELECT * FROM {table} WHERE {feature} ORDER BY {feature} ASC"
             self.cursor.execute(query)
 
-            # קבלת התוצאות
             results = self.cursor.fetchall()
-            print(results)
             for result in results:
                 if result not in list_features:
                     list_features.append(result[0])
-        print("list features ",list_features)
+        self.logger.message(f"list features {list_features}")
         return list_features
 
     def generate_unique_id(self):
@@ -185,37 +205,37 @@ class Database:
 def init_database(data_base_name="gui_conf"):
     db = Database(host="localhost", user="root", passwd="Aa123456", database=data_base_name)
     db.connect()
-    # db.delete_table("label_param")
-    # db.delete_table("frs_info")
-    # db.delete_table("com_info")
+    db.delete_table("label_param")
+    db.delete_table("frs_info")
+    db.delete_table("com_info")
     columns = {"id": "INT AUTO_INCREMENT PRIMARY KEY",
                "parent": "INT",
                "x": "INT",
                "y": "INT",
-               "width": "INT",
-               "height": "INT",
+               "Width": "INT",
+               "Height": "INT",
                "label_name": "VARCHAR(255)",
                "class": "VARCHAR(255)",
                "info_table": "VARCHAR(255)"}
     db.create_table("label_param", columns)
 
     columns = {"id": "INT AUTO_INCREMENT PRIMARY KEY",
-               "max_byte": "INT",
-               "min_byte": "INT",
-               "max_bit": "INT",
-               "min_bit": "INT"}
+               "maxByte": "INT",
+               "minByte": "INT",
+               "maxBit": "INT",
+               "minBit": "INT"}
 
     db.create_table("frs_info", columns)
 
     columns = {"id": "INT AUTO_INCREMENT PRIMARY KEY",
-               "type": "VARCHAR(255)",
+               "Type": "VARCHAR(255)",
                "last_conn_info": "VARCHAR(255)",
                "func": "VARCHAR(255)"}
 
     db.create_table("com_info", columns)
     data = {
-        "width": "1250",
-        "height": "850",
+        "Width": "1250",
+        "Height": "850",
         "label_name": "Main",
         "x": 0,
         "y": 0,
@@ -242,6 +262,5 @@ def init_database(data_base_name="gui_conf"):
 # db.find_data(table_name="TestTable", num_id=1234)
 # db.update_data({"id": 1234, "age": 35})
 # # db.remove_data_by_id("1234")
-
 #init_database()
 

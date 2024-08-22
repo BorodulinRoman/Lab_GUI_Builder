@@ -1,0 +1,77 @@
+Logger started: 2024-08-21 14:25:20.066434
+14-25-20-196825: Connected to MySQL Server version 8.0.37
+14-25-20-197826: You're connected to database: ('gui_conf',)
+14-25-20-200535: list features [17621, 23698, 23920, 23616, 1, 14793, 16805, 17621, 23616, 23698, 23920, 24466]
+14-25-20-201610: Data found in com_info: [{'id': 17621, 'Type': 'com_list', 'last_conn_info': 'None', 'func': 'None'}]
+14-25-20-202535: Data found in frs_info: []
+14-25-20-203565: Data found in label_param: [{'id': 17621, 'parent': 1, 'x': 20, 'y': 10, 'Width': 160, 'Height': 100, 'label_name': 'New combo', 'class': "<class '__main__.ComboboxRightClickMenu'>", 'info_table': None}]
+14-25-20-205133: Data found in com_info: [{'id': 23698, 'Type': 'function', 'last_conn_info': 'None', 'func': 'None'}]
+14-25-20-206602: Data found in frs_info: []
+14-25-20-207614: Data found in label_param: [{'id': 23698, 'parent': 16805, 'x': 60, 'y': 160, 'Width': 300, 'Height': 100, 'label_name': 'New combo', 'class': "<class '__main__.ComboboxRightClickMenu'>", 'info_table': None}]
+14-25-20-208747: Data found in com_info: [{'id': 23920, 'Type': 'com_list', 'last_conn_info': 'None', 'func': 'None'}]
+14-25-20-209746: Data found in frs_info: []
+14-25-20-210252: Data found in label_param: [{'id': 23920, 'parent': 16805, 'x': 160, 'y': 330, 'Width': 300, 'Height': 100, 'label_name': 'New combo', 'class': "<class '__main__.ComboboxRightClickMenu'>", 'info_table': None}]
+14-25-20-211268: Data found in com_info: []
+14-25-20-212266: Data found in frs_info: [{'id': 23616, 'maxByte': 0, 'minByte': 2, 'maxBit': 2, 'minBit': 2}]
+14-25-20-213606: Data found in label_param: [{'id': 23616, 'parent': 16805, 'x': 20, 'y': 10, 'Width': 130, 'Height': 40, 'label_name': 'New Packet', 'class': "<class '__main__.DraggableRightClickMenu'>", 'info_table': None}]
+14-25-20-214675: Data found in com_info: []
+14-25-20-215642: Data found in frs_info: []
+14-25-20-217154: Data found in label_param: [{'id': 1, 'parent': None, 'x': 0, 'y': 0, 'Width': 1250, 'Height': 850, 'label_name': 'Main', 'class': "<class '__main__.RightClickMenu'>", 'info_table': None}]
+14-25-20-217154: Data found in com_info: []
+14-25-20-219121: Data found in frs_info: []
+14-25-20-219121: Data found in label_param: [{'id': 14793, 'parent': 1, 'x': 10, 'y': 210, 'Width': 520, 'Height': 400, 'label_name': 'New Widget', 'class': "<class '__main__.DraggableRightClickMenu'>", 'info_table': None}]
+14-25-20-220691: Data found in com_info: []
+14-25-20-221910: Data found in frs_info: []
+14-25-20-222917: Data found in label_param: [{'id': 16805, 'parent': 1, 'x': 540, 'y': 0, 'Width': 820, 'Height': 600, 'label_name': 'New Widget', 'class': "<class '__main__.DraggableRightClickMenu'>", 'info_table': None}]
+14-25-20-223916: Data found in com_info: [{'id': 17621, 'Type': 'com_list', 'last_conn_info': 'None', 'func': 'None'}]
+14-25-20-225176: Data found in frs_info: []
+14-25-20-225969: Data found in label_param: [{'id': 17621, 'parent': 1, 'x': 20, 'y': 10, 'Width': 160, 'Height': 100, 'label_name': 'New combo', 'class': "<class '__main__.ComboboxRightClickMenu'>", 'info_table': None}]
+14-25-20-226472: Data found in com_info: []
+14-25-20-227656: Data found in frs_info: [{'id': 23616, 'maxByte': 0, 'minByte': 2, 'maxBit': 2, 'minBit': 2}]
+14-25-20-228157: Data found in label_param: [{'id': 23616, 'parent': 16805, 'x': 20, 'y': 10, 'Width': 130, 'Height': 40, 'label_name': 'New Packet', 'class': "<class '__main__.DraggableRightClickMenu'>", 'info_table': None}]
+14-25-20-229167: Data found in com_info: [{'id': 23698, 'Type': 'function', 'last_conn_info': 'None', 'func': 'None'}]
+14-25-20-229167: Data found in frs_info: []
+14-25-20-230748: Data found in label_param: [{'id': 23698, 'parent': 16805, 'x': 60, 'y': 160, 'Width': 300, 'Height': 100, 'label_name': 'New combo', 'class': "<class '__main__.ComboboxRightClickMenu'>", 'info_table': None}]
+14-25-20-231616: Data found in com_info: [{'id': 23920, 'Type': 'com_list', 'last_conn_info': 'None', 'func': 'None'}]
+14-25-20-231616: Data found in frs_info: []
+14-25-20-232624: Data found in label_param: [{'id': 23920, 'parent': 16805, 'x': 160, 'y': 330, 'Width': 300, 'Height': 100, 'label_name': 'New combo', 'class': "<class '__main__.ComboboxRightClickMenu'>", 'info_table': None}]
+14-25-20-233624: Data found in com_info: []
+14-25-20-234623: Data found in frs_info: []
+14-25-20-235591: Data found in label_param: [{'id': 24466, 'parent': 16805, 'x': 520, 'y': 10, 'Width': 150, 'Height': 400, 'label_name': 'New Widget', 'class': "<class '__main__.DraggableRightClickMenu'>", 'info_table': None}]
+14-25-20-236091: Parent element 1 not yet created, adding 17621 to waiting list
+14-25-20-237010: Parent element 16805 not yet created, adding 23698 to waiting list
+14-25-20-237473: Parent element 16805 not yet created, adding 23920 to waiting list
+14-25-20-238592: Parent element 16805 not yet created, adding 23616 to waiting list
+14-25-20-238592: Setting root size to - 1250x850
+14-25-20-239872: Create RightClickMenu'>)
+14-25-20-240680: Class String after cleaning: 'RightClickMenu'
+14-25-20-241356: Class string does not contain a module name, assuming '__main__'.
+14-25-20-589579: Placed frame .!rightclickmenu at position (0,0)
+14-25-20-591325: Create DraggableRightClickMenu'>)
+14-25-20-591994: Class String after cleaning: 'DraggableRightClickMenu'
+14-25-20-592063: Class string does not contain a module name, assuming '__main__'.
+14-25-20-632138: Placed frame .!rightclickmenu.!draggablerightclickmenu at position (10,210)
+14-25-20-634035: Create DraggableRightClickMenu'>)
+14-25-20-635129: Class String after cleaning: 'DraggableRightClickMenu'
+14-25-20-636150: Class string does not contain a module name, assuming '__main__'.
+14-25-20-674580: Placed frame .!rightclickmenu.!draggablerightclickmenu2 at position (540,0)
+14-25-20-676051: Create DraggableRightClickMenu'>)
+14-25-20-676111: Class String after cleaning: 'DraggableRightClickMenu'
+14-25-20-677117: Class string does not contain a module name, assuming '__main__'.
+14-25-20-713464: Placed frame .!rightclickmenu.!draggablerightclickmenu2.!draggablerightclickmenu at position (520,10)
+14-25-20-714464: Create ComboboxRightClickMenu'>)
+14-25-20-715465: Class String after cleaning: 'ComboboxRightClickMenu'
+14-25-20-716543: Class string does not contain a module name, assuming '__main__'.
+14-25-20-757772: Placed frame .!rightclickmenu.!comboboxrightclickmenu at position (20,10)
+14-25-20-758278: Create ComboboxRightClickMenu'>)
+14-25-20-759430: Class String after cleaning: 'ComboboxRightClickMenu'
+14-25-20-759537: Class string does not contain a module name, assuming '__main__'.
+14-25-20-801075: Placed frame .!rightclickmenu.!draggablerightclickmenu2.!comboboxrightclickmenu at position (60,160)
+14-25-20-801310: Create ComboboxRightClickMenu'>)
+14-25-20-802647: Class String after cleaning: 'ComboboxRightClickMenu'
+14-25-20-802647: Class string does not contain a module name, assuming '__main__'.
+14-25-20-851812: Placed frame .!rightclickmenu.!draggablerightclickmenu2.!comboboxrightclickmenu2 at position (160,330)
+14-25-20-853253: Create DraggableRightClickMenu'>)
+14-25-20-854498: Class String after cleaning: 'DraggableRightClickMenu'
+14-25-20-855655: Class string does not contain a module name, assuming '__main__'.
+14-25-20-899707: Placed frame .!rightclickmenu.!draggablerightclickmenu2.!draggablerightclickmenu2 at position (20,10)

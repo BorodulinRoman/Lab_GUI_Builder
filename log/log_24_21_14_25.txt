@@ -1,0 +1,149 @@
+Logger started: 2024-08-21 14:25:20.233624
+14-25-20-589579: Connected to MySQL Server version 8.0.37
+14-25-20-590553: You're connected to database: ('gui_conf',)
+14-25-20-631136: Connected to MySQL Server version 8.0.37
+14-25-20-633426: You're connected to database: ('gui_conf',)
+14-25-20-674580: Connected to MySQL Server version 8.0.37
+14-25-20-675596: You're connected to database: ('gui_conf',)
+14-25-20-713464: Connected to MySQL Server version 8.0.37
+14-25-20-714464: You're connected to database: ('gui_conf',)
+14-25-20-752130: Connected to MySQL Server version 8.0.37
+14-25-20-753107: You're connected to database: ('gui_conf',)
+14-25-20-799073: Connected to MySQL Server version 8.0.37
+14-25-20-800076: You're connected to database: ('gui_conf',)
+14-25-20-849462: Connected to MySQL Server version 8.0.37
+14-25-20-851312: You're connected to database: ('gui_conf',)
+14-25-20-899707: Connected to MySQL Server version 8.0.37
+14-25-20-900994: You're connected to database: ('gui_conf',)
+14-25-44-182813: Change mode enabled
+14-25-45-568613: Dragging 'New Packet' to (20, 30)
+14-25-45-649396: Dragging 'New Packet' to (20, 30)
+14-25-45-664962: Dragging 'New Packet' to (30, 30)
+14-25-45-672290: Dragging 'New Packet' to (30, 30)
+14-25-45-679766: Dragging 'New Packet' to (30, 30)
+14-25-45-690047: Dragging 'New Packet' to (30, 30)
+14-25-45-695970: Dragging 'New Packet' to (40, 30)
+14-25-45-704318: Dragging 'New Packet' to (40, 30)
+14-25-45-712823: Dragging 'New Packet' to (50, 30)
+14-25-45-720343: Dragging 'New Packet' to (50, 30)
+14-25-45-728332: Dragging 'New Packet' to (60, 30)
+14-25-45-735670: Dragging 'New Packet' to (70, 30)
+14-25-45-743754: Dragging 'New Packet' to (80, 30)
+14-25-45-751077: Dragging 'New Packet' to (90, 30)
+14-25-45-759891: Dragging 'New Packet' to (90, 30)
+14-25-45-768066: Dragging 'New Packet' to (90, 30)
+14-25-45-776391: Dragging 'New Packet' to (100, 30)
+14-25-45-784395: Dragging 'New Packet' to (100, 30)
+14-25-45-791395: Dragging 'New Packet' to (100, 30)
+14-25-45-799600: Dragging 'New Packet' to (110, 30)
+14-25-45-807597: Dragging 'New Packet' to (110, 30)
+14-25-45-815917: Dragging 'New Packet' to (110, 30)
+14-25-45-824923: Dragging 'New Packet' to (120, 30)
+14-25-45-831543: Dragging 'New Packet' to (120, 30)
+14-25-45-839621: Dragging 'New Packet' to (130, 30)
+14-25-45-847392: Dragging 'New Packet' to (140, 30)
+14-25-45-855737: Dragging 'New Packet' to (150, 30)
+14-25-45-864484: Dragging 'New Packet' to (160, 30)
+14-25-45-872007: Dragging 'New Packet' to (160, 40)
+14-25-45-879361: Dragging 'New Packet' to (170, 40)
+14-25-45-887702: Dragging 'New Packet' to (170, 40)
+14-25-45-896385: Dragging 'New Packet' to (170, 40)
+14-25-45-903864: Dragging 'New Packet' to (180, 40)
+14-25-46-264344: Dragging 'New Packet' to (180, 40)
+14-25-46-271430: Dragging 'New Packet' to (180, 40)
+14-25-46-592617: Dragging 'New Packet' to (180, 40)
+14-25-46-599657: Dragging 'New Packet' to (170, 40)
+14-25-46-608034: Dragging 'New Packet' to (160, 40)
+14-25-46-615608: Dragging 'New Packet' to (160, 40)
+14-25-46-623431: Dragging 'New Packet' to (150, 40)
+14-25-46-631561: Dragging 'New Packet' to (150, 40)
+14-25-46-639564: Dragging 'New Packet' to (140, 40)
+14-25-46-647597: Dragging 'New Packet' to (140, 40)
+14-25-46-720259: Dragging 'New Packet' to (140, 40)
+14-25-46-727749: Dragging 'New Packet' to (140, 40)
+14-25-46-735277: Dragging 'New Packet' to (140, 40)
+14-25-46-744178: Dragging 'New Packet' to (130, 40)
+14-25-46-751498: Dragging 'New Packet' to (130, 40)
+14-25-46-759992: Dragging 'New Packet' to (120, 40)
+14-25-46-767856: Dragging 'New Packet' to (120, 40)
+14-25-46-776184: Dragging 'New Packet' to (110, 40)
+14-25-46-783283: Dragging 'New Packet' to (100, 40)
+14-25-46-791249: Dragging 'New Packet' to (100, 40)
+14-25-46-800267: Dragging 'New Packet' to (100, 40)
+14-25-46-808436: Dragging 'New Packet' to (90, 40)
+14-25-47-026102: Data found in com_info: []
+14-25-47-027142: No data found with ID 23616 in com_info.
+14-25-47-028234: Failed to update data in com_info: 1054 (42S22): Unknown column 'x' in 'field list'
+14-25-47-028234: Data found in frs_info: [{'id': 23616, 'maxByte': 0, 'minByte': 2, 'maxBit': 2, 'minBit': 2}]
+14-25-47-040105: Failed to update data in frs_info: 1054 (42S22): Unknown column 'x' in 'field list'
+14-25-47-041060: Data found in label_param: [{'id': 23616, 'parent': 16805, 'x': 20, 'y': 10, 'Width': 130, 'Height': 40, 'label_name': 'New Packet', 'class': "<class '__main__.DraggableRightClickMenu'>", 'info_table': None}]
+14-25-47-041060: Data with ID 23616 updated in label_param.
+14-25-47-042101: Stopped dragging 'New Packet' at (90, 40)
+14-25-57-761205: Dragging 'New Packet' to (90, 60)
+14-25-57-769988: Dragging 'New Packet' to (90, 60)
+14-25-57-775998: Dragging 'New Packet' to (100, 60)
+14-25-57-783750: Dragging 'New Packet' to (100, 60)
+14-25-57-791966: Dragging 'New Packet' to (100, 60)
+14-25-57-801127: Dragging 'New Packet' to (100, 60)
+14-25-57-808133: Dragging 'New Packet' to (100, 60)
+14-25-57-816521: Dragging 'New Packet' to (110, 60)
+14-25-57-824600: Dragging 'New Packet' to (110, 60)
+14-25-57-831759: Dragging 'New Packet' to (110, 60)
+14-25-57-840104: Dragging 'New Packet' to (110, 60)
+14-25-57-848066: Dragging 'New Packet' to (120, 60)
+14-25-57-856280: Dragging 'New Packet' to (120, 60)
+14-25-57-864850: Dragging 'New Packet' to (130, 60)
+14-25-57-873202: Dragging 'New Packet' to (130, 60)
+14-25-57-879615: Dragging 'New Packet' to (130, 60)
+14-25-57-888821: Dragging 'New Packet' to (140, 50)
+14-25-57-895570: Dragging 'New Packet' to (140, 50)
+14-25-57-904348: Dragging 'New Packet' to (140, 50)
+14-25-57-912774: Dragging 'New Packet' to (140, 50)
+14-25-58-043265: Data found in com_info: []
+14-25-58-044248: No data found with ID 23616 in com_info.
+14-25-58-045886: Failed to update data in com_info: 1054 (42S22): Unknown column 'x' in 'field list'
+14-25-58-047324: Data found in frs_info: [{'id': 23616, 'maxByte': 0, 'minByte': 2, 'maxBit': 2, 'minBit': 2}]
+14-25-58-057539: Failed to update data in frs_info: 1054 (42S22): Unknown column 'x' in 'field list'
+14-25-58-058543: Data found in label_param: [{'id': 23616, 'parent': 16805, 'x': 90, 'y': 40, 'Width': 130, 'Height': 40, 'label_name': 'New Packet', 'class': "<class '__main__.DraggableRightClickMenu'>", 'info_table': None}]
+14-25-58-059618: Data with ID 23616 updated in label_param.
+14-25-58-059618: Stopped dragging 'New Packet' at (140, 50)
+14-25-59-264785: Dragging 'New Packet' to (140, 70)
+14-25-59-280785: Dragging 'New Packet' to (140, 70)
+14-25-59-288947: Dragging 'New Packet' to (140, 70)
+14-25-59-296890: Dragging 'New Packet' to (140, 70)
+14-25-59-304673: Dragging 'New Packet' to (130, 70)
+14-25-59-312675: Dragging 'New Packet' to (130, 70)
+14-25-59-320871: Dragging 'New Packet' to (130, 70)
+14-25-59-328771: Dragging 'New Packet' to (130, 70)
+14-25-59-336596: Dragging 'New Packet' to (120, 70)
+14-25-59-344875: Dragging 'New Packet' to (120, 70)
+14-25-59-352857: Dragging 'New Packet' to (110, 70)
+14-25-59-360597: Dragging 'New Packet' to (110, 70)
+14-25-59-368243: Dragging 'New Packet' to (100, 60)
+14-25-59-376680: Dragging 'New Packet' to (90, 60)
+14-25-59-383958: Dragging 'New Packet' to (80, 60)
+14-25-59-392573: Dragging 'New Packet' to (80, 60)
+14-25-59-399671: Dragging 'New Packet' to (70, 60)
+14-25-59-408716: Dragging 'New Packet' to (70, 60)
+14-25-59-416935: Dragging 'New Packet' to (70, 60)
+14-25-59-507560: Data found in com_info: []
+14-25-59-508566: No data found with ID 23616 in com_info.
+14-25-59-509558: Failed to update data in com_info: 1054 (42S22): Unknown column 'x' in 'field list'
+14-25-59-519041: Data found in frs_info: [{'id': 23616, 'maxByte': 0, 'minByte': 2, 'maxBit': 2, 'minBit': 2}]
+14-25-59-520138: Failed to update data in frs_info: 1054 (42S22): Unknown column 'x' in 'field list'
+14-25-59-520138: Data found in label_param: [{'id': 23616, 'parent': 16805, 'x': 140, 'y': 50, 'Width': 130, 'Height': 40, 'label_name': 'New Packet', 'class': "<class '__main__.DraggableRightClickMenu'>", 'info_table': None}]
+14-25-59-521089: Data with ID 23616 updated in label_param.
+14-25-59-521089: Stopped dragging 'New Packet' at (70, 60)
+14-26-07-783978: Dragging 'New Packet' to (70, 80)
+14-26-07-848056: Dragging 'New Packet' to (80, 80)
+14-26-07-872252: Dragging 'New Packet' to (80, 80)
+14-26-07-904040: Dragging 'New Packet' to (80, 80)
+14-26-08-000204: Dragging 'New Packet' to (80, 80)
+14-26-08-033940: Data found in com_info: []
+14-26-08-034943: No data found with ID 23616 in com_info.
+14-26-08-037904: Failed to update data in com_info: 1054 (42S22): Unknown column 'x' in 'field list'
+14-26-08-039649: Data found in frs_info: [{'id': 23616, 'maxByte': 0, 'minByte': 2, 'maxBit': 2, 'minBit': 2}]
+14-26-08-040150: Failed to update data in frs_info: 1054 (42S22): Unknown column 'x' in 'field list'
+14-26-08-041204: Data found in label_param: [{'id': 23616, 'parent': 16805, 'x': 70, 'y': 60, 'Width': 130, 'Height': 40, 'label_name': 'New Packet', 'class': "<class '__main__.DraggableRightClickMenu'>", 'info_table': None}]
+14-26-08-041880: Data with ID 23616 updated in label_param.
+14-26-08-042380: Stopped dragging 'New Packet' at (80, 80)

@@ -1,0 +1,3 @@
+Logger started: 2024-08-21 14:24:37.456471
+14-24-37-594784: Connected to MySQL Server version 8.0.37
+14-24-37-596813: You're connected to database: ('gui_conf',)
