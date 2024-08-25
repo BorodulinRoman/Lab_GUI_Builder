@@ -3,8 +3,8 @@ from copy import deepcopy
 import time
 from DeviceManager import get_start_time_in_sec, get_start_time, KeySightScopeUSB
 import os
-import winshell
-import webbrowser
+# import winshell
+# import webbrowser
 
 
 def load_config(file_path):
@@ -127,22 +127,22 @@ class Report:
         self.test = None
         self.report = None
         self.table = None
-
-        reports_dir_path = os.path.join(winshell.desktop(), "reports")
-        os.makedirs(reports_dir_path, exist_ok=True)
-
-        # Create the shortcut path within the "Reports" directory
-        shortcut_path = os.path.join(reports_dir_path, f"ReportShortcut_{t}.lnk")
-
-        # Create the shortcut
-        with winshell.shortcut(shortcut_path) as shortcut:
-            shortcut.path = os.path.abspath(new_file_path)
-            shortcut.description = "Shortcut to the latest report"
-            shortcut.working_directory = os.path.dirname(new_file_path)
-
-        # Convert the shortcut path to a URL format and open it
-        folder_url = 'file://' + shortcut_path.replace(os.sep, '/')
-        webbrowser.open(folder_url)
+        # OPEN REPORT
+        # reports_dir_path = os.path.join(winshell.desktop(), "reports")
+        # os.makedirs(reports_dir_path, exist_ok=True)
+        #
+        # # Create the shortcut path within the "Reports" directory
+        # shortcut_path = os.path.join(reports_dir_path, f"ReportShortcut_{t}.lnk")
+        #
+        # # Create the shortcut
+        # with winshell.shortcut(shortcut_path) as shortcut:
+        #     shortcut.path = os.path.abspath(new_file_path)
+        #     shortcut.description = "Shortcut to the latest report"
+        #     shortcut.working_directory = os.path.dirname(new_file_path)
+        #
+        # # Convert the shortcut path to a URL format and open it
+        # folder_url = 'file://' + shortcut_path.replace(os.sep, '/')
+        # webbrowser.open(folder_url)
 
 
 class Script:

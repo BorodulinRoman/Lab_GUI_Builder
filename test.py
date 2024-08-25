@@ -74,3 +74,4 @@ class InputWindow:
             values[field] = entry.get()
         self.callback(values)
         self.window.destroy()
+

@@ -14,8 +14,7 @@ class Logger:
         self.text_widget = None
         # Create a log file with the current date and time
         now = datetime.now()
-        log_filename = now.strftime(f"{name}/{name}_%y_%d_%H_%M.txt")
-        self.log_filepath = os.path.join(os.getcwd(), log_filename)
+        self.log_filepath = now.strftime(f"{name}\\{name}_%y_%d_%H_%M.txt")
 
         # Create the log file if it doesn't exist
         if not os.path.exists(self.log_filepath):

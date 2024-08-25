@@ -383,6 +383,7 @@ class SetupLoader:
         for num_id in num_ids:
             self.elements_dict[num_id] = self.db.get_info(num_id)
         print(self.elements_dict)
+        self.root.title("Project_test ver DD")
 
     def load_setup(self):
         """Create labels/frames based on the loaded JSON data."""
@@ -494,10 +495,41 @@ class SetupLoader:
         return frame
 
 
+def info_line(root):
+    menubar = tk.Menu(root)
+    root.config(menu=menubar)
+
+    # Create "File" menu
+    file_menu = tk.Menu(menubar, tearoff=0)
+    menubar.add_cascade(label="File", menu=file_menu)
+    file_menu.add_command(label="New Setup", command=lambda: print("New Setup"))
+    file_menu.add_command(label="Load Setup", command=lambda: print("Load Setup"))
+    file_menu.add_command(label="Save Setup", command=lambda: print("Save Setup"))
+    file_menu.add_separator()
+    file_menu.add_command(label="Exit", command=root.quit)
+
+    # Create "View" menu
+    view_menu = tk.Menu(menubar, tearoff=0)
+    menubar.add_cascade(label="View", menu=view_menu)
+    view_menu.add_command(label="Change View", command=lambda: print("Change View"))
+
+    # Create "Add" menu
+    add_menu = tk.Menu(menubar, tearoff=0)
+    menubar.add_cascade(label="Add", menu=add_menu)
+    add_menu.add_command(label="Add Item", command=lambda: print("Add Item"))
+
+    # Create "Info" menu
+    info_menu = tk.Menu(menubar, tearoff=0)
+    menubar.add_cascade(label="Info", menu=info_menu)
+    info_menu.add_command(label="Version", command=lambda: print("Version Info"))
+
+
 # Example usage
 if __name__ == "__main__":
     root_main = tk.Tk()
+    info_line(root_main)
     root_main.change_mode = False
     root_main.loader = SetupLoader(root_main)
     root_main.loader.load_setup()
+    root_main.attributes('-alpha', 0.95)
     root_main.mainloop()
