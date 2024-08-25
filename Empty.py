@@ -1,3 +1,4 @@
+import time
 import tkinter as tk
 from tkinter import Menu, messagebox, ttk
 from test import InputWindow, round_to_nearest_10
@@ -6,7 +7,6 @@ from DeviceManager import VisaDeviceManager
 from database import Database, Logger
 from ReportsAndScriptRun import Script
 from tkinter import filedialog
-PROJECT = "test.json"
 
 
 class ScriptRunnerApp:
@@ -152,10 +152,11 @@ class RightClickMenu(tk.LabelFrame):
 
     def build_menu(self, x, y):
         """Build the submenu for creating new widgets."""
+        data_rcm = DataDraggableRightClickMenu
         drag_rcm = DraggableRightClickMenu
         comb_rcm = ComboboxRightClickMenu
         create_menu = Menu(self.menu, tearoff=0)  # Create a new submenu
-        create_menu.add_command(label='Data Label', command=lambda: self.packet_label(x, y, drag_rcm))
+        create_menu.add_command(label='Data Label', command=lambda: self.packet_label(x, y, data_rcm))
         create_menu.add_command(label='Label', command=lambda: self.open_creation_window(x, y, drag_rcm))
         create_menu.add_command(label='Combobox', command=lambda: self.open_combobox(x, y, comb_rcm))
         create_menu.add_command(label='Button', command=lambda: self.open_creation_window(x, y, drag_rcm))
@@ -274,6 +275,23 @@ class DraggableRightClickMenu(RightClickMenu):
                 self.logger.message(f"Error updating label position: {e}")
 
 
+class DataDraggableRightClickMenu(DraggableRightClickMenu):
+    """A draggable label frame that includes a combobox and a toggle button."""
+
+    def __init__(self, main_root, parent_info, values, logger, gen_id="0000"):
+        """Initialize the ComboboxRightClickMenu with a root, parent, label, width, and height."""
+        super().__init__(main_root, parent_info, values, logger, gen_id=gen_id)
+        self.logger = logger
+        self.element_info = self.db.get_info(self.gen_id)
+        self.thread_update = threading.Thread(target=self.update_data_label)
+        self.thread_update.start()
+
+    def update_data_label(self):
+        while 1:
+            time.sleep(1)
+            print(self.element_info)
+
+
 class ComboboxRightClickMenu(DraggableRightClickMenu):
     """A draggable label frame that includes a combobox and a toggle button."""
 
@@ -387,9 +405,13 @@ class SetupLoader:
 
     def load_setup(self):
         """Create labels/frames based on the loaded JSON data."""
-        for element in self.elements_dict.values():
+        self.root.loader.packet = None
+        sorted_keys_desc = sorted(self.elements_dict.keys(), reverse=True)
+        sorted_dict_desc = {key: self.elements_dict[key] for key in sorted_keys_desc}
+        for element in sorted_dict_desc.values():
+            print("try_tocreate", element)
             self.create_element(element)
-
+            print("created_el", self.created_elements)
         # Process waiting list until it's empty
         while self.waiting_list:
             waiting_list_copy = self.waiting_list.copy()
@@ -412,7 +434,8 @@ class SetupLoader:
         element_id = element.get('id', '')
         parent_id = element.get('parent', 'root')
 
-        if element_id in self.created_elements:
+        if element_id in self.created_elements.keys():
+
             self.logger_setup.message(f"Element {element_id} already created on Parent - {parent_id}")
             return self.created_elements[element_id]
 
