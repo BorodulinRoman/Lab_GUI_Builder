@@ -1,12 +1,12 @@
 import time
-import tkinter as tk
-from tkinter import Menu, messagebox, ttk
+from tkinter import Menu, messagebox
 from test import InputWindow, round_to_nearest_10
 import threading
 from DeviceManager import VisaDeviceManager
 from database import Database, Logger
 from ReportsAndScriptRun import Script
 from tkinter import filedialog
+from BarLine import *
 
 
 class ScriptRunnerApp:
@@ -385,12 +385,12 @@ class ComboboxRightClickMenu(DraggableRightClickMenu):
 
 
 class SetupLoader:
-    def __init__(self, root):
+    def __init__(self, root, database, logger):
         self.script = None
+        self.db = database
         self.root = root
-        self.logger_setup = Logger("setup")
-        self.logger = Logger()
-        self.db = Database("gui_conf", self.logger)
+        self.logger_setup = Logger('setup')
+        self.logger = logger
         self.elements_dict = {}
         self.created_elements = {}
         self.waiting_list = []
@@ -409,7 +409,7 @@ class SetupLoader:
         sorted_keys_desc = sorted(self.elements_dict.keys(), reverse=True)
         sorted_dict_desc = {key: self.elements_dict[key] for key in sorted_keys_desc}
         for element in sorted_dict_desc.values():
-            print("try_tocreate", element)
+            print("try_to_create", element)
             self.create_element(element)
             print("created_el", self.created_elements)
         # Process waiting list until it's empty
@@ -518,41 +518,16 @@ class SetupLoader:
         return frame
 
 
-def info_line(root):
-    menubar = tk.Menu(root)
-    root.config(menu=menubar)
-
-    # Create "File" menu
-    file_menu = tk.Menu(menubar, tearoff=0)
-    menubar.add_cascade(label="File", menu=file_menu)
-    file_menu.add_command(label="New Setup", command=lambda: print("New Setup"))
-    file_menu.add_command(label="Load Setup", command=lambda: print("Load Setup"))
-    file_menu.add_command(label="Save Setup", command=lambda: print("Save Setup"))
-    file_menu.add_separator()
-    file_menu.add_command(label="Exit", command=root.quit)
-
-    # Create "View" menu
-    view_menu = tk.Menu(menubar, tearoff=0)
-    menubar.add_cascade(label="View", menu=view_menu)
-    view_menu.add_command(label="Change View", command=lambda: print("Change View"))
-
-    # Create "Add" menu
-    add_menu = tk.Menu(menubar, tearoff=0)
-    menubar.add_cascade(label="Add", menu=add_menu)
-    add_menu.add_command(label="Add Item", command=lambda: print("Add Item"))
-
-    # Create "Info" menu
-    info_menu = tk.Menu(menubar, tearoff=0)
-    menubar.add_cascade(label="Info", menu=info_menu)
-    info_menu.add_command(label="Version", command=lambda: print("Version Info"))
-
-
 # Example usage
 if __name__ == "__main__":
     root_main = tk.Tk()
-    info_line(root_main)
     root_main.change_mode = False
-    root_main.loader = SetupLoader(root_main)
+
+    logger = Logger("log")
+    db_gui = Database("gui_conf", logger)
+    enu_bar = MenuBar(root_main, db_gui)
+
+    root_main.loader = SetupLoader(root_main, db_gui, logger)
     root_main.loader.load_setup()
-    root_main.attributes('-alpha', 0.95)
+    # root_main.attributes('-alpha', 0.95)
     root_main.mainloop()
