@@ -1,0 +1,2 @@
+Logger started: 2024-08-27 09:55:23.023827
+[09-55-23-145198] Error while connecting to MySQL: 1049 (42000): Unknown database 'gui_conf'
