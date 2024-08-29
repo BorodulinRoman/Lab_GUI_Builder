@@ -5,16 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="03566363-8df4-4cd8-b209-5c6ef035168c" name="Changes" comment="New class created DataDraggableRightClickMenu - for parsing comport data">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/BarLine.py" beforeDir="false" afterPath="$PROJECT_DIR$/BarLine.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Empty.py" beforeDir="false" afterPath="$PROJECT_DIR$/Empty.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ReportsAndScriptRun.py" beforeDir="false" afterPath="$PROJECT_DIR$/ReportsAndScriptRun.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/database.py" beforeDir="false" afterPath="$PROJECT_DIR$/database.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/info/init_report.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/info/init_table.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/info/init_test.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/script/test.script" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/test.py" beforeDir="false" afterPath="$PROJECT_DIR$/test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/log24291055.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/log24291200.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/log24291321.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/log24291435.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/log24291443.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/log24291453.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/log24291529.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/setup24291056.txt" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -255,32 +254,32 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/BarLine.py</url>
-          <line>97</line>
+          <line>96</line>
           <option name="timeStamp" value="55" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/BarLine.py</url>
-          <line>98</line>
+          <line>97</line>
           <option name="timeStamp" value="56" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/BarLine.py</url>
-          <line>153</line>
+          <line>152</line>
           <option name="timeStamp" value="58" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/BarLine.py</url>
-          <line>156</line>
+          <line>155</line>
           <option name="timeStamp" value="59" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/BarLine.py</url>
-          <line>157</line>
+          <line>156</line>
           <option name="timeStamp" value="60" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/BarLine.py</url>
-          <line>165</line>
+          <line>163</line>
           <option name="timeStamp" value="61" />
         </line-breakpoint>
       </breakpoints>

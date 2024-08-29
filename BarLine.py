@@ -1,4 +1,3 @@
-import datetime
 import tkinter as tk
 from tkinter import ttk
 import os
@@ -156,7 +155,6 @@ class FindReportWindow:
             # Write the log entries to the file
             with open(temp_file_path, 'w') as temp_file:
                 for entry in log_entries:
-                    log_id = entry[0]
                     log_time = entry[1].strftime('%H:%M:%S:%f')  # Formatting the datetime to the desired format
                     log_level = entry[2]
                     log_message = entry[3]

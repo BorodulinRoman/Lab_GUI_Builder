@@ -1,2 +1,0 @@
-(10:55:15:894530 info {'id': 1, 'parent': 0, 'x': 0, 'y': 0, 'Width': 1250, 'Height': 850, 'label_name': 'Main', 'class': "<class '__main__.RightClickMenu'>", 'info_table': None})
-(10:55:15:899678 info Label id '1' location: (0, 0))
