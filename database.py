@@ -3,21 +3,20 @@ from mysql.connector import Error
 import random
 from datetime import datetime
 from queue import Queue
-import os
 import threading
 import tkinter as tk
 
 
-class printloger():
+class PrintLoger:
     def __init__(self):
         self.info = "logger"
-    def message(self, message):
-        print(message)
 
+    def message(self, message):
+        print(f"{self.info} - {message}")
 
 
 class Logger:
-    def __init__(self,name):
+    def __init__(self, name):
         self.db = Database("logs")
         self.table_name = datetime.now().strftime(f"{name}%y%d%H%M")
         self.log_queue = Queue()
@@ -90,70 +89,6 @@ class Logger:
         self.log_thread.join()
 
 
-class Logger_old:
-    def __init__(self, name="log"):
-        self.scrollbar = None
-        self.text_widget = None
-        # Create a log file with the current date and time
-        now = datetime.now()
-        self.log_filepath = now.strftime(f"{name}\\{name}_%y_%d_%H_%M.txt")
-
-        # Create the log file if it doesn't exist
-        if not os.path.exists(self.log_filepath):
-            with open(self.log_filepath, 'w') as file:
-                file.write("Logger started: {}\n".format(now.strftime("%Y-%m-%d %H:%M:%S.%f")))
-
-        # Create a queue to hold log messages
-        self.log_queue = Queue()
-
-        # Start a thread that will handle the actual logging
-        self.log_thread = threading.Thread(target=self._process_logs)
-        self.log_thread.daemon = True  # Daemonize the thread to ensure it closes when the main program exits
-        self.log_thread.start()
-
-    def message(self, message):
-        # Add the log message to the queue
-        self.log_queue.put(message)
-        # todo create window info for user
-
-    def _process_logs(self):
-        while True:
-            # Retrieve a message from the queue and write it to the log file
-            message = self.log_queue.get()
-            if message is None:
-                break
-
-            # Get the current time for the log entry
-            now = datetime.now()
-            timestamp = now.strftime("%H-%M-%S-%f")
-            formatted_message = f"[{timestamp}] {message}\n"
-            # Write the log message to the file
-            with open(self.log_filepath, 'a') as file:
-                file.write(formatted_message)
-
-            # Mark the queue task as done
-            self.log_queue.task_done()
-            # print(self.text_widget)
-            if self.text_widget is not None:
-                self.text_widget.after(10, self._update_text_widget, formatted_message)
-            else:
-                print(message)
-
-    def _update_text_widget(self, message):
-        try:
-            self.text_widget.config(state=tk.NORMAL)
-            self.text_widget.insert(tk.END, message)
-            self.text_widget.config(state=tk.DISABLED)
-            self.text_widget.see(tk.END)
-        except Exception as e:
-            print(f"Error updating text widget: {e}")
-
-    def close(self):
-        # Stop the logging thread by adding a None message to the queue
-        self.log_queue.put(None)
-        self.log_thread.join()
-
-
 def create_schema(host, user, passwd, schema_name):
     try:
         # Connect to MySQL Server
@@ -172,17 +107,12 @@ def create_schema(host, user, passwd, schema_name):
     except Error as e:
         print(f"Failed to create schema '{schema_name}': {e}")
 
-    finally:
-        if connection.is_connected():
-            cursor.close()
-            connection.close()
-            print(f"Connection to MySQL closed.")
 
 class Database:
     def __init__(self, database, logger=None, host="localhost", user="root", passwd="Aa123456"):
         if logger is not None:
             self.logger = logger
-        self.logger = printloger()
+        self.logger = PrintLoger()
         self.cursor = None
         self.host = host
         self.user = user
@@ -290,14 +220,17 @@ class Database:
         except Error as e:
             self.logger.message(f"Failed to remove data: {e}")
 
-    def find_data(self, table_name, num_id):
+    def find_data(self, table_name, num_id=None, feature='id'):
         try:
-            sql = f"SELECT * FROM {table_name} WHERE id = {num_id}"
+            if num_id is None:
+                sql = f"SELECT * FROM {table_name}"
+            else:
+                sql = f"SELECT * FROM {table_name} WHERE {feature} = {num_id}"
             self.cursor.execute(sql)
             columns = self.cursor.column_names
             records = self.cursor.fetchall()
             result = [dict(zip(columns, row)) for row in records]
-            self.logger.message(f"Data found in {table_name}: {result}")
+            # self.logger.message(f"Data found in {table_name}: {result}")
 
             return result
         except Error as e:
@@ -395,9 +328,10 @@ def init_database(data_base_name="gui_conf"):
     create_schema("localhost", "root", "Aa123456", "logs")
     db = Database(host="localhost", user="root", passwd="Aa123456", database=data_base_name)
     db.connect()
-    db.delete_table("label_param")
-    db.delete_table("frs_info")
-    db.delete_table("com_info")
+    # db.delete_table("label_param")
+    # db.delete_table("frs_info")
+    # db.delete_table("com_info")
+
     columns = {"id": "INT AUTO_INCREMENT PRIMARY KEY",
                "parent": "INT",
                "x": "INT",
@@ -477,17 +411,21 @@ def init_database(data_base_name="gui_conf"):
     db.add_data_to_table("label_param", data_scope)
 
     db.switch_database('reports_list')
-    columns = {"ResultStatus": "INT",
-                "project_name": "VARCHAR(255)",
-                "test_name": "VARCHAR(255)",
-                "workOrder": "VARCHAR(255)",
-                "model": "VARCHAR(255)",
-                "gui_type": "VARCHAR(255)",
-                "gui_ver": "VARCHAR(255)",
-                "StartTimeFormatted": "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
-                "GroupResults": "VARCHAR(255)"}
-    db.create_table("init_report", columns)
 
+    # db.delete_table("init_report")
+    # db.delete_table("init_table")
+    # db.delete_table("init_test")
+
+    columns = {"ResultStatus": "INT",
+               "project_name": "VARCHAR(255)",
+               "test_name": "VARCHAR(255)",
+               "workOrder": "VARCHAR(255)",
+               "model": "VARCHAR(255)",
+               "gui_type": "VARCHAR(255)",
+               "gui_ver": "VARCHAR(255)",
+               "StartTimeFormatted": "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
+               "GroupResults": "VARCHAR(255)"}
+    db.create_table("init_report", columns)
     init_report = {
         "ResultStatus": 0,
         "project_name": "test_project",
@@ -496,9 +434,43 @@ def init_database(data_base_name="gui_conf"):
         "model": "CARD1",
         "gui_type": "Test",
         "gui_ver": "1.0",
-        "GroupResults": " "
+        "GroupResults": ""
     }
     db.add_data_to_table("init_report", init_report)
+
+    columns = {
+        "StepResults": "VARCHAR(255)",
+        "GroupName": "VARCHAR(255)",
+        "ResultStatus": "INT",
+        "NumOfFail": "INT"}
+    db.create_table("init_table", columns)
+    init_table = {
+        "StepResults": "",
+        "GroupName": "",
+        "ResultStatus": 2,
+        "NumOfFail": 0
+    }
+    db.add_data_to_table("init_table", init_table)
+
+    columns = {
+        "StepName": "VARCHAR(255)",
+        "Description": "VARCHAR(255)",
+        "Min": "VARCHAR(255)",
+        "Max": "VARCHAR(255)",
+        "ResultStatus": "INT",
+        "Message": "VARCHAR(255)",
+        "TestStart": "VARCHAR(255)"}
+    db.create_table("init_test", columns)
+    init_test = {
+        "StepName": "",
+        "Description": "",
+        "Min": "",
+        "Max": "",
+        "ResultStatus": 0,
+        "Message": "",
+        "TestStart": ""
+    }
+    db.add_data_to_table("init_test", init_test)
     db.disconnect()
 
 

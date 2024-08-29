@@ -2,6 +2,7 @@ import time
 from tkinter import Menu, messagebox
 from test import InputWindow, round_to_nearest_10
 import threading
+import datetime
 from DeviceManager import VisaDeviceManager
 from database import Database, Logger
 from ReportsAndScriptRun import Script
@@ -10,9 +11,9 @@ from BarLine import *
 
 
 class ScriptRunnerApp:
-    def __init__(self, root, logger):
-        self.script = Script(logger)
-        self.logger = logger
+    def __init__(self, root, loger, database):
+        self.script = Script(loger, database)
+        self.logger = loger
         self.load_button = None
         self.info_label = None
         self.start_button = None
@@ -59,6 +60,7 @@ class ScriptRunnerApp:
             self.info_label.config(text="No file selected")
 
     def start_script(self):
+        self.script.report.script_name = f"{self.filepath[:-7]}{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
         if self.filepath:
             self.running = True
             self.info_label.config(text="Start " + self.filepath)
@@ -148,7 +150,7 @@ class RightClickMenu(tk.LabelFrame):
             self.destroy()  # This destroys the widget
             self.logger.message(f"Removed '{temp}'")
         except Exception as e:
-            self.logger.message(f"Error removing label: {e}")
+            self.logger.message(f"Error removing label: {e}", log_level="ERROR")
 
     def build_menu(self, x, y):
         """Build the submenu for creating new widgets."""
@@ -198,9 +200,9 @@ class RightClickMenu(tk.LabelFrame):
 
             self.logger.message(f"New widget '{values['label_name']}' created at ({x}, {y})")
         except KeyError as e:
-            self.logger.message(f"Key error in widget settings: {e}")
+            self.logger.message(f"Key error in widget settings: {e}", log_level="ERROR")
         except ValueError as e:
-            self.logger.message(f"Value error in widget settings: {e}")
+            self.logger.message(f"Value error in widget settings: {e}", log_level="ERROR")
 
     def confirm_enable_change_mode(self):
         """Confirm with the user before enabling change mode."""
@@ -272,7 +274,7 @@ class DraggableRightClickMenu(RightClickMenu):
                 self.db.update(new_element)
                 self.logger.message(f"Stopped dragging '{self.cget('text')}' at ({self.rounded_x}, {self.rounded_y})")
             except Exception as e:
-                self.logger.message(f"Error updating label position: {e}")
+                self.logger.message(f"Error updating label position: {e}", log_level="ERROR")
 
 
 class DataDraggableRightClickMenu(DraggableRightClickMenu):
@@ -428,7 +430,7 @@ class SetupLoader:
         self.logger.text_widget = text_widget
 
     def create_script_label(self, frame):
-        ScriptRunnerApp(frame, self.logger,)
+        ScriptRunnerApp(frame, self.logger, self.db)
 
     def create_element(self, element):
         element_id = element.get('id', '')
@@ -529,5 +531,6 @@ if __name__ == "__main__":
 
     root_main.loader = SetupLoader(root_main, db_gui, logger)
     root_main.loader.load_setup()
+    db_gui.logger = root_main.loader.logger
     # root_main.attributes('-alpha', 0.95)
     root_main.mainloop()

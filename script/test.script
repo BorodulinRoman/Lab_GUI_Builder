@@ -1,7 +1,0 @@
-REM
-NEWTBL,test_name
-CHKMSGBYTE,test_name,7,0,7,0,0,1,0,1,1,0
-DELAYMS,1000
-NEWTBL,test2
-CHKMSGBYTE,test_name2,7,0,7,0,0,1,0,1,1,0
-DELAYMS,1000

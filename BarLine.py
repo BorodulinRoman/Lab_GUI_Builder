@@ -7,6 +7,8 @@ import subprocess
 
 class FindReportWindow:
     def __init__(self, parent, database):
+        self.results_tree = None
+        self.search_entry = None
         self.report = 'reports_list'
         self.window = parent
         self.database = database
@@ -55,13 +57,11 @@ class FindReportWindow:
         self.search_entry.grid(row=1, column=1, padx=10, pady=10)
         self.search_entry.bind("<KeyRelease>", self.update_search_results)
 
-        self.results_tree = ttk.Treeview(self.window, columns=("Name", "Date", "Size"), show="headings")
+        self.results_tree = ttk.Treeview(self.window, columns=("Name", "Date"), show="headings")
         self.results_tree.grid(row=2, column=0, columnspan=2, padx=10, pady=10)
 
         self.results_tree.heading("Name", text="Name", command=lambda: self.sort_column("Name"))
         self.results_tree.heading("Date", text="Date", command=lambda: self.sort_column("Date"))
-        self.results_tree.heading("Size", text="Size", command=lambda: self.sort_column("Size"))
-
         # Bind double-click event to open file
         self.results_tree.bind("<Double-1>", self.open_file)
 
@@ -92,15 +92,14 @@ class FindReportWindow:
 
     def search_reports(self, query):
         self.database.switch_database(self.report)
-        table_names = self.database.get_all_table_names()  # Example method from your database class
-        #self.database.switch_database()
+        reports = self.database.find_data("init_report")
+        # self.database.switch_database()
         results = []
-        for name in table_names:
-            if query.lower() in name.lower():
-                results.append({
-                    "Name": name,
-                    "Date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                })
+        for name in reports:
+            results.append({
+                "Name": name["GroupResults"],
+                "Date": name["StartTimeFormatted"],
+            })
         return results
 
     def search_logs(self, query):
@@ -122,7 +121,6 @@ class FindReportWindow:
                         "Name": name,
                         "Date": first_timestamp[0].strftime("%Y-%m-%d %H:%M:%S"),  # Format the timestamp
                     })
-
         return results
 
     def sort_column(self, col):
@@ -151,14 +149,21 @@ class FindReportWindow:
             temp_file_path = os.path.join(log_dir, f"{item_name}.txt")
 
             # Retrieve the log content from the database
-            sql = f"SELECT message FROM {item_name}"
+            sql = f"SELECT * FROM {item_name}"
             self.database.cursor.execute(sql)
             log_entries = self.database.cursor.fetchall()
 
             # Write the log entries to the file
             with open(temp_file_path, 'w') as temp_file:
                 for entry in log_entries:
-                    temp_file.write(f"{entry[0]}\n")  # Write each log message as a line
+                    log_id = entry[0]
+                    log_time = entry[1].strftime('%H:%M:%S:%f')  # Formatting the datetime to the desired format
+                    log_level = entry[2]
+                    log_message = entry[3]
+
+                    # Representing the log entry in the desired format
+                    formatted_log_entry = f"{log_time}-{log_level}: {log_message}"
+                    temp_file.write(f"{formatted_log_entry}\n")  # Write each log message as a line
 
             # Open the file with the default application
             if os.path.exists(temp_file_path):
@@ -224,9 +229,10 @@ class MenuBar:
         quit()
 
     def report(self):
-        root_REPORT = tk.Toplevel(self.menubar)  # Use Toplevel instead of Tk
-        root_REPORT.title("Find Report")  # Set a different title for the new window
-        find_report_window = FindReportWindow(root_REPORT, self.database)
+        root_report = tk.Toplevel(self.menubar)  # Use Toplevel instead of Tk
+        root_report.title("Find Report")  # Set a different title for the new window
+        find_report_window = FindReportWindow(root_report, self.database)
+        print(find_report_window)
 
     def features_info(self):
         print("Change View")

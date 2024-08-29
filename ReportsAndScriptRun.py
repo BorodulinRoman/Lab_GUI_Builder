@@ -5,6 +5,7 @@ from DeviceManager import get_start_time_in_sec, get_start_time, KeySightScopeUS
 import os
 import winshell
 import webbrowser
+from datetime import datetime
 
 
 def load_config(file_path):
@@ -53,26 +54,35 @@ def get_bytes_range(bytes_string):
 
 
 class Report:
-    def __init__(self):
+    def __init__(self, database):
+        self.db = database
+        self.script_name = None
         self.test = None
         self.report = None
         self.table = None
         self.finale = 2
-        self.init_report = load_config('info/init_report.json')
-        self.init_table = load_config('info/init_table.json')
-        self.init_test = load_config('info/init_test.json')
+
+        # self.init_report = load_config('info/init_report.json')
+        # self.init_table = load_config('info/init_table.json')
+        # self.init_test = load_config('info/init_test.json')
+
+        self.db.switch_database('reports_list')
+        self.init_report = self.db.find_data("init_report", 0, "ResultStatus")[0]
+        self.init_table = self.db.find_data("init_table", 2, "ResultStatus")[0]
+        self.init_test = self.db.find_data("init_test", 0, "ResultStatus")[0]
 
     def build(self, data=None):
         self.report = deepcopy(self.init_report)
         self.report["ResultStatus"] = self.finale
         self.report["test_name"] = self.init_report['test_name']
-        self.report["StartTimeFormatted"] = get_start_time()
+        self.report["StartTimeFormatted"] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         self.report["project_name"] = "project"
         self.report["gui_type"] = "GUI_8_Relay"
         self.report["gui_ver"] = "1.0"
 
         self.table = deepcopy(self.init_table)
         self.table["GroupName"] = "Main"
+        self.report["GroupResults"] = []
 
     def build_new_table(self, table_name):
         if len(self.table["StepResults"]):
@@ -80,6 +90,7 @@ class Report:
 
         self.table = deepcopy(self.init_table)
         self.table["GroupName"] = table_name
+        self.table["StepResults"] = []
 
     def build_new_test(self, data):
         self.test = deepcopy(self.init_test)
@@ -90,63 +101,80 @@ class Report:
             self.table["ResultStatus"] = 1
             self.table["NumOfFail"] += 1
 
+    def _save_report_to_database(self):
+        tables = self.report["GroupResults"]
+        self.report["GroupResults"] = self.script_name
+        self.db.add_data_to_table("init_report", self.report)
+        for table in tables:
+            tests = table["StepResults"]
+            table["StepResults"] = f"{self.script_name}"
+            self.db.add_data_to_table("init_table", table)
+            for test in tests:
+                test["Description"] = f"{table['GroupName']}{self.script_name}"
+                self.db.add_data_to_table("init_test", test)
+
     def save_report(self):
         self.report["ResultStatus"] = self.finale
         self.report["GroupResults"].append(self.table)
-        original_file_path = 'info/reports/rafael.html'
 
-        try:
-            with open(original_file_path, 'r', encoding='utf-8') as file:
-                lines = file.readlines()
-        except FileNotFoundError:
-            print(f"Error: The file {original_file_path} was not found.")
-            return
-        except Exception as e:
-            print(f"Unexpected error reading file {original_file_path}: {e}")
-            return
-
-        for i, line in enumerate(lines):
-            if 'var obj =  paste_results_here' in line:
-                formatted_json = json.dumps(self.report, indent=4)
-                # Replace 'paste_results_here' with formatted_json and ensure it does not escape the quotes
-                lines[i] = line.replace('paste_results_here', formatted_json)
-
-        t = get_start_time_in_sec()
-        new_file_path = f'info/reports/rafael_{t}.html'
-        os.makedirs(os.path.dirname(new_file_path), exist_ok=True)
-
-        try:
-            with open(new_file_path, 'w', encoding='utf-8') as file:
-                file.writelines(lines)
-            print(f"Report successfully saved to {new_file_path}")
-        except Exception as e:
-            print(f"Error writing to file {new_file_path}: {e}")
-            return
-
-        # Reset attributes
+        self._save_report_to_database()
         self.test = None
         self.report = None
         self.table = None
 
-        reports_dir_path = os.path.join(winshell.desktop(), "reports")
-        os.makedirs(reports_dir_path, exist_ok=True)
+        # original_file_path = 'info/reports/rafael.html'
+        # try:
+        #     with open(original_file_path, 'r', encoding='utf-8') as file:
+        #         lines = file.readlines()
+        # except FileNotFoundError:
+        #     print(f"Error: The file {original_file_path} was not found.")
+        #     return
+        # except Exception as e:
+        #     print(f"Unexpected error reading file {original_file_path}: {e}")
+        #     return
+        #
+        # for i, line in enumerate(lines):
+        #     if 'var obj =  paste_results_here' in line:
+        #         formatted_json = json.dumps(self.report, indent=4)
+        #         # Replace 'paste_results_here' with formatted_json and ensure it does not escape the quotes
+        #         lines[i] = line.replace('paste_results_here', formatted_json)
+        #
+        # t = get_start_time_in_sec()
+        # new_file_path = f'info/reports/rafael_{t}.html'
+        # os.makedirs(os.path.dirname(new_file_path), exist_ok=True)
+        #
+        # try:
+        #     with open(new_file_path, 'w', encoding='utf-8') as file:
+        #         file.writelines(lines)
+        #     print(f"Report successfully saved to {new_file_path}")
+        # except Exception as e:
+        #     print(f"Error writing to file {new_file_path}: {e}")
+        #     return
 
-        # Create the shortcut path within the "Reports" directory
-        shortcut_path = os.path.join(reports_dir_path, f"ReportShortcut_{t}.lnk")
+        # Reset attributes
+        # self.test = None
+        # self.report = None
+        # self.table = None
 
-        # Create the shortcut
-        with winshell.shortcut(shortcut_path) as shortcut:
-            shortcut.path = os.path.abspath(new_file_path)
-            shortcut.description = "Shortcut to the latest report"
-            shortcut.working_directory = os.path.dirname(new_file_path)
-
-        # Convert the shortcut path to a URL format and open it
-        folder_url = 'file://' + shortcut_path.replace(os.sep, '/')
-        webbrowser.open(folder_url)
+        # reports_dir_path = os.path.join(winshell.desktop(), "reports")
+        # os.makedirs(reports_dir_path, exist_ok=True)
+        #
+        # # Create the shortcut path within the "Reports" directory
+        # shortcut_path = os.path.join(reports_dir_path, f"ReportShortcut_{t}.lnk")
+        #
+        # # Create the shortcut
+        # with winshell.shortcut(shortcut_path) as shortcut:
+        #     shortcut.path = os.path.abspath(new_file_path)
+        #     shortcut.description = "Shortcut to the latest report"
+        #     shortcut.working_directory = os.path.dirname(new_file_path)
+        #
+        # # Convert the shortcut path to a URL format and open it
+        # folder_url = 'file://' + shortcut_path.replace(os.sep, '/')
+        # webbrowser.open(folder_url)
 
 
 class Script:
-    def __init__(self, logger, tester="RelayCTRL"):
+    def __init__(self, logger, database, tester="RelayCTRL"):
         self.port = None
         self.path = None
         self.scope = KeySightScopeUSB(logger)
@@ -156,7 +184,7 @@ class Script:
         self.uuts = None
         self.cmd_button = []
         self.response = None
-        self.report = Report()
+        self.report = Report(database)
         self.tester = tester
         self.peripheral = load_config('info/peripheral.json')
         self.relay_cmd = self.peripheral["ports"][self.tester]["script"]

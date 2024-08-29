@@ -1,7 +1,5 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
-import json
-import random
 
 
 def round_to_nearest_10(n):
@@ -16,6 +14,7 @@ class InputWindow:
 
     def __init__(self, main_root, title, callback, default_values, options=None):
         """Initialize the InputWindow with a root, title, fields, callback, and default values."""
+        self.options = None
         self.combobox = {}
         self.root = main_root
         self.window = tk.Toplevel(self.root)
@@ -74,4 +73,3 @@ class InputWindow:
             values[field] = entry.get()
         self.callback(values)
         self.window.destroy()
-
