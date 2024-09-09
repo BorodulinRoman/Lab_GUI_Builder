@@ -174,7 +174,7 @@ class RightClickMenu(tk.LabelFrame):
 
     def packet_label(self, x, y, cls):
         """Opens the InputWindow for user to input settings and create a new widget."""
-        default_values = {'label_name': 'New Packet', 'maxByte': 0, 'minByte': 0, 'maxBit': 0, 'minBit': 0}
+        default_values = {'label_name': 'New Packet', 'maxByte': 0, 'minByte': 0, 'maxBit': 0, 'minBupdateit': 0}
         InputWindow(self.root, "Create New Widget",
                     lambda values: self.create_new_widget_with_settings(values, x, y, cls), default_values,
                     {"Dimension": ['130x40', '300x40', '600x40']})
@@ -289,6 +289,7 @@ class DataDraggableRightClickMenu(DraggableRightClickMenu):
         self.thread_update.start()
 
     def update_data_label(self):
+
         while 1:
             time.sleep(1)
             print(self.element_info)

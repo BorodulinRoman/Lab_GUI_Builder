@@ -6,7 +6,7 @@
   "'RELAY,number,on/off'": "For Example, if {number} = 1 & {on/off} = ON then RELAY,1,1",
   "'CHKMSGBYTE,test_name,msb,lsb,h_bit,l_bit,in_hex,scale_factor,signed,low_range,high_range,fail_mode'": "Gets specific RX data from the mainUART COM",
   "'SCP{scope}MEAS'": "For Example, scope 1 use SCP1MEAS, save measurements from the scope, use the command before SCP{scope}M{meas_number}",
-  "'SCP{scope}M{meas_number}',,,": "For Example, scope 1 meas number 2 use SCP1M2, return second meas from the scope use the function after SCP{scope}MEAS",
+  "'SCP{scope}M{meas_number}',factor, min, max, fail_sat": "For Example, scope 1 meas number 2 use SCP1M2, return second meas from the scope use the function after SCP{scope}MEAS",
   "'SCP{scope}LDSU,setup_path'": "Load setup to scope from file setup_path (.agilent) ",
   "'SCP{scope}SAVE,": "save scope SETUP",
   "'SCP{scope}SING,'": "Change scope Run Control to Signal",

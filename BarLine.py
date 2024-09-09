@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 import os
 import subprocess
-
+from ReportsAndScriptRun import Report
 
 class FindReportWindow:
     def __init__(self, parent, database):
@@ -95,10 +95,11 @@ class FindReportWindow:
         # self.database.switch_database()
         results = []
         for name in reports:
-            results.append({
-                "Name": name["GroupResults"],
-                "Date": name["StartTimeFormatted"],
-            })
+            if name["GroupResults"]:
+                results.append({
+                    "Name": name["GroupResults"],
+                    "Date": name["StartTimeFormatted"],
+                })
         return results
 
     def search_logs(self, query):
@@ -136,45 +137,86 @@ class FindReportWindow:
         item_name = self.results_tree.item(selected_item, "values")[0]  # Get the item name from the selected item
 
         if self.search_type.get() == "Reports":
-            # If it's a report (from the database), print the message
-            print("This is a database routine")
+            self._open_report(item_name)
         elif self.search_type.get() == "Logs":
-            # Ensure the 'log' directory exists
-            log_dir = os.path.join(os.getcwd(), "log")
-            if not os.path.exists(log_dir):
-                os.makedirs(log_dir)  # Create the directory if it doesn't exist
-
-            # Set the file path using the table name as the filename
-            temp_file_path = os.path.join(log_dir, f"{item_name}.txt")
-
-            # Retrieve the log content from the database
-            sql = f"SELECT * FROM {item_name}"
-            self.database.cursor.execute(sql)
-            log_entries = self.database.cursor.fetchall()
-
-            # Write the log entries to the file
-            with open(temp_file_path, 'w') as temp_file:
-                for entry in log_entries:
-                    log_time = entry[1].strftime('%H:%M:%S:%f')  # Formatting the datetime to the desired format
-                    log_level = entry[2]
-                    log_message = entry[3]
-
-                    # Representing the log entry in the desired format
-                    formatted_log_entry = f"{log_time}-{log_level}: {log_message}"
-                    temp_file.write(f"{formatted_log_entry}\n")  # Write each log message as a line
-
-            # Open the file with the default application
-            if os.path.exists(temp_file_path):
-                try:
-                    subprocess.Popen(['open', temp_file_path])  # For macOS
-                except FileNotFoundError:
-                    try:
-                        os.startfile(temp_file_path)  # For Windows
-                    except AttributeError:
-                        subprocess.call(['xdg-open', temp_file_path])  # For Linux
+            self._open_log_file(item_name)
         else:
-            # Handle other cases if necessary
             print("Unknown item type")
+
+    def _open_log_file(self, item_name):
+        # Ensure the 'log' directory exists
+        log_dir = os.path.join(os.getcwd(), "info/log")
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir)  # Create the directory if it doesn't exist
+
+        # Set the file path using the table name as the filename
+        temp_file_path = os.path.join(log_dir, f"{item_name}.txt")
+
+        # Retrieve the log content from the database
+        sql = f"SELECT * FROM {item_name}"
+        self.database.cursor.execute(sql)
+        log_entries = self.database.cursor.fetchall()
+
+        # Write the log entries to the file
+        with open(temp_file_path, 'w') as temp_file:
+            for entry in log_entries:
+                log_time = entry[1].strftime('%H:%M:%S:%f')  # Formatting the datetime to the desired format
+                log_level = entry[2]
+                log_message = entry[3]
+
+                # Representing the log entry in the desired format
+                formatted_log_entry = f"{log_time}-{log_level}: {log_message}"
+                temp_file.write(f"{formatted_log_entry}\n")  # Write each log message as a line
+
+        # Open the file with the default application
+        if os.path.exists(temp_file_path):
+            try:
+                subprocess.Popen(['open', temp_file_path])  # For macOS
+            except FileNotFoundError:
+                try:
+                    os.startfile(temp_file_path)  # For Windows
+                except AttributeError:
+                    subprocess.call(['xdg-open', temp_file_path])  # For Linux
+
+    def _open_report(self, item_name):
+        name = self.database.database
+        self.database.switch_database('reports_list')
+        report_builder = Report(self.database)
+        show_report = {}
+
+        report_path = os.path.join(os.getcwd(), "info/reports")
+        if not os.path.exists(report_path):
+            os.makedirs(report_path)
+
+        reports = self.database.find_data(table_name="init_report", feature="GroupResults")
+        for report in reports:
+            if item_name in report["GroupResults"]:
+                show_report = report
+                show_report["GroupResults"] = []
+                break
+
+        tests = self.database.find_data(table_name="init_test", feature="Description")
+        show_tests = []
+        for test in tests:
+            if item_name in test['Description']:
+                show_tests.append(test)
+
+        tables = self.database.find_data(table_name="init_table", feature="StepResults")
+        for table in tables:
+            if item_name in table["StepResults"]:
+                test_name = f"{table['GroupName']}_{item_name}"
+                table["StepResults"] = []
+                for test in show_tests:
+                    if test_name in test['Description']:
+                        table["StepResults"].append(test)
+                show_report["GroupResults"].append(table)
+
+        dt = show_report["StartTimeFormatted"]
+        show_report["StartTimeFormatted"] = dt.strftime("%Y-%m-%d %H:%M:%S")
+        report_builder.report = show_report
+        report_builder.build_report()
+        self.database.switch_database(name)
+
 
 
 class MenuBar:
@@ -196,7 +238,6 @@ class MenuBar:
         self.menubar.add_cascade(label="File", menu=self.file_menu)
         self.file_menu.add_command(label="New Setup", command=self.new_setup)
         self.file_menu.add_command(label="Load Setup", command=self.load_setup)
-        self.file_menu.add_command(label="Save Setup", command=self.save_setup)
         self.file_menu.add_separator()
         self.file_menu.add_command(label="Exit", command=self.exit_app)
 
@@ -219,9 +260,6 @@ class MenuBar:
     def load_setup(self):
         print("Load Setup")
 
-    def save_setup(self):
-        print("Save Setup")
-
     def exit_app(self):
         print("Exit App")
         quit()
@@ -240,3 +278,4 @@ class MenuBar:
 
     def show_version(self):
         print("Version Info")
+'New Text Document20240829154050'

@@ -1,7 +1,7 @@
 import json
 from copy import deepcopy
 import time
-from DeviceManager import get_start_time_in_sec, get_start_time, KeySightScopeUSB
+from DeviceManager import get_start_time,get_start_time_in_sec, KeySightScopeUSB
 import os
 import winshell
 import webbrowser
@@ -83,6 +83,7 @@ class Report:
         self.table = deepcopy(self.init_table)
         self.table["GroupName"] = "Main"
         self.report["GroupResults"] = []
+        self.table["StepResults"] = []
 
     def build_new_table(self, table_name):
         if len(self.table["StepResults"]):
@@ -102,75 +103,76 @@ class Report:
             self.table["NumOfFail"] += 1
 
     def _save_report_to_database(self):
-        tables = self.report["GroupResults"]
-        self.report["GroupResults"] = self.script_name
-        self.db.add_data_to_table("init_report", self.report)
+        report_copy = deepcopy(self.report.copy())
+        tables = report_copy["GroupResults"]
+        try:
+            report_copy["GroupResults"] = "_".join(self.script_name.split(" "))
+        except:
+            report_copy["GroupResults"] = self.script_name
+
+        self.db.add_data_to_table("init_report", report_copy)
         for table in tables:
             tests = table["StepResults"]
-            table["StepResults"] = f"{self.script_name}"
+            table["StepResults"] = f"{report_copy['GroupResults']}"
             self.db.add_data_to_table("init_table", table)
             for test in tests:
-                test["Description"] = f"{table['GroupName']}{self.script_name}"
+                test["Description"] = f"{table['GroupName']}_{report_copy['GroupResults']}"
                 self.db.add_data_to_table("init_test", test)
+
+    def build_report(self):
+        original_file_path = 'info/reports/rafael.html'
+        try:
+            with open(original_file_path, 'r', encoding='utf-8') as file:
+                lines = file.readlines()
+        except FileNotFoundError:
+            print(f"Error: The file {original_file_path} was not found.")
+            return
+        except Exception as e:
+            print(f"Unexpected error reading file {original_file_path}: {e}")
+            return
+
+        for i, line in enumerate(lines):
+            if 'var obj =  paste_results_here' in line:
+                formatted_json = json.dumps(self.report, indent=4)
+                # Replace 'paste_results_here' with formatted_json and ensure it does not escape the quotes
+                lines[i] = line.replace('paste_results_here', formatted_json)
+
+        t = get_start_time_in_sec()
+        new_file_path = f'info/reports/rafael_{t}.html'
+        os.makedirs(os.path.dirname(new_file_path), exist_ok=True)
+
+        try:
+            with open(new_file_path, 'w', encoding='utf-8') as file:
+                file.writelines(lines)
+            print(f"Report successfully saved to {new_file_path}")
+        except Exception as e:
+            print(f"Error writing to file {new_file_path}: {e}")
+            return
+
+        reports_dir_path = os.path.join(winshell.desktop(), "reports")
+        os.makedirs(reports_dir_path, exist_ok=True)
+
+        # Create the shortcut path within the "Reports" directory
+        shortcut_path = os.path.join(reports_dir_path, f"ReportShortcut_{t}.lnk")
+
+        # Create the shortcut
+        with winshell.shortcut(shortcut_path) as shortcut:
+            shortcut.path = os.path.abspath(new_file_path)
+            shortcut.description = "Shortcut to the latest report"
+            shortcut.working_directory = os.path.dirname(new_file_path)
+
+        # Convert the shortcut path to a URL format and open it
+        folder_url = 'file://' + shortcut_path.replace(os.sep, '/')
+        webbrowser.open(folder_url)
 
     def save_report(self):
         self.report["ResultStatus"] = self.finale
         self.report["GroupResults"].append(self.table)
-
         self._save_report_to_database()
+        self.build_report()
         self.test = None
         self.report = None
         self.table = None
-
-        # original_file_path = 'info/reports/rafael.html'
-        # try:
-        #     with open(original_file_path, 'r', encoding='utf-8') as file:
-        #         lines = file.readlines()
-        # except FileNotFoundError:
-        #     print(f"Error: The file {original_file_path} was not found.")
-        #     return
-        # except Exception as e:
-        #     print(f"Unexpected error reading file {original_file_path}: {e}")
-        #     return
-        #
-        # for i, line in enumerate(lines):
-        #     if 'var obj =  paste_results_here' in line:
-        #         formatted_json = json.dumps(self.report, indent=4)
-        #         # Replace 'paste_results_here' with formatted_json and ensure it does not escape the quotes
-        #         lines[i] = line.replace('paste_results_here', formatted_json)
-        #
-        # t = get_start_time_in_sec()
-        # new_file_path = f'info/reports/rafael_{t}.html'
-        # os.makedirs(os.path.dirname(new_file_path), exist_ok=True)
-        #
-        # try:
-        #     with open(new_file_path, 'w', encoding='utf-8') as file:
-        #         file.writelines(lines)
-        #     print(f"Report successfully saved to {new_file_path}")
-        # except Exception as e:
-        #     print(f"Error writing to file {new_file_path}: {e}")
-        #     return
-
-        # Reset attributes
-        # self.test = None
-        # self.report = None
-        # self.table = None
-
-        # reports_dir_path = os.path.join(winshell.desktop(), "reports")
-        # os.makedirs(reports_dir_path, exist_ok=True)
-        #
-        # # Create the shortcut path within the "Reports" directory
-        # shortcut_path = os.path.join(reports_dir_path, f"ReportShortcut_{t}.lnk")
-        #
-        # # Create the shortcut
-        # with winshell.shortcut(shortcut_path) as shortcut:
-        #     shortcut.path = os.path.abspath(new_file_path)
-        #     shortcut.description = "Shortcut to the latest report"
-        #     shortcut.working_directory = os.path.dirname(new_file_path)
-        #
-        # # Convert the shortcut path to a URL format and open it
-        # folder_url = 'file://' + shortcut_path.replace(os.sep, '/')
-        # webbrowser.open(folder_url)
 
 
 class Script:
@@ -221,24 +223,27 @@ class Script:
         return list_line
 
     def scope_scripts(self, list_line, data):
-        if "MEAS" in list_line.upper():
-            self.scope.save_meas(scp_id=self.peripheral['scope'][list_line[0]])
-        elif "M" in list_line.upper():
-            self.get_scope_info(scp_id=self.peripheral['scope'][list_line[0]], index=[list_line[-1]], data=data)
-        elif "LDSU" in list_line.upper():
-            self.scope.load_setup(scp_id=self.peripheral['scope'][list_line[0]], file_path=data[0])
-        elif "SING" in list_line.upper():
-            self.scope.single(scp_id=self.peripheral['scope'][list_line[0]])
-        elif "STOP" in list_line.upper():
-            self.scope.stop(scp_id=self.peripheral['scope'][list_line[0]])
-        elif "RST" in list_line.upper():
-            self.scope.reset(scp_id=self.peripheral['scope'][list_line[0]])
-        elif "SVSC" in list_line.upper():
-            temp = self.path.split('/')
-            self.path = "/".join(temp[:-1])
-            self.scope.save_img(scp_id=self.peripheral['scope'][list_line[0]], path=self.path)
-        elif "SAVE" in list_line.upper():
-            self.scope.save_setup(scp_id=self.peripheral['scope'][list_line[0]])
+        try:
+            if "MEAS" in list_line.upper():
+                self.scope.save_meas(scp_id=self.peripheral['scope'][list_line[0]])
+            elif "M" in list_line.upper():
+                self.get_scope_info(scp_id=self.peripheral['scope'][list_line[0]], index=[list_line[-1]], data=data)
+            elif "LDSU" in list_line.upper():
+                self.scope.load_setup(scp_id=self.peripheral['scope'][list_line[0]], file_path=data[0])
+            elif "SING" in list_line.upper():
+                self.scope.single(scp_id=self.peripheral['scope'][list_line[0]])
+            elif "STOP" in list_line.upper():
+                self.scope.stop(scp_id=self.peripheral['scope'][list_line[0]])
+            elif "RST" in list_line.upper():
+                self.scope.reset(scp_id=self.peripheral['scope'][list_line[0]])
+            elif "SVSC" in list_line.upper():
+                temp = self.path.split('/')
+                self.path = "/".join(temp[:-1])
+                self.scope.save_img(scp_id=self.peripheral['scope'][list_line[0]], path=self.path)
+            elif "SAVE" in list_line.upper():
+                self.scope.save_setup(scp_id=self.peripheral['scope'][list_line[0]])
+        except Exception as e:
+            self.logger.message(e, log_level="ERROR")
 
     def relay(self, relay_number, status):
         relay = f"Relay{relay_number}_"
@@ -279,32 +284,42 @@ class Script:
             self.logger.message(f"Error Initiate a {t} mS,{e}")
 
     def get_scope_info(self, scp_id, index, data):
-        result = self.scope.get_measurement_results(scp_id=scp_id, index=int(index[0]))
-        print(result)
         test_name, scale_factor, low_range, high_range, fail_mode = data[:5]
         t = get_start_time()
-        results = {
-            "StepName": test_name,
-            "Description": fail_mode,
-            "Min": str(float(low_range) / (10 ** int(scale_factor))).lower(),
-            "Max": str(float(high_range) / (10 ** int(scale_factor))).lower(),
-            "ResultStatus": 0,
-            "Message": str(float(result) / (10 ** int(scale_factor))),
-            "TestStart": t
-        }
-        min_val = float(low_range) / 10 ** int(scale_factor)
-        max_val = float(high_range) / 10 ** int(scale_factor)
-        if min_val <= float(result) / (10 ** int(scale_factor)) <= max_val:
-            results["ResultStatus"] = 2
-        else:
-            self.report.init_report['ResultStatus'] = 'Fail'
-            results["ResultStatus"] = 3
-            if int(fail_mode) == 1:
-                self.stop_flag = 0
-                results["ResultStatus"] = 1
+        try:
+            result = self.scope.get_measurement_results(scp_id=scp_id, index=int(index[0]))
+            print(result)
+            results = {
+                "StepName": test_name,
+                "Description": fail_mode,
+                "Min": str(float(low_range) / (10 ** int(scale_factor))).lower(),
+                "Max": str(float(high_range) / (10 ** int(scale_factor))).lower(),
+                "ResultStatus": 0,
+                "Message": str(float(result) / (10 ** int(scale_factor))),
+                "TestStart": t
+            }
+            min_val = float(low_range) / 10 ** int(scale_factor)
+            max_val = float(high_range) / 10 ** int(scale_factor)
+            if min_val <= float(result) / (10 ** int(scale_factor)) <= max_val:
+                results["ResultStatus"] = 2
+            else:
+                self.report.init_report['ResultStatus'] = 'Fail'
+                results["ResultStatus"] = 3
+                if int(fail_mode) == 1:
+                    self.stop_flag = 0
+                    results["ResultStatus"] = 1
 
-        self.report.build_new_test(results)
-
+            self.report.build_new_test(results)
+        except Exception as e:
+            results = {
+                "StepName": test_name,
+                "Description": fail_mode,
+                "Min": str(float(low_range) / (10 ** int(scale_factor))).lower(),
+                "Max": str(float(high_range) / (10 ** int(scale_factor))).lower(),
+                "ResultStatus": 0,
+                "Message": e,
+                "TestStart": t
+            }
         return results
 
     def get_data_info(self, data):
@@ -329,7 +344,9 @@ class Script:
                     self.send_get_command(self.last_line)
             list_bytes = [self.response[int(some_bit)] for some_bit in range(int(low_byte), int(high_byte) + 1)]
         except Exception as e:
-            return f"Problem with response: {e}"
+            results["Message"] = f"Problem with response: {e}"
+            self.report.build_new_test(results)
+            return results
 
         if not len(list_bytes):
             return f"return list empty"

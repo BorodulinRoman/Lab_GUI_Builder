@@ -5,15 +5,28 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="03566363-8df4-4cd8-b209-5c6ef035168c" name="Changes" comment="New class created DataDraggableRightClickMenu - for parsing comport data">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/BarLine.py" beforeDir="false" afterPath="$PROJECT_DIR$/BarLine.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/log/log24291055.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/log/log24291200.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/log/log24291321.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/log/log24291435.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/log/log24291443.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/log/log24291453.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/log/log24291529.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/log/setup24291056.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Empty.py" beforeDir="false" afterPath="$PROJECT_DIR$/Empty.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ReportsAndScriptRun.py" beforeDir="false" afterPath="$PROJECT_DIR$/ReportsAndScriptRun.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database.py" beforeDir="false" afterPath="$PROJECT_DIR$/database.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/info/commands.json" beforeDir="false" afterPath="$PROJECT_DIR$/info/commands.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/info/reports/rafael_20240827_112958.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/info/reports/rafael_20240827_113254.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/info/reports/rafael_20240829_132210.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/info/reports/rafael_20240829_135934.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/info/reports/rafael_20240829_143328.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/info/reports/rafael_20240829_143559.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/info/reports/rafael_20240829_143941.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/info/reports/rafael_20240829_144055.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/info/reports/rafael_20240829_144409.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/info/reports/rafael_20240829_145431.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/info/reports/rafael_20240829_150650.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/info/reports/rafael_20240829_150941.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/info/reports/rafael_20240829_151215.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/info/reports/rafael_20240829_152953.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/info/reports/rafael_20240829_153135.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/info/reports/rafael_20240829_154105.html" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -161,8 +174,8 @@
     </configuration>
     <list>
       <item itemvalue="Python.Empty" />
-      <item itemvalue="Python.database" />
       <item itemvalue="Python.DeviceManager" />
+      <item itemvalue="Python.database" />
       <item itemvalue="Python.test" />
     </list>
     <recent_temporary>
@@ -239,48 +252,53 @@
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/ReportsAndScriptRun.py</url>
-          <line>107</line>
+          <line>113</line>
           <option name="timeStamp" value="52" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/ReportsAndScriptRun.py</url>
-          <line>111</line>
-          <option name="timeStamp" value="53" />
+          <line>383</line>
+          <option name="timeStamp" value="66" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/ReportsAndScriptRun.py</url>
-          <line>106</line>
-          <option name="timeStamp" value="54" />
+          <line>350</line>
+          <option name="timeStamp" value="67" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/BarLine.py</url>
-          <line>96</line>
-          <option name="timeStamp" value="55" />
+          <line>217</line>
+          <option name="timeStamp" value="78" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/BarLine.py</url>
-          <line>97</line>
-          <option name="timeStamp" value="56" />
+          <line>216</line>
+          <option name="timeStamp" value="81" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/BarLine.py</url>
-          <line>152</line>
-          <option name="timeStamp" value="58" />
+          <line>215</line>
+          <option name="timeStamp" value="82" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/BarLine.py</url>
-          <line>155</line>
-          <option name="timeStamp" value="59" />
+          <line>210</line>
+          <option name="timeStamp" value="94" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/BarLine.py</url>
-          <line>156</line>
-          <option name="timeStamp" value="60" />
+          <line>209</line>
+          <option name="timeStamp" value="97" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/BarLine.py</url>
-          <line>163</line>
-          <option name="timeStamp" value="61" />
+          <url>file://$PROJECT_DIR$/database.py</url>
+          <line>349</line>
+          <option name="timeStamp" value="98" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/database.py</url>
+          <line>358</line>
+          <option name="timeStamp" value="99" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

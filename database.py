@@ -128,7 +128,7 @@ class Database:
             self.cursor.execute(f"USE {new_database_name}")
             self.logger.message(f"Switched to database: {new_database_name}")
         except Error as e:
-            self.logger.message(f"Failed to switch to database {new_database_name}: {e}")
+            self.logger.message(f"Failed to switch to database {new_database_name}: {e}",)
 
     def connect(self):
         try:
@@ -322,16 +322,31 @@ class Database:
         return random.choice(available_ids)
 
 
+def remove_database_info(db):
+    db.switch_database('gui_conf')
+    for table in db.get_all_table_names():
+        db.delete_table(table)
+
+    db.switch_database('reports_list')
+    for table in db.get_all_table_names():
+        db.delete_table(table)
+
+    db.switch_database('logs')
+    for table in db.get_all_table_names():
+        db.delete_table(table)
+
+
+
+
 def init_database(data_base_name="gui_conf"):
     create_schema("localhost", "root", "Aa123456", "gui_conf")
     create_schema("localhost", "root", "Aa123456", "reports_list")
     create_schema("localhost", "root", "Aa123456", "logs")
     db = Database(host="localhost", user="root", passwd="Aa123456", database=data_base_name)
     db.connect()
-    # db.delete_table("label_param")
-    # db.delete_table("frs_info")
-    # db.delete_table("com_info")
+    # remove_database_info(db)
 
+    db.switch_database('gui_conf')
     columns = {"id": "INT AUTO_INCREMENT PRIMARY KEY",
                "parent": "INT",
                "x": "INT",
@@ -411,11 +426,6 @@ def init_database(data_base_name="gui_conf"):
     db.add_data_to_table("label_param", data_scope)
 
     db.switch_database('reports_list')
-
-    # db.delete_table("init_report")
-    # db.delete_table("init_table")
-    # db.delete_table("init_test")
-
     columns = {"ResultStatus": "INT",
                "project_name": "VARCHAR(255)",
                "test_name": "VARCHAR(255)",
