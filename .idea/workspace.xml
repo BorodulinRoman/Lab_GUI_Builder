@@ -4,29 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="03566363-8df4-4cd8-b209-5c6ef035168c" name="Changes" comment="New class created DataDraggableRightClickMenu - for parsing comport data">
+    <list default="true" id="03566363-8df4-4cd8-b209-5c6ef035168c" name="Changes" comment="Update report search and oprn files from database">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/BarLine.py" beforeDir="false" afterPath="$PROJECT_DIR$/BarLine.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Empty.py" beforeDir="false" afterPath="$PROJECT_DIR$/Empty.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ReportsAndScriptRun.py" beforeDir="false" afterPath="$PROJECT_DIR$/ReportsAndScriptRun.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/database.py" beforeDir="false" afterPath="$PROJECT_DIR$/database.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/info/commands.json" beforeDir="false" afterPath="$PROJECT_DIR$/info/commands.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/info/reports/rafael_20240827_112958.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/info/reports/rafael_20240827_113254.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/info/reports/rafael_20240829_132210.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/info/reports/rafael_20240829_135934.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/info/reports/rafael_20240829_143328.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/info/reports/rafael_20240829_143559.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/info/reports/rafael_20240829_143941.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/info/reports/rafael_20240829_144055.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/info/reports/rafael_20240829_144409.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/info/reports/rafael_20240829_145431.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/info/reports/rafael_20240829_150650.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/info/reports/rafael_20240829_150941.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/info/reports/rafael_20240829_151215.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/info/reports/rafael_20240829_152953.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/info/reports/rafael_20240829_153135.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/info/reports/rafael_20240829_154105.html" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -227,7 +208,15 @@
       <option name="project" value="LOCAL‎" />
       <updated>1724570317243</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL‎-00004" summary="Update report search and oprn files from database">
+      <option name="closed" value="true" />
+      <created>1725882636257</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL‎-00004" />
+      <option name="project" value="LOCAL‎" />
+      <updated>1725882636257</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -245,7 +234,8 @@
     <MESSAGE value="Add report system" />
     <MESSAGE value="Add report system logger text box" />
     <MESSAGE value="Some changes for init :&#10;disable reports&#10;add menu line" />
-    <option name="LAST_COMMIT_MESSAGE" value="Some changes for init :&#10;disable reports&#10;add menu line" />
+    <MESSAGE value="Update report search and oprn files from database" />
+    <option name="LAST_COMMIT_MESSAGE" value="Update report search and oprn files from database" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -267,38 +257,43 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/BarLine.py</url>
-          <line>217</line>
+          <line>248</line>
           <option name="timeStamp" value="78" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/BarLine.py</url>
-          <line>216</line>
+          <line>247</line>
           <option name="timeStamp" value="81" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/BarLine.py</url>
-          <line>215</line>
+          <line>246</line>
           <option name="timeStamp" value="82" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/BarLine.py</url>
-          <line>210</line>
+          <line>241</line>
           <option name="timeStamp" value="94" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/BarLine.py</url>
-          <line>209</line>
+          <line>240</line>
           <option name="timeStamp" value="97" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/database.py</url>
-          <line>349</line>
+          <line>350</line>
           <option name="timeStamp" value="98" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/database.py</url>
-          <line>358</line>
+          <line>359</line>
           <option name="timeStamp" value="99" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/BarLine.py</url>
+          <line>106</line>
+          <option name="timeStamp" value="106" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

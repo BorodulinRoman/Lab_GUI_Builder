@@ -225,7 +225,8 @@ class Database:
             if num_id is None:
                 sql = f"SELECT * FROM {table_name}"
             else:
-                sql = f"SELECT * FROM {table_name} WHERE {feature} = {num_id}"
+                sql = f"SELECT * FROM {table_name} WHERE {feature} = '{num_id}'"
+            print(sql)
             self.cursor.execute(sql)
             columns = self.cursor.column_names
             records = self.cursor.fetchall()

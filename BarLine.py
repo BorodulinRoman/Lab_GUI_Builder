@@ -3,6 +3,7 @@ from tkinter import ttk
 import os
 import subprocess
 from ReportsAndScriptRun import Report
+import pandas as pd
 
 class FindReportWindow:
     def __init__(self, parent, database):
@@ -45,7 +46,7 @@ class FindReportWindow:
         search_type_menu = ttk.Combobox(
             self.window, textvariable=self.search_type, state="readonly"
         )
-        search_type_menu['values'] = ("Logs", "Reports")
+        search_type_menu['values'] = ("Logs", "Reports", "CSV")
         search_type_menu.grid(row=0, column=1, padx=10, pady=10)
         search_type_menu.bind("<<ComboboxSelected>>", self.update_search_results)
 
@@ -77,17 +78,20 @@ class FindReportWindow:
             self.results_tree.delete(i)
 
         # Fetch the appropriate data based on search type
-        if search_type == "All" or search_type == "Reports":
-            results.extend(self.search_reports(search_query))
-        if search_type == "All" or search_type == "Logs":
-            results.extend(self.search_logs(search_query))
+        if search_type == "Reports":
+            results = self.search_reports(search_query)
+        if search_type == "Logs":
+            results = self.search_logs(search_query)
+        if search_type == "CSV":
+            results = self.search_csv(search_query)
 
         # Sort the results based on the selected column and order
         results = sorted(results, key=lambda x: x[self.sort_by.get()], reverse=not self.sort_order.get())
 
         # Populate the Treeview with the new results
         for result in results:
-            self.results_tree.insert("", "end", values=(result["Name"], result["Date"]))
+            values = [val for val in result.values()]
+            self.results_tree.insert("", "end", values=values)
 
     def search_reports(self, query):
         self.database.switch_database(self.report)
@@ -123,6 +127,20 @@ class FindReportWindow:
                     })
         return results
 
+    def search_csv(self, query):
+        self.database.switch_database('reports_list')  # Switch to the 'logs' database
+        results = []
+        steps = self.database.find_data(table_name="init_test", feature="StepName")  # Get all table names
+        for step in steps:
+            if not step["StepName"]:
+                continue
+            if {"Name": step["StepName"]} not in results:
+                results.append({
+                    "Name": step["StepName"]
+                })
+                print(results)
+        return results
+
     def sort_column(self, col):
         if self.sort_by.get() == col:
             self.sort_order.set(not self.sort_order.get())
@@ -134,14 +152,27 @@ class FindReportWindow:
 
     def open_file(self, event):
         selected_item = self.results_tree.selection()[0]  # Get selected item
-        item_name = self.results_tree.item(selected_item, "values")[0]  # Get the item name from the selected item
+        item_name = self.results_tree.item(selected_item, "values")[0]
 
         if self.search_type.get() == "Reports":
             self._open_report(item_name)
         elif self.search_type.get() == "Logs":
             self._open_log_file(item_name)
+        elif self.search_type.get() == "CSV":
+            self._open_csv(item_name)
         else:
             print("Unknown item type")
+
+    def _open_csv(self, item_name):
+        data = self.database.find_data(table_name="init_test", num_id=item_name, feature="StepName", )
+        df = pd.DataFrame(data)
+        log_dir = os.path.join(os.getcwd(), "info/csv")
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir)  # Create the directory if it doesn't exist
+        temp_file_path = os.path.join(log_dir, f"{item_name}.csv")
+        df.to_csv(temp_file_path, index=False)
+        os.startfile(temp_file_path)
+
 
     def _open_log_file(self, item_name):
         # Ensure the 'log' directory exists
