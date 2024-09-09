@@ -96,14 +96,14 @@ class FindReportWindow:
     def search_reports(self, query):
         self.database.switch_database(self.report)
         reports = self.database.find_data("init_report")
-        # self.database.switch_database()
         results = []
         for name in reports:
-            if name["GroupResults"]:
-                results.append({
-                    "Name": name["GroupResults"],
-                    "Date": name["StartTimeFormatted"],
-                })
+            if query.lower() in name["GroupResults"].lower():
+                if name["GroupResults"]:
+                    results.append({
+                        "Name": name["GroupResults"],
+                        "Date": name["StartTimeFormatted"],
+                    })
         return results
 
     def search_logs(self, query):
@@ -132,13 +132,13 @@ class FindReportWindow:
         results = []
         steps = self.database.find_data(table_name="init_test", feature="StepName")  # Get all table names
         for step in steps:
-            if not step["StepName"]:
-                continue
-            if {"Name": step["StepName"]} not in results:
-                results.append({
-                    "Name": step["StepName"]
-                })
-                print(results)
+            if query.lower() in step["StepName"].lower():
+                if not step["StepName"]:
+                    continue
+                if {"Name": step["StepName"]} not in results:
+                    results.append({
+                        "Name": step["StepName"]
+                    })
         return results
 
     def sort_column(self, col):
@@ -172,7 +172,6 @@ class FindReportWindow:
         temp_file_path = os.path.join(log_dir, f"{item_name}.csv")
         df.to_csv(temp_file_path, index=False)
         os.startfile(temp_file_path)
-
 
     def _open_log_file(self, item_name):
         # Ensure the 'log' directory exists
