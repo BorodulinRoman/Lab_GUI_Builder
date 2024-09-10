@@ -1,18 +1,19 @@
 import time
-import tkinter as tk
-from tkinter import Menu, messagebox, ttk
+from tkinter import Menu, messagebox
 from test import InputWindow, round_to_nearest_10
 import threading
+import datetime
 from DeviceManager import VisaDeviceManager
 from database import Database, Logger
 from ReportsAndScriptRun import Script
 from tkinter import filedialog
+from BarLine import *
 
 
 class ScriptRunnerApp:
-    def __init__(self, root, logger):
-        self.script = Script(logger)
-        self.logger = logger
+    def __init__(self, root, loger, database):
+        self.script = Script(loger, database)
+        self.logger = loger
         self.load_button = None
         self.info_label = None
         self.start_button = None
@@ -59,6 +60,7 @@ class ScriptRunnerApp:
             self.info_label.config(text="No file selected")
 
     def start_script(self):
+        self.script.report.script_name = f"{self.filepath[:-7]}{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
         if self.filepath:
             self.running = True
             self.info_label.config(text="Start " + self.filepath)
@@ -148,7 +150,7 @@ class RightClickMenu(tk.LabelFrame):
             self.destroy()  # This destroys the widget
             self.logger.message(f"Removed '{temp}'")
         except Exception as e:
-            self.logger.message(f"Error removing label: {e}")
+            self.logger.message(f"Error removing label: {e}", log_level="ERROR")
 
     def build_menu(self, x, y):
         """Build the submenu for creating new widgets."""
@@ -172,7 +174,7 @@ class RightClickMenu(tk.LabelFrame):
 
     def packet_label(self, x, y, cls):
         """Opens the InputWindow for user to input settings and create a new widget."""
-        default_values = {'label_name': 'New Packet', 'maxByte': 0, 'minByte': 0, 'maxBit': 0, 'minBit': 0}
+        default_values = {'label_name': 'New Packet', 'maxByte': 0, 'minByte': 0, 'maxBit': 0, 'minBupdateit': 0}
         InputWindow(self.root, "Create New Widget",
                     lambda values: self.create_new_widget_with_settings(values, x, y, cls), default_values,
                     {"Dimension": ['130x40', '300x40', '600x40']})
@@ -198,9 +200,9 @@ class RightClickMenu(tk.LabelFrame):
 
             self.logger.message(f"New widget '{values['label_name']}' created at ({x}, {y})")
         except KeyError as e:
-            self.logger.message(f"Key error in widget settings: {e}")
+            self.logger.message(f"Key error in widget settings: {e}", log_level="ERROR")
         except ValueError as e:
-            self.logger.message(f"Value error in widget settings: {e}")
+            self.logger.message(f"Value error in widget settings: {e}", log_level="ERROR")
 
     def confirm_enable_change_mode(self):
         """Confirm with the user before enabling change mode."""
@@ -272,7 +274,7 @@ class DraggableRightClickMenu(RightClickMenu):
                 self.db.update(new_element)
                 self.logger.message(f"Stopped dragging '{self.cget('text')}' at ({self.rounded_x}, {self.rounded_y})")
             except Exception as e:
-                self.logger.message(f"Error updating label position: {e}")
+                self.logger.message(f"Error updating label position: {e}", log_level="ERROR")
 
 
 class DataDraggableRightClickMenu(DraggableRightClickMenu):
@@ -287,6 +289,7 @@ class DataDraggableRightClickMenu(DraggableRightClickMenu):
         self.thread_update.start()
 
     def update_data_label(self):
+
         while 1:
             time.sleep(1)
             print(self.element_info)
@@ -385,12 +388,12 @@ class ComboboxRightClickMenu(DraggableRightClickMenu):
 
 
 class SetupLoader:
-    def __init__(self, root):
+    def __init__(self, root, database, logger):
         self.script = None
+        self.db = database
         self.root = root
-        self.logger_setup = Logger("setup")
-        self.logger = Logger()
-        self.db = Database("gui_conf", self.logger)
+        self.logger_setup = Logger('setup')
+        self.logger = logger
         self.elements_dict = {}
         self.created_elements = {}
         self.waiting_list = []
@@ -409,7 +412,7 @@ class SetupLoader:
         sorted_keys_desc = sorted(self.elements_dict.keys(), reverse=True)
         sorted_dict_desc = {key: self.elements_dict[key] for key in sorted_keys_desc}
         for element in sorted_dict_desc.values():
-            print("try_tocreate", element)
+            print("try_to_create", element)
             self.create_element(element)
             print("created_el", self.created_elements)
         # Process waiting list until it's empty
@@ -428,7 +431,7 @@ class SetupLoader:
         self.logger.text_widget = text_widget
 
     def create_script_label(self, frame):
-        ScriptRunnerApp(frame, self.logger,)
+        ScriptRunnerApp(frame, self.logger, self.db)
 
     def create_element(self, element):
         element_id = element.get('id', '')
@@ -518,41 +521,17 @@ class SetupLoader:
         return frame
 
 
-def info_line(root):
-    menubar = tk.Menu(root)
-    root.config(menu=menubar)
-
-    # Create "File" menu
-    file_menu = tk.Menu(menubar, tearoff=0)
-    menubar.add_cascade(label="File", menu=file_menu)
-    file_menu.add_command(label="New Setup", command=lambda: print("New Setup"))
-    file_menu.add_command(label="Load Setup", command=lambda: print("Load Setup"))
-    file_menu.add_command(label="Save Setup", command=lambda: print("Save Setup"))
-    file_menu.add_separator()
-    file_menu.add_command(label="Exit", command=root.quit)
-
-    # Create "View" menu
-    view_menu = tk.Menu(menubar, tearoff=0)
-    menubar.add_cascade(label="View", menu=view_menu)
-    view_menu.add_command(label="Change View", command=lambda: print("Change View"))
-
-    # Create "Add" menu
-    add_menu = tk.Menu(menubar, tearoff=0)
-    menubar.add_cascade(label="Add", menu=add_menu)
-    add_menu.add_command(label="Add Item", command=lambda: print("Add Item"))
-
-    # Create "Info" menu
-    info_menu = tk.Menu(menubar, tearoff=0)
-    menubar.add_cascade(label="Info", menu=info_menu)
-    info_menu.add_command(label="Version", command=lambda: print("Version Info"))
-
-
 # Example usage
 if __name__ == "__main__":
     root_main = tk.Tk()
-    info_line(root_main)
     root_main.change_mode = False
-    root_main.loader = SetupLoader(root_main)
+
+    logger = Logger("log")
+    db_gui = Database("gui_conf", logger)
+
+    root_main.loader = SetupLoader(root_main, db_gui, logger)
     root_main.loader.load_setup()
-    root_main.attributes('-alpha', 0.95)
+    db_gui.logger = root_main.loader.logger
+    enu_bar = MenuBar(root_main, db_gui)
+    # root_main.attributes('-alpha', 0.95)
     root_main.mainloop()

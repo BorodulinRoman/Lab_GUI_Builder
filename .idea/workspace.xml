@@ -4,10 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="03566363-8df4-4cd8-b209-5c6ef035168c" name="Changes" comment="Some changes for init :&#10;disable reports&#10;add menu line">
+    <list default="true" id="03566363-8df4-4cd8-b209-5c6ef035168c" name="Changes" comment="Search issues fixed">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BarLine.py" beforeDir="false" afterPath="$PROJECT_DIR$/BarLine.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Empty.py" beforeDir="false" afterPath="$PROJECT_DIR$/Empty.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test.json" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -51,7 +51,7 @@
     "Python.test.executor": "Run",
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "Communication-protocol",
+    "git-widget-placeholder": "bar__menu",
     "ignore.virus.scanning.warn.message": "true",
     "last_opened_file_path": "C:/Users/ROMANBO/Documents/GitHub/Lab_GUI_Builder/info",
     "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
@@ -155,8 +155,8 @@
     </configuration>
     <list>
       <item itemvalue="Python.Empty" />
-      <item itemvalue="Python.database" />
       <item itemvalue="Python.DeviceManager" />
+      <item itemvalue="Python.database" />
       <item itemvalue="Python.test" />
     </list>
     <recent_temporary>
@@ -208,7 +208,31 @@
       <option name="project" value="LOCAL‎" />
       <updated>1724570317243</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL‎-00004" summary="Update report search and oprn files from database">
+      <option name="closed" value="true" />
+      <created>1725882636257</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL‎-00004" />
+      <option name="project" value="LOCAL‎" />
+      <updated>1725882636257</updated>
+    </task>
+    <task id="LOCAL‎-00005" summary="New feature for csv files">
+      <option name="closed" value="true" />
+      <created>1725888847320</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL‎-00005" />
+      <option name="project" value="LOCAL‎" />
+      <updated>1725888847320</updated>
+    </task>
+    <task id="LOCAL‎-00006" summary="Search issues fixed">
+      <option name="closed" value="true" />
+      <created>1725889374580</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL‎-00006" />
+      <option name="project" value="LOCAL‎" />
+      <updated>1725889374580</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -226,15 +250,68 @@
     <MESSAGE value="Add report system" />
     <MESSAGE value="Add report system logger text box" />
     <MESSAGE value="Some changes for init :&#10;disable reports&#10;add menu line" />
-    <option name="LAST_COMMIT_MESSAGE" value="Some changes for init :&#10;disable reports&#10;add menu line" />
+    <MESSAGE value="Update report search and oprn files from database" />
+    <MESSAGE value="New feature for csv files" />
+    <MESSAGE value="Search issues fixed" />
+    <option name="LAST_COMMIT_MESSAGE" value="Search issues fixed" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/Empty.py</url>
-          <line>457</line>
-          <option name="timeStamp" value="31" />
+          <url>file://$PROJECT_DIR$/ReportsAndScriptRun.py</url>
+          <line>113</line>
+          <option name="timeStamp" value="52" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/ReportsAndScriptRun.py</url>
+          <line>383</line>
+          <option name="timeStamp" value="66" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/ReportsAndScriptRun.py</url>
+          <line>350</line>
+          <option name="timeStamp" value="67" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/BarLine.py</url>
+          <line>224</line>
+          <option name="timeStamp" value="78" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/BarLine.py</url>
+          <line>223</line>
+          <option name="timeStamp" value="81" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/BarLine.py</url>
+          <line>222</line>
+          <option name="timeStamp" value="82" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/BarLine.py</url>
+          <line>217</line>
+          <option name="timeStamp" value="94" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/BarLine.py</url>
+          <line>216</line>
+          <option name="timeStamp" value="97" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/database.py</url>
+          <line>350</line>
+          <option name="timeStamp" value="98" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/database.py</url>
+          <line>359</line>
+          <option name="timeStamp" value="99" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/BarLine.py</url>
+          <line>106</line>
+          <option name="timeStamp" value="106" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
