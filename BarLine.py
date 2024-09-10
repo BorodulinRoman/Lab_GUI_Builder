@@ -5,6 +5,7 @@ import subprocess
 from ReportsAndScriptRun import Report
 import pandas as pd
 
+
 class FindReportWindow:
     def __init__(self, parent, database):
         self.results_tree = None
@@ -46,7 +47,7 @@ class FindReportWindow:
         search_type_menu = ttk.Combobox(
             self.window, textvariable=self.search_type, state="readonly"
         )
-        search_type_menu['values'] = ("Logs", "Reports", "CSV")
+        search_type_menu['values'] = ("Logs", "Reports")
         search_type_menu.grid(row=0, column=1, padx=10, pady=10)
         search_type_menu.bind("<<ComboboxSelected>>", self.update_search_results)
 
@@ -82,8 +83,7 @@ class FindReportWindow:
             results = self.search_reports(search_query)
         if search_type == "Logs":
             results = self.search_logs(search_query)
-        if search_type == "CSV":
-            results = self.search_csv(search_query)
+
 
         # Sort the results based on the selected column and order
         results = sorted(results, key=lambda x: x[self.sort_by.get()], reverse=not self.sort_order.get())
@@ -127,19 +127,6 @@ class FindReportWindow:
                     })
         return results
 
-    def search_csv(self, query):
-        self.database.switch_database('reports_list')  # Switch to the 'logs' database
-        results = []
-        steps = self.database.find_data(table_name="init_test", feature="StepName")  # Get all table names
-        for step in steps:
-            if query.lower() in step["StepName"].lower():
-                if not step["StepName"]:
-                    continue
-                if {"Name": step["StepName"]} not in results:
-                    results.append({
-                        "Name": step["StepName"]
-                    })
-        return results
 
     def sort_column(self, col):
         if self.sort_by.get() == col:
@@ -158,20 +145,10 @@ class FindReportWindow:
             self._open_report(item_name)
         elif self.search_type.get() == "Logs":
             self._open_log_file(item_name)
-        elif self.search_type.get() == "CSV":
-            self._open_csv(item_name)
         else:
             print("Unknown item type")
 
-    def _open_csv(self, item_name):
-        data = self.database.find_data(table_name="init_test", num_id=item_name, feature="StepName", )
-        df = pd.DataFrame(data)
-        log_dir = os.path.join(os.getcwd(), "info/csv")
-        if not os.path.exists(log_dir):
-            os.makedirs(log_dir)  # Create the directory if it doesn't exist
-        temp_file_path = os.path.join(log_dir, f"{item_name}.csv")
-        df.to_csv(temp_file_path, index=False)
-        os.startfile(temp_file_path)
+
 
     def _open_log_file(self, item_name):
         # Ensure the 'log' directory exists
@@ -248,9 +225,141 @@ class FindReportWindow:
         self.database.switch_database(name)
 
 
+class FeatureWindow:
+    def __init__(self, parent, database):
+        self.database = database
+        self.ok_button = None
+        self.combo = None
+        self.feature_vars = None
+        self.tree = None
+        self.top = None
+        self.parent = parent
+        self.features = []  # Store all features
+        self.sorted_ascending = True  # Flag to track sorting order
+        self.create_window()
+
+    def create_window(self):
+        # Create Toplevel window
+        self.top = tk.Toplevel(self.parent)
+        self.top.title("Multi-Features Statistic")
+
+        # Search box for filtering features
+        search_label = ttk.Label(self.top, text="Search Features:")
+        search_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        self.search_var = tk.StringVar()
+        search_entry = ttk.Entry(self.top, textvariable=self.search_var)
+        search_entry.grid(row=0, column=1, padx=5, pady=5, sticky="w")
+        search_entry.bind("<KeyRelease>", self.filter_features)
+
+        # Create Treeview for feature selection with checkboxes
+        self.tree = ttk.Treeview(self.top, columns=("Select", "Feature"), show="headings", height=10)
+        self.tree.heading("Select", text="Select")
+        self.tree.heading("Feature", text="Feature", command=self.sort_features)
+        self.tree.column("Select", width=180, anchor='center')
+        self.tree.column("Feature", width=150)
+        self.tree.grid(row=2, column=0, padx=10, pady=10, columnspan=2)
+
+        # Adding features with checkboxes in Treeview
+        self.features = self._get_features()
+        self.feature_vars = {feature: False for feature in self.features}  # Store checkbox states
+        self.update_treeview(self.features)
+
+        # Bind click event to toggle checkboxes
+        self.tree.bind("<Button-1>", self.toggle_checkbox)
+
+        # Add Combobox for function selection
+        self.combo = ttk.Combobox(
+            self.top, values=["Save as CSV", "Generate Graph"], state="readonly"
+        )
+        self.combo.grid(row=3, column=1, padx=10, pady=10)
+        self.combo.set("Select Function")
+
+        # OK button to trigger selected function
+        self.ok_button = ttk.Button(self.top, text="OK", command=self.run_function)
+        self.ok_button.grid(row=3, column=0, padx=10, pady=10)
+
+    def _get_features(self):
+        self.database.switch_database('reports_list')  # Switch to the 'logs' database
+        results = []
+        steps = self.database.find_data(table_name="init_test", feature="StepName")  # Get all table names
+        for step in steps:
+            if not step["StepName"]:
+                continue
+            if step["StepName"] not in results:
+                results.append(step["StepName"])
+        return results
+
+    def update_treeview(self, features):
+        # Clear current items in Treeview
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+        # Insert updated features
+        for feature in features:
+            self.tree.insert("", "end", values=("[ ]", feature))
+
+    def toggle_checkbox(self, event):
+        # Detect which item was clicked
+        item_id = self.tree.identify_row(event.y)
+        column = self.tree.identify_column(event.x)
+
+        if column == "#1" and item_id:  # Check if the click was on the "Select" column
+            current_value = self.tree.item(item_id, 'values')[0]
+            feature_name = self.tree.item(item_id, 'values')[1]
+
+            # Toggle checkbox state
+            if current_value == "[ ]":
+                self.tree.item(item_id, values=("[X]", feature_name))
+                self.feature_vars[feature_name] = True
+            else:
+                self.tree.item(item_id, values=("[ ]", feature_name))
+                self.feature_vars[feature_name] = False
+
+    def filter_features(self, event):
+        # Filter features based on search input
+        search_text = self.search_var.get().lower()
+        filtered_features = [feature for feature in self.features if search_text in feature.lower()]
+        self.update_treeview(filtered_features)
+
+    def sort_features(self):
+        # Sort features alphabetically, toggling between ascending and descending
+        self.features.sort(reverse=not self.sorted_ascending)
+        self.sorted_ascending = not self.sorted_ascending
+        self.update_treeview(self.features)
+
+    def run_function(self):
+        selected_function = self.combo.get()
+        selected_features = [feature for feature, selected in self.feature_vars.items() if selected]
+
+        # Call the appropriate function based on the ComboBox selection
+        if selected_function == "Save as CSV":
+            self.save_as_csv(selected_features)
+        elif selected_function == "Generate Graph":
+            self.generate_graph(selected_features)
+        else:
+            print("No function selected or invalid function chosen.")
+
+    def save_as_csv(self, features):
+        features_data = []
+        for item_name in features:
+            data = self.database.find_data(table_name="init_test", num_id=item_name, feature="StepName")
+            for d in data:
+                features_data.append(d)
+        df = pd.DataFrame(features_data)
+        log_dir = os.path.join(os.getcwd(), "info/csv")
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir)  # Create the directory if it doesn't exist
+        temp_file_path = os.path.join(log_dir, f"{'_'.join(features)}.csv")
+        df.to_csv(temp_file_path, index=False)
+        os.startfile(temp_file_path)
+
+    def generate_graph(self, features):
+        # Example function that simulates generating a graph for selected features
+        print(f"Function: Generate Graph, Features: {features}")
+
 
 class MenuBar:
     def __init__(self, root, database):
+        self.logger = database.logger
         self.menubar = tk.Menu(root)
         root.config(menu=self.menubar)
         self.database = database
@@ -285,27 +394,26 @@ class MenuBar:
         self.info_menu.add_command(label="Version", command=self.show_version)
 
     def new_setup(self):
-        print("New Setup")
+        self.logger.message("New Setup")
 
     def load_setup(self):
-        print("Load Setup")
+        self.logger.message("Load Setup")
 
     def exit_app(self):
-        print("Exit App")
+        self.logger.message("Exit App")
         quit()
 
     def report(self):
         root_report = tk.Toplevel(self.menubar)  # Use Toplevel instead of Tk
         root_report.title("Find Report")  # Set a different title for the new window
         find_report_window = FindReportWindow(root_report, self.database)
-        print(find_report_window)
+        self.logger.message(find_report_window)
 
     def features_info(self):
-        print("Change View")
+        FeatureWindow(self.menubar,self.database)
 
     def add_item(self):
-        print("Add Item")
+        self.logger.message("Add Item")
 
     def show_version(self):
-        print("Version Info")
-'New Text Document20240829154050'
+        self.logger.message("Version Info")

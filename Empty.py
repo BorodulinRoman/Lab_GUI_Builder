@@ -528,10 +528,10 @@ if __name__ == "__main__":
 
     logger = Logger("log")
     db_gui = Database("gui_conf", logger)
-    enu_bar = MenuBar(root_main, db_gui)
 
     root_main.loader = SetupLoader(root_main, db_gui, logger)
     root_main.loader.load_setup()
     db_gui.logger = root_main.loader.logger
+    enu_bar = MenuBar(root_main, db_gui)
     # root_main.attributes('-alpha', 0.95)
     root_main.mainloop()
