@@ -1,4 +1,5 @@
 import pyvisa
+from pyvisa import constants
 from tkinter import filedialog
 from datetime import datetime
 
@@ -26,19 +27,26 @@ class VisaDeviceManager:
         self.logger = logger
         self.rm = pyvisa.ResourceManager()
         self.device = None
+        self.device_name = None
 
     def find_devices(self):
         """Finds all connected VISA devices."""
         devices = self.rm.list_resources()
-        return devices
+        asrl_devices = []
+        for device in devices:
+            if "ASRL" in device:
+                asrl_devices.append(device)
+        return asrl_devices
 
-    def connect(self, device_name):
+    def connect(self):
         """Connect to a specific VISA device by name."""
         try:
-            self.device = self.rm.open_resource(device_name)
-            self.logger.message(f"Connected to {device_name}")
+            self.device = self.rm.open_resource(self.device_name, access_mode=constants.VI_EXCLUSIVE_LOCK)
+            self.logger.message(f"Connected to {self.device_name}")
+            return True
         except Exception as e:
-            self.logger.message(f"Failed to connect to {device_name}: {str(e)}")
+            self.logger.message(f"Failed to connect to {self.device_name}: {str(e)}")
+            return False
 
     def disconnect(self):
         """Disconnect the currently connected VISA device."""

@@ -4,8 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="03566363-8df4-4cd8-b209-5c6ef035168c" name="Changes" comment="Search issues fixed">
+    <list default="true" id="03566363-8df4-4cd8-b209-5c6ef035168c" name="Changes" comment="defined comport and store at dictionary.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DeviceManager.py" beforeDir="false" afterPath="$PROJECT_DIR$/DeviceManager.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Empty.py" beforeDir="false" afterPath="$PROJECT_DIR$/Empty.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/database.py" beforeDir="false" afterPath="$PROJECT_DIR$/database.py" afterDir="false" />
     </list>
@@ -24,7 +25,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="main" />
+        <entry key="$PROJECT_DIR$" value="Communication-protocol" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -46,12 +47,12 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "Python.DeviceManager.executor": "Run",
-    "Python.Empty.executor": "Debug",
+    "Python.Empty.executor": "Run",
     "Python.database.executor": "Run",
     "Python.test.executor": "Run",
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "Communication-protocol",
+    "git-widget-placeholder": "Communication-protocol__update__Datalable",
     "ignore.virus.scanning.warn.message": "true",
     "last_opened_file_path": "C:/Users/ROMANBO/Documents/GitHub/Lab_GUI_Builder/info",
     "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
@@ -232,7 +233,15 @@
       <option name="project" value="LOCAL‎" />
       <updated>1725889374580</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL‎-00007" summary="defined comport and store at dictionary.">
+      <option name="closed" value="true" />
+      <created>1726039729296</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL‎-00007" />
+      <option name="project" value="LOCAL‎" />
+      <updated>1726039729296</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -253,7 +262,8 @@
     <MESSAGE value="Update report search and oprn files from database" />
     <MESSAGE value="New feature for csv files" />
     <MESSAGE value="Search issues fixed" />
-    <option name="LAST_COMMIT_MESSAGE" value="Search issues fixed" />
+    <MESSAGE value="defined comport and store at dictionary." />
+    <option name="LAST_COMMIT_MESSAGE" value="defined comport and store at dictionary." />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -305,19 +315,15 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/Empty.py</url>
-          <line>201</line>
-          <option name="timeStamp" value="114" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/Empty.py</url>
-          <line>202</line>
-          <option name="timeStamp" value="115" />
+          <line>346</line>
+          <option name="timeStamp" value="127" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
     <watches-manager>
       <configuration name="PythonConfigurationType">
         <watch expression="__py_debug_temp_var_930836697.comport_list" />
+        <watch expression="self.root.comport_list" />
       </configuration>
     </watches-manager>
   </component>

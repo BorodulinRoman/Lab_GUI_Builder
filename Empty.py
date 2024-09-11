@@ -190,6 +190,7 @@ class RightClickMenu(tk.LabelFrame):
 
     def create_new_widget_with_settings(self, values, x, y, cls):
         """Creates a new widget with the specified settings."""
+        com_id = {}
         try:
             values["x"] = round_to_nearest_10(x - self.winfo_rootx())
             values["y"] = round_to_nearest_10(y - self.winfo_rooty())
@@ -197,10 +198,10 @@ class RightClickMenu(tk.LabelFrame):
             values["class"] = str(cls)
             if "info_table" not in values.keys():
                 values["info_table"] = None
-                com_id = 0
+                com_id["id"] = 0
             else:
                 com_id = self.db.find_data("label_param", values["info_table"], "label_name")[0]
-            values["id"] = self.db.add_element(values, int(int(com_id["id"])/10000) * 10000)
+            values["id"] = self.db.add_element(values, int(int(com_id["id"]) / 10000) * 10000)
             frame = self.root.loader.create_frame(values, self)
             frame.place(x=values["x"], y=values["y"])
 
@@ -243,7 +244,7 @@ class DraggableRightClickMenu(RightClickMenu):
 
     def __init__(self, main_root, parent_info, values, logger, gen_id="0000"):
         """Initialize the DraggableRightClickMenu with a root, parent, and label."""
-        super().__init__(main_root, parent_info, values, logger,  gen_id=gen_id, text=values["label_name"])
+        super().__init__(main_root, parent_info, values, logger, gen_id=gen_id, text=values["label_name"])
         self.logger = logger
         self.label_name = values["label_name"]
         self.rounded_x = 0
@@ -289,16 +290,22 @@ class DataDraggableRightClickMenu(DraggableRightClickMenu):
     def __init__(self, main_root, parent_info, values, logger, gen_id="0000"):
         """Initialize the ComboboxRightClickMenu with a root, parent, label, width, and height."""
         super().__init__(main_root, parent_info, values, logger, gen_id=gen_id)
+        self.data_info = None
+        self.thread_update = None
+        self.element_info = None
         self.logger = logger
+        self.init()
+
+    def update_data_label(self):
+        time.sleep(1)
+        print(self.element_info)
+
+    def init(self):
         self.element_info = self.db.get_info(self.gen_id)
         self.thread_update = threading.Thread(target=self.update_data_label)
         self.thread_update.start()
-
-    def update_data_label(self):
-
-        while 1:
-            time.sleep(1)
-            print(self.element_info)
+        self.data_info = tk.Label(self, text="")
+        self.data_info.place(x=2, y=0)
 
 
 class ComboboxRightClickMenu(DraggableRightClickMenu):
@@ -307,6 +314,7 @@ class ComboboxRightClickMenu(DraggableRightClickMenu):
     def __init__(self, main_root, parent_info, values, logger, gen_id="0000"):
         """Initialize the ComboboxRightClickMenu with a root, parent, label, width, and height."""
         super().__init__(main_root, parent_info, values, logger, gen_id=gen_id)
+        self.port = None
         self.logger = logger
         self.checkbox_var = None
         self.checkbox = None
@@ -315,10 +323,11 @@ class ComboboxRightClickMenu(DraggableRightClickMenu):
         self.label = None
         self.combobox = None
         self.button = None
+        self.is_started = False
+        self.data_list = []
         self.width = values.get('Width', 150)
         self.height = values.get('Height', 100)
         self.init_box(values, main_root)
-        self.is_started = False
 
     def init_box(self, values, main_root):
         self.top_frame = tk.Frame(self)
@@ -328,19 +337,18 @@ class ComboboxRightClickMenu(DraggableRightClickMenu):
         self.label = tk.Label(self.top_frame, text=values["label_name"])
         self.label.pack(side=tk.LEFT, padx=5, pady=5)
 
-        # Retrieve the list from main_root based on the type specified in values
-        self.val_list = getattr(main_root, values["Type"], {})
-        self.combobox = ttk.Combobox(self.top_frame, values=list(self.val_list))
-        self.combobox.pack(side=tk.LEFT, padx=5, pady=5)
-
-        # Bind the combobox selection event to a callback function
-        self.combobox.bind("<<ComboboxSelected>>", self.on_combobox_select)
-
         # Create a toggle Button under the combobox
         if values["Type"] == "com_list":
+            self.port = VisaDeviceManager(self.logger)
+            self.val_list = self.port.find_devices()
             self.button = tk.Button(self, text="Start", command=self.on_com_click, font=("Arial", 10))
+            com_info = self.db.find_data("com_info", self.gen_id)[0]
+            # if com_info["last_conn_info"] != "None" and com_info["last_conn_info"] in self.port.find_devices():
+            #     self.port.device_name = com_info["last_conn_info"]
+            #     self.on_com_click()
 
         elif values["Type"] == "function":
+            self.val_list = getattr(main_root, values["Type"], {})
             self.button = tk.Button(self, text="Send", command=self.on_fun_click, font=("Arial", 10))
             self.checkbox_var = tk.IntVar()
             self.checkbox = tk.Checkbutton(self, text="AUTO RUN", variable=self.checkbox_var)
@@ -352,10 +360,18 @@ class ComboboxRightClickMenu(DraggableRightClickMenu):
         # Force the size change by using place geometry manager
         self.place_configure(width=self.width, height=self.height)
 
+        # Retrieve the list from main_root based on the type specified in values
+        self.combobox = ttk.Combobox(self.top_frame, values=list(self.val_list))
+        self.combobox.pack(side=tk.LEFT, padx=5, pady=5)
+
+        # Bind the combobox selection event to a callback function
+        self.combobox.bind("<<ComboboxSelected>>", self.on_combobox_select)
+
     def on_combobox_select(self, event):
         """Callback function when a combobox item is selected."""
         print(event)
         selected_value = self.combobox.get()
+        self.port.device_name = selected_value
         self.logger.message(f"Selected value: {selected_value}")
         # Add any additional functionality you need on selection
 
@@ -371,16 +387,30 @@ class ComboboxRightClickMenu(DraggableRightClickMenu):
             self.logger.message(f"Button clicked! Current combobox selection: {selected_value}")
             # Add any additional functionality you need on button click
 
+    def update_all_data_label(self, word):
+        for data_label in self.data_list:
+            data_label.data_info.config(text=word)
+
     def on_com_click(self):
         """Callback function when the button is clicked."""
         if self.is_started:
             self.button.config(text="Start", fg="black", font=("Arial", 10))
             self.combobox.config(state="normal")  # Enable the combobox
             self.is_started = False
+            self.port.disconnect()
+            self.update_all_data_label("")
         else:
+            if not self.port.connect():
+                self.logger.message("Port in use")
+                return False
+            self.db.switch_database("gui_conf")
+            com_info = self.db.find_data("com_info", self.gen_id)[0]
+            com_info["last_conn_info"] = self.port.device_name
+            self.db.update(com_info)
             self.button.config(text="Stop", fg="red", font=("Arial", 10))
             self.combobox.config(state="disabled")  # Disable the combobox
             self.is_started = True
+            self.update_all_data_label("------")
 
         # Send data if type is function
         if self.val_list and callable(self.combobox.get()):
@@ -396,7 +426,6 @@ class ComboboxRightClickMenu(DraggableRightClickMenu):
 class SetupLoader:
     def __init__(self, root, database, logger):
         self.script = None
-        self.comport_list = {}
         self.db = database
         self.root = root
         self.logger_setup = Logger('setup')
@@ -405,7 +434,6 @@ class SetupLoader:
         self.created_elements = {}
         self.waiting_list = []
         self.init()
-
 
     def init(self):
         num_ids = self.db.get_by_feature("id")
@@ -417,7 +445,7 @@ class SetupLoader:
     def load_setup(self):
         """Create labels/frames based on the loaded JSON data."""
         self.root.loader.packet = None
-        sorted_keys_desc = sorted(self.elements_dict.keys(), reverse=True)
+        sorted_keys_desc = sorted(self.elements_dict.keys(), reverse=False)
         sorted_dict_desc = {key: self.elements_dict[key] for key in sorted_keys_desc}
         for element in sorted_dict_desc.values():
             print("try_to_create", element)
@@ -438,11 +466,9 @@ class SetupLoader:
         scrollbar.grid(row=0, column=1, sticky="ns")
         self.logger.text_widget = text_widget
 
-
     def create_info_scope(self, frame):
         scope_name1 = tk.Label(frame, text="----------------------------")
         scope_name1.place(x=5, y=5)
-
 
     def create_script_label(self, frame):
         ScriptRunnerApp(frame, self.logger, self.db)
@@ -452,7 +478,6 @@ class SetupLoader:
         parent_id = element.get('parent', 'root')
 
         if element_id in self.created_elements.keys():
-
             self.logger_setup.message(f"Element {element_id} already created on Parent - {parent_id}")
             return self.created_elements[element_id]
 
@@ -529,7 +554,18 @@ class SetupLoader:
                     logger=self.logger)
 
         if "ComboboxRightClickMenu" in class_name and element["Type"] == "com_list":
-            self.comport_list[frame_id] = frame
+            self.root.comport_list[frame_id] = frame
+
+        if "DataDraggableRightClickMenu" in class_name:
+            try:
+                self.db.switch_database('gui_conf')
+                combo_id = self.db.find_data("label_param", element["info_table"], "label_name")[0]["id"]
+                self.root.comport_list[combo_id].data_list.append(frame)
+
+            except Exception as e:
+                self.logger.message(f"Can't create element {element}", "ERROR")
+                frame.destroy()
+                return None
 
         if frame_id == 4:
             self.create_info_scope(frame)
@@ -545,6 +581,7 @@ class SetupLoader:
 if __name__ == "__main__":
     root_main = tk.Tk()
     root_main.change_mode = False
+    root_main.comport_list = {}
 
     logger = Logger("log")
     db_gui = Database("gui_conf", logger)
