@@ -268,9 +268,9 @@ class Database:
     def remove_element(self, num_id):
         self.logger.message(f"Remove element {num_id}")
 
-    def add_element(self, values):
+    def add_element(self, values, num_param=0):
         table_names = self.get_all_table_names()
-        values['id'] = int(1 + int(values["parent"]) / 10000) * 10000 + self.generate_unique_id()
+        values['id'] = int(1 + int(values["parent"]) / 10000) * 10000 + self.generate_unique_id() + num_param
         for table_name in table_names:
             temp_values = {}
             columns = self.get_columns(table_name)

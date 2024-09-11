@@ -174,7 +174,9 @@ class RightClickMenu(tk.LabelFrame):
 
     def packet_label(self, x, y, cls):
         """Opens the InputWindow for user to input settings and create a new widget."""
-        default_values = {'label_name': 'New Packet', 'maxByte': 0, 'minByte': 0, 'maxBit': 0, 'minBupdateit': 0}
+        default_values = {'label_name': 'New Packet', 'maxByte': 0, 'minByte': 0,
+                          'maxBit': 0, 'minBit': 0,
+                          'info_table': "enter comport"}
         InputWindow(self.root, "Create New Widget",
                     lambda values: self.create_new_widget_with_settings(values, x, y, cls), default_values,
                     {"Dimension": ['130x40', '300x40', '600x40']})
@@ -193,8 +195,12 @@ class RightClickMenu(tk.LabelFrame):
             values["y"] = round_to_nearest_10(y - self.winfo_rooty())
             values["parent"] = self.gen_id
             values["class"] = str(cls)
-            values["info_table"] = None
-            values["id"] = self.db.add_element(values)
+            if "info_table" not in values.keys():
+                values["info_table"] = None
+                com_id = 0
+            else:
+                com_id = self.db.find_data("label_param", values["info_table"], "label_name")[0]
+            values["id"] = self.db.add_element(values, int(int(com_id["id"])/10000) * 10000)
             frame = self.root.loader.create_frame(values, self)
             frame.place(x=values["x"], y=values["y"])
 
@@ -390,6 +396,7 @@ class ComboboxRightClickMenu(DraggableRightClickMenu):
 class SetupLoader:
     def __init__(self, root, database, logger):
         self.script = None
+        self.comport_list = {}
         self.db = database
         self.root = root
         self.logger_setup = Logger('setup')
@@ -398,6 +405,7 @@ class SetupLoader:
         self.created_elements = {}
         self.waiting_list = []
         self.init()
+
 
     def init(self):
         num_ids = self.db.get_by_feature("id")
@@ -429,6 +437,12 @@ class SetupLoader:
         text_widget.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
         scrollbar.grid(row=0, column=1, sticky="ns")
         self.logger.text_widget = text_widget
+
+
+    def create_info_scope(self, frame):
+        scope_name1 = tk.Label(frame, text="----------------------------")
+        scope_name1.place(x=5, y=5)
+
 
     def create_script_label(self, frame):
         ScriptRunnerApp(frame, self.logger, self.db)
@@ -513,7 +527,13 @@ class SetupLoader:
                     values=element,
                     gen_id=element.get('id', ''),
                     logger=self.logger)
-        if frame_id == 3:
+
+        if "ComboboxRightClickMenu" in class_name and element["Type"] == "com_list":
+            self.comport_list[frame_id] = frame
+
+        if frame_id == 4:
+            self.create_info_scope(frame)
+        elif frame_id == 3:
             self.create_info_label(frame)
         elif frame_id == 2:
             self.create_script_label(frame)
