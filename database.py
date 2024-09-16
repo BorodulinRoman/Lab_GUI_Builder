@@ -67,12 +67,14 @@ class Logger:
 
             # Mark the queue task as done
             self.log_queue.task_done()
-
-            # Optionally update a text widget or print the message
-            if self.text_widget is not None:
-                self.text_widget.after(10, self._update_text_widget, f"[{timestamp}] {log_level.upper()}: {message}\n")
-            else:
-                print(f"[{timestamp}] {log_level.upper()}: {message}")
+            try:
+                # Optionally update a text widget or print the message
+                if self.text_widget is not None:
+                    self.text_widget.after(10, self._update_text_widget, f"[{timestamp}] {log_level.upper()}: {message}\n")
+                else:
+                    print(f"[{timestamp}] {log_level.upper()}: {message}")
+            except Exception as e:
+                print(e)
 
     def _update_text_widget(self, formatted_message):
         try:

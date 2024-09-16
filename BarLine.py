@@ -84,7 +84,6 @@ class FindReportWindow:
         if search_type == "Logs":
             results = self.search_logs(search_query)
 
-
         # Sort the results based on the selected column and order
         results = sorted(results, key=lambda x: x[self.sort_by.get()], reverse=not self.sort_order.get())
 
@@ -127,7 +126,6 @@ class FindReportWindow:
                     })
         return results
 
-
     def sort_column(self, col):
         if self.sort_by.get() == col:
             self.sort_order.set(not self.sort_order.get())
@@ -147,8 +145,6 @@ class FindReportWindow:
             self._open_log_file(item_name)
         else:
             print("Unknown item type")
-
-
 
     def _open_log_file(self, item_name):
         # Ensure the 'log' directory exists
@@ -227,6 +223,7 @@ class FindReportWindow:
 
 class FeatureWindow:
     def __init__(self, parent, database):
+        self.search_var = None
         self.database = database
         self.ok_button = None
         self.combo = None
@@ -410,7 +407,7 @@ class MenuBar:
         self.logger.message(find_report_window)
 
     def features_info(self):
-        FeatureWindow(self.menubar,self.database)
+        FeatureWindow(self.menubar, self.database)
 
     def add_item(self):
         self.logger.message("Add Item")

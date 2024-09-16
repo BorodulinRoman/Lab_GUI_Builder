@@ -1,4 +1,5 @@
 import tkinter as tk
+import time
 from tkinter import messagebox, ttk
 
 
@@ -73,3 +74,8 @@ class InputWindow:
             values[field] = entry.get()
         self.callback(values)
         self.window.destroy()
+
+
+
+
+

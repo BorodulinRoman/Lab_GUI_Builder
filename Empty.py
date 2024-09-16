@@ -3,11 +3,12 @@ from tkinter import Menu, messagebox
 from test import InputWindow, round_to_nearest_10
 import threading
 import datetime
-from DeviceManager import VisaDeviceManager
+from DeviceManager import VisaDeviceManager, extract_bits
 from database import Database, Logger
 from ReportsAndScriptRun import Script
 from tkinter import filedialog
 from BarLine import *
+import multiprocessing
 
 
 class ScriptRunnerApp:
@@ -104,9 +105,9 @@ class ScriptRunnerApp:
 class RightClickMenu(tk.LabelFrame):
     """A label frame that shows a context menu on right-click."""
 
-    def __init__(self, main_root, parent_info, values, logger, gen_id="0000", width=0, height=0, text=None):
+    def __init__(self, main_root, parent_info, values, log, gen_id="0000", width=0, height=0, text=None):
         """Initialize the RightClickMenu with a root, parent, label, width, height, and optional text."""
-        self.logger = logger
+        self.logger = log
         super().__init__(parent_info, text=text if text else values["label_name"])
         self.config(width=int(values['Width']), height=int(values['Height']))
         self.label_name = None
@@ -242,10 +243,9 @@ class RightClickMenu(tk.LabelFrame):
 class DraggableRightClickMenu(RightClickMenu):
     """A label frame that can be dragged and shows a context menu on right-click."""
 
-    def __init__(self, main_root, parent_info, values, logger, gen_id="0000"):
+    def __init__(self, main_root, parent_info, values, log, gen_id="0000"):
         """Initialize the DraggableRightClickMenu with a root, parent, and label."""
-        super().__init__(main_root, parent_info, values, logger, gen_id=gen_id, text=values["label_name"])
-        self.logger = logger
+        super().__init__(main_root, parent_info, values, log, gen_id=gen_id, text=values["label_name"])
         self.label_name = values["label_name"]
         self.rounded_x = 0
         self.rounded_y = 0
@@ -287,38 +287,43 @@ class DraggableRightClickMenu(RightClickMenu):
 class DataDraggableRightClickMenu(DraggableRightClickMenu):
     """A draggable label frame that includes a combobox and a toggle button."""
 
-    def __init__(self, main_root, parent_info, values, logger, gen_id="0000"):
+    def __init__(self, main_root, parent_info, values, log, gen_id="0000"):
         """Initialize the ComboboxRightClickMenu with a root, parent, label, width, and height."""
-        super().__init__(main_root, parent_info, values, logger, gen_id=gen_id)
+        super().__init__(main_root, parent_info, values, log, gen_id=gen_id)
+        self.reverse = 1
         self.data_info = None
-        self.thread_update = None
-        self.element_info = None
-        self.logger = logger
+        print("roman ", values)
+        self.low_bit = values["minBit"]
+        self.high_bit = values["maxBit"]
+        self.low_byte = values["minByte"]
+        self.high_byte = values["maxByte"]
         self.init()
 
-    def update_data_label(self):
-        time.sleep(1)
-        print(self.element_info)
-
     def init(self):
-        self.element_info = self.db.get_info(self.gen_id)
-        self.thread_update = threading.Thread(target=self.update_data_label)
-        self.thread_update.start()
         self.data_info = tk.Label(self, text="")
         self.data_info.place(x=2, y=0)
+        if self.low_byte > self.high_byte:
+            temp = self.low_byte
+            self.low_byte = self.high_byte
+            self.high_byte = temp
+            self.reverse = -1
 
 
 class ComboboxRightClickMenu(DraggableRightClickMenu):
     """A draggable label frame that includes a combobox and a toggle button."""
 
-    def __init__(self, main_root, parent_info, values, logger, gen_id="0000"):
+    def __init__(self, main_root, parent_info, values, log, gen_id="0000"):
         """Initialize the ComboboxRightClickMenu with a root, parent, label, width, and height."""
-        super().__init__(main_root, parent_info, values, logger, gen_id=gen_id)
+        super().__init__(main_root, parent_info, values, log, gen_id=gen_id)
+        self.data = None
+        self.first_val = None
+        self.main_root = main_root
+        self.type = None
         self.port = None
-        self.logger = logger
+        self.logger = log
         self.checkbox_var = None
         self.checkbox = None
-        self.val_list = None
+        self.val_list = ["select or set"]
         self.top_frame = None
         self.label = None
         self.combobox = None
@@ -332,22 +337,31 @@ class ComboboxRightClickMenu(DraggableRightClickMenu):
     def init_box(self, values, main_root):
         self.top_frame = tk.Frame(self)
         self.top_frame.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-
+        self.type = values["Type"]
         # Create a Label
         self.label = tk.Label(self.top_frame, text=values["label_name"])
         self.label.pack(side=tk.LEFT, padx=5, pady=5)
 
+        # Retrieve the list from main_root based on the type specified in values
+        self.combobox = ttk.Combobox(self.top_frame, values=list(self.val_list))
+        self.combobox.pack(side=tk.LEFT, padx=5, pady=5)
+        self.combobox.set(self.val_list[0])
+
+        # Bind the combobox selection event to a callback function
+        self.combobox.bind("<<ComboboxSelected>>", self.on_combobox_select)
+
         # Create a toggle Button under the combobox
-        if values["Type"] == "com_list":
+        if self.type == "com_list":
             self.port = VisaDeviceManager(self.logger)
-            self.val_list = self.port.find_devices()
+            self.update_combo_com()
             self.button = tk.Button(self, text="Start", command=self.on_com_click, font=("Arial", 10))
             com_info = self.db.find_data("com_info", self.gen_id)[0]
-            # if com_info["last_conn_info"] != "None" and com_info["last_conn_info"] in self.port.find_devices():
-            #     self.port.device_name = com_info["last_conn_info"]
-            #     self.on_com_click()
+            if com_info["last_conn_info"] != "None" and com_info["last_conn_info"] in self.port.find_devices():
+                self.port.device_name = com_info["last_conn_info"]
+                self.on_com_click()
+                self.combobox.set(self.port.device_name)
 
-        elif values["Type"] == "function":
+        elif self.type == "function":
             self.val_list = getattr(main_root, values["Type"], {})
             self.button = tk.Button(self, text="Send", command=self.on_fun_click, font=("Arial", 10))
             self.checkbox_var = tk.IntVar()
@@ -360,15 +374,15 @@ class ComboboxRightClickMenu(DraggableRightClickMenu):
         # Force the size change by using place geometry manager
         self.place_configure(width=self.width, height=self.height)
 
-        # Retrieve the list from main_root based on the type specified in values
-        self.combobox = ttk.Combobox(self.top_frame, values=list(self.val_list))
-        self.combobox.pack(side=tk.LEFT, padx=5, pady=5)
-
-        # Bind the combobox selection event to a callback function
-        self.combobox.bind("<<ComboboxSelected>>", self.on_combobox_select)
+    def update_combo_com(self):
+        self.val_list = self.port.find_devices()
+        self.val_list.insert(0, "select or set")
+        self.combobox.config(values=self.val_list)
 
     def on_combobox_select(self, event):
         """Callback function when a combobox item is selected."""
+        if self.type == "com_list":
+            self.update_combo_com()
         print(event)
         selected_value = self.combobox.get()
         self.port.device_name = selected_value
@@ -378,18 +392,12 @@ class ComboboxRightClickMenu(DraggableRightClickMenu):
     def on_fun_click(self):
         # Send data if type is function
         auto_run = self.checkbox_var.get()
-        self.logger.message(rf" check box is {auto_run}")
-        if self.val_list and callable(self.val_list.get(self.combobox.get())):
-            selected_function = self.val_list[self.combobox.get()]
-            selected_function()  # Call the function
-        else:
-            selected_value = self.combobox.get()
-            self.logger.message(f"Button clicked! Current combobox selection: {selected_value}")
-            # Add any additional functionality you need on button click
+        print(auto_run)
 
-    def update_all_data_label(self, word):
+    def update_all_data_label(self, packet):
+
         for data_label in self.data_list:
-            data_label.data_info.config(text=word)
+            data_label.data_info.config(text=packet)
 
     def on_com_click(self):
         """Callback function when the button is clicked."""
@@ -398,7 +406,7 @@ class ComboboxRightClickMenu(DraggableRightClickMenu):
             self.combobox.config(state="normal")  # Enable the combobox
             self.is_started = False
             self.port.disconnect()
-            self.update_all_data_label("")
+            # self.update_all_data_label("")
         else:
             if not self.port.connect():
                 self.logger.message("Port in use")
@@ -410,7 +418,9 @@ class ComboboxRightClickMenu(DraggableRightClickMenu):
             self.button.config(text="Stop", fg="red", font=("Arial", 10))
             self.combobox.config(state="disabled")  # Disable the combobox
             self.is_started = True
-            self.update_all_data_label("------")
+            # self.update_all_data_label("------")
+            process = threading.Thread(target=self.update_data_labels)
+            process.start()
 
         # Send data if type is function
         if self.val_list and callable(self.combobox.get()):
@@ -422,14 +432,46 @@ class ComboboxRightClickMenu(DraggableRightClickMenu):
             self.logger.message(f"Button clicked! Current combobox selection: {selected_value}")
             # Add any additional functionality you need on button click
 
+    def update_data_labels(self):
+        threads = []
+        while self.port.device and self.main_root.winfo_exists():
+            time.sleep(0.1)
+            # print("run process")
+            self.data = self.port.query_read()
+            # start = time.time_ns()
+            for data_label in self.data_list:
+                if self.data is None:
+                    break
+                try:
+                    threads.append(threading.Thread(target=self._update_data_label, args=(data_label,)))
+                    threads[-1].start()
+                except Exception as e:
+                    print(e)
+                    pass
+            for thread in threads:
+                thread.join()
+            threads = []
+            # stop = time.time_ns()
+            # print(f"all thread finished in {stop-start} ns")
+            self.data = None
+
+
+    def _update_data_label(self, data_label):
+        time.sleep(0.001)
+        list_bytes = [self.data[int(some_bit)] for some_bit in range(int(data_label.low_byte),
+                                                                          int(data_label.high_byte) + 1)]
+        data = extract_bits(list_bytes[::data_label.reverse], data_label.low_bit, data_label.high_bit)
+        data_label.data_info.config(text=data)
+
 
 class SetupLoader:
-    def __init__(self, root, database, logger):
+    def __init__(self, root, database, log):
+        self.scope_name = None
         self.script = None
         self.db = database
         self.root = root
         self.logger_setup = Logger('setup')
-        self.logger = logger
+        self.logger = log
         self.elements_dict = {}
         self.created_elements = {}
         self.waiting_list = []
@@ -467,8 +509,8 @@ class SetupLoader:
         self.logger.text_widget = text_widget
 
     def create_info_scope(self, frame):
-        scope_name1 = tk.Label(frame, text="----------------------------")
-        scope_name1.place(x=5, y=5)
+        self.scope_name = tk.Label(frame, text="----------------------------")
+        self.scope_name.place(x=5, y=5)
 
     def create_script_label(self, frame):
         ScriptRunnerApp(frame, self.logger, self.db)
@@ -551,7 +593,7 @@ class SetupLoader:
                     parent_info=parent_info,
                     values=element,
                     gen_id=element.get('id', ''),
-                    logger=self.logger)
+                    log=self.logger)
 
         if "ComboboxRightClickMenu" in class_name and element["Type"] == "com_list":
             self.root.comport_list[frame_id] = frame
@@ -563,7 +605,7 @@ class SetupLoader:
                 self.root.comport_list[combo_id].data_list.append(frame)
 
             except Exception as e:
-                self.logger.message(f"Can't create element {element}", "ERROR")
+                self.logger.message(f"Can't create element {element}, {e}", "ERROR")
                 frame.destroy()
                 return None
 
@@ -591,4 +633,5 @@ if __name__ == "__main__":
     db_gui.logger = root_main.loader.logger
     enu_bar = MenuBar(root_main, db_gui)
     # root_main.attributes('-alpha', 0.95)
+    time.sleep(0.01)
     root_main.mainloop()

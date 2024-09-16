@@ -1,7 +1,7 @@
 import json
 from copy import deepcopy
 import time
-from DeviceManager import get_start_time,get_start_time_in_sec, KeySightScopeUSB
+from DeviceManager import get_start_time, get_start_time_in_sec, KeySightScopeUSB
 import os
 import winshell
 import webbrowser
@@ -107,7 +107,8 @@ class Report:
         tables = report_copy["GroupResults"]
         try:
             report_copy["GroupResults"] = "_".join(self.script_name.split(" "))
-        except:
+        except Exception as e:
+            print(e)
             report_copy["GroupResults"] = self.script_name
 
         self.db.add_data_to_table("init_report", report_copy)

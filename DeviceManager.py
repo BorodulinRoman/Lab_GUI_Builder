@@ -2,6 +2,32 @@ import pyvisa
 from pyvisa import constants
 from tkinter import filedialog
 from datetime import datetime
+import atexit
+
+
+def extract_bits(byte_string_list, low, high):
+    try:
+        # Convert byte strings to integers
+        byte_list = [int(byte_str, 16) for byte_str in byte_string_list]
+
+        # Calculate the total bit span
+        total_bits = len(byte_list) * 8
+        # Validate range
+        if not (0 <= low <= high < total_bits):
+            raise ValueError("Low and high must be within the range determined by the byte list size.")
+
+        # Combine bytes into a single integer
+        combined_bytes = 0
+        for i, byte in enumerate(byte_list):
+            combined_bytes |= byte << (8 * i)
+
+        # Mask and extract bits
+        mask = (1 << (high - low + 1)) - 1
+        extracted_value = (combined_bytes >> low) & mask
+
+        return int(extracted_value)  # Return as integer for flexible formatting
+    except Exception as e:
+        return "------"
 
 
 def get_start_time_in_sec():
@@ -28,6 +54,14 @@ class VisaDeviceManager:
         self.rm = pyvisa.ResourceManager()
         self.device = None
         self.device_name = None
+        atexit.register(self.cleanup)
+
+    def cleanup(self):
+        """Cleanup resources before exiting."""
+        if self.device:
+            self.device.close()
+            self.device = None
+            self.logger.message("Cleanly disconnected from device on exit")
 
     def find_devices(self):
         """Finds all connected VISA devices."""
@@ -43,6 +77,11 @@ class VisaDeviceManager:
         try:
             self.device = self.rm.open_resource(self.device_name, access_mode=constants.VI_EXCLUSIVE_LOCK)
             self.logger.message(f"Connected to {self.device_name}")
+            self.set_device_timeout()
+            self.device.write_termination = None
+            self.device.term_chars = None
+            self.device.timeout = 1  # in milliseconds
+            self.device.baud_rate = 4000000
             return True
         except Exception as e:
             self.logger.message(f"Failed to connect to {self.device_name}: {str(e)}")
@@ -68,19 +107,38 @@ class VisaDeviceManager:
         else:
             self.logger.message("No device connected to send command")
 
-    def query(self, command):
-        """Send a command and get a response from the connected VISA device."""
+    def set_device_timeout(self, timeout_ms=1000):
+        """Set the timeout for the VISA device in milliseconds."""
         if self.device:
+            self.device.timeout = timeout_ms
+            self.logger.message(f"Device timeout set to {timeout_ms} milliseconds")
+        else:
+            self.logger.message("No device connected to set timeout")
+
+    def query_read(self, command=None):
+        if self.device:
+            if command is None:
+                return self.read_response()
             try:
                 response = self.device.query(command)
-                self.logger.message(f"Query '{command}' received response: {response}")
                 return response
             except Exception as e:
-                self.logger.message(f"Failed to query command '{command}': {str(e)}")
                 return None
         else:
-            self.logger.message("No device connected to send query")
             return None
+
+    def read_response(self):
+        """Read a response from the connected VISA device without sending a command."""
+        if self.device:
+            try:
+                self.device.read_termination = None
+                response = self.device.read()
+                return response
+            except Exception as e:
+                return None
+        else:
+            return None
+
 
 
 class KeySightScopeUSB:
