@@ -494,11 +494,12 @@ class SetupLoader:
             self.create_element(element)
             print("created_el", self.created_elements)
         # Process waiting list until it's empty
+        for wait in self.waiting_list:
+            wait.comport = self.root.comport_list[wait("func")]
         while self.waiting_list:
-            waiting_list_copy = self.waiting_list.copy()
+            self.waiting_list.copy()
             self.waiting_list.clear()
-            for element in waiting_list_copy:
-                self.create_element(element)
+            #frame.comport = self.root.comport_list[element("func")]
 
     def create_info_label(self, frame):
         text_widget = tk.Text(frame, height=10, width=108, wrap=tk.WORD, state=tk.DISABLED)
@@ -597,6 +598,12 @@ class SetupLoader:
 
         if "ComboboxRightClickMenu" in class_name and element["Type"] == "com_list":
             self.root.comport_list[frame_id] = frame
+
+        if "ComboboxRightClickMenu" in class_name and element["Type"] == "func":
+            if element("func") in self.root.comport_list.keys():
+                frame.comport = self.root.comport_list[element("func")]
+            else:
+                self.waiting_list.append(frame)
 
         if "DataDraggableRightClickMenu" in class_name:
             try:

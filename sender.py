@@ -4,7 +4,7 @@ from datetime import datetime
 
 # Create the resource manager
 rm = visa.ResourceManager()
-
+print(rm.list_resources())
 def hex_to_bytes(hex_string):
     hex_values = hex_string.split(',')
     byte_array = bytes(int(h, 16) for h in hex_values)
