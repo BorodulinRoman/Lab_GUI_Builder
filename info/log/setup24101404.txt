@@ -1,0 +1,19 @@
+14:04:15:957355-info: Parent element 1 not yet created, adding 4 to waiting list
+14:04:15:960335-info: Parent element 1 not yet created, adding 3 to waiting list
+14:04:15:962562-info: Parent element 1 not yet created, adding 2 to waiting list
+14:04:15:964561-info: Setting root size to - 1250x850
+14:04:15:965561-info: Create RightClickMenu'>)
+14:04:15:967591-info: Class String after cleaning: 'RightClickMenu'
+14:04:15:969616-info: Class string does not contain a module name, assuming '__main__'.
+14:04:16:337827-info: Placed frame .!rightclickmenu at position (0,0)
+14:04:16:340983-info: Create DraggableRightClickMenu'>)
+14:04:16:344058-info: Class String after cleaning: 'DraggableRightClickMenu'
+14:04:16:346058-info: Class string does not contain a module name, assuming '__main__'.
+14:04:16:387694-info: Placed frame .!rightclickmenu.!draggablerightclickmenu at position (910,700)
+14:04:16:390819-info: Create DraggableRightClickMenu'>)
+14:04:16:393909-info: Class String after cleaning: 'DraggableRightClickMenu'
+14:04:16:395833-info: Class string does not contain a module name, assuming '__main__'.
+14:04:16:440484-info: Placed frame .!rightclickmenu.!draggablerightclickmenu2 at position (0,600)
+14:04:16:443548-info: Create DraggableRightClickMenu'>)
+14:04:16:445550-info: Class String after cleaning: 'DraggableRightClickMenu'
+14:04:16:447288-info: Class string does not contain a module name, assuming '__main__'.

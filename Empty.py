@@ -134,7 +134,7 @@ class RightClickMenu(tk.LabelFrame):
         self.menu = Menu(self, tearoff=0)
         if self.root.change_mode:
             self.menu.add_command(label='Disable Change Mode', command=self.disable_change_mode)
-            if self.gen_id not in [0, 2, 3, 4]:
+            if self.gen_id not in [0, 1, 2, 3, 4]:
                 self.menu.add_command(label='Remove', command=self.del_label)
             if self.gen_id not in [2, 3, 4]:
                 self.menu.add_cascade(label='New', menu=self.build_menu(x, y))  # Add the submenu to the main menu
@@ -290,9 +290,8 @@ class DataDraggableRightClickMenu(DraggableRightClickMenu):
 
     def update_data_label(self):
 
-        while 1:
-            time.sleep(1)
-            print(self.element_info)
+        time.sleep(1)
+        print(self.element_info)
 
 
 class ComboboxRightClickMenu(DraggableRightClickMenu):
@@ -409,18 +408,13 @@ class SetupLoader:
     def load_setup(self):
         """Create labels/frames based on the loaded JSON data."""
         self.root.loader.packet = None
-        sorted_keys_desc = sorted(self.elements_dict.keys(), reverse=True)
+        sorted_keys_desc = sorted(self.elements_dict.keys(), reverse=False)
         sorted_dict_desc = {key: self.elements_dict[key] for key in sorted_keys_desc}
         for element in sorted_dict_desc.values():
             print("try_to_create", element)
             self.create_element(element)
             print("created_el", self.created_elements)
         # Process waiting list until it's empty
-        while self.waiting_list:
-            waiting_list_copy = self.waiting_list.copy()
-            self.waiting_list.clear()
-            for element in waiting_list_copy:
-                self.create_element(element)
 
     def create_info_label(self, frame):
         text_widget = tk.Text(frame, height=10, width=108, wrap=tk.WORD, state=tk.DISABLED)
@@ -452,13 +446,9 @@ class SetupLoader:
         else:
             if parent_id not in self.created_elements:
                 parent_element = self.elements_dict.get(parent_id)
-                if parent_element:
-                    self.logger_setup.message(
-                        f"Parent element {parent_id} not yet created, adding {element_id} to waiting list")
-                    self.waiting_list.append(element)
-                    return None
-                else:
+                if not parent_element:
                     self.logger_setup.message(f"Warning: Parent element with ID {parent_id} not found.")
+                    self.db.remove_element(element_id)
                     return None
             parent_info = self.created_elements[parent_id]
 
@@ -507,12 +497,17 @@ class SetupLoader:
             except (ImportError, AttributeError) as e:
                 raise ImportError(f"Could not import class '{class_name}' from module '{module_name}'.") from e
         frame_id = element.get('id', '')
+        try:
+            frame = cls(main_root=self.root,
+                        parent_info=parent_info,
+                        values=element,
+                        gen_id=element.get('id', ''),
+                        logger=self.logger)
+        except Exception as e:
 
-        frame = cls(main_root=self.root,
-                    parent_info=parent_info,
-                    values=element,
-                    gen_id=element.get('id', ''),
-                    logger=self.logger)
+            self.logger.message(f"Frame id {frame_id} with error {e}", "Error")
+            return None
+
         if frame_id == 3:
             self.create_info_label(frame)
         elif frame_id == 2:

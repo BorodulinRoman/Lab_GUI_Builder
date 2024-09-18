@@ -207,18 +207,22 @@ class Database:
         return temp_column_name_list
 
     def remove_data_by_id(self, id_value):
-        try:
-            # Get all table names
-            table_names = self.get_all_table_names()
-            for table_name in table_names:
-                # Check if the table has a column named "ID"
-                columns = self.get_columns(table_name)
+        self.switch_database("gui_conf")
+        # Get all table names
+        table_names = self.get_all_table_names()
+        for table_name in table_names:
+            # Check if the table has a column named "ID"
+            columns = self.get_columns(table_name)
+            try:
                 if "id" in columns:
-                    # Execute the delete command
-                    self.cursor.execute(f"DELETE FROM {table_name} WHERE ID = %s", (id_value,))
+                    val1 = f"DELETE FROM {table_name} WHERE id = {id_value}"
+                    print(val1)
+                    self.cursor.execute(val1)
+                    self.connection.commit()
                     self.logger.message(f"Data with ID {id_value} removed from {table_name}.")
-        except Error as e:
-            self.logger.message(f"Failed to remove data: {e}")
+
+            except Error as e:
+                self.logger.message(f"Failed to remove data: {e}")
 
     def find_data(self, table_name, num_id=None, feature='id'):
         try:
@@ -238,6 +242,7 @@ class Database:
             self.logger.message(f"Failed to find data in {table_name}: {e}")
 
     def update(self, info):
+        self.switch_database("gui_conf")
         try:
             table_list = self.get_all_table_names()
             id_value = info.get('id')
@@ -265,8 +270,18 @@ class Database:
         except Error as e:
             self.logger.message(f"Failed to update data in: {e}")
 
-    def remove_element(self, num_id):
-        self.logger.message(f"Remove element {num_id}")
+    #def remove_element(self, num_id):
+    #    self.logger.message(f"Remove element {num_id}")
+
+    def remove_element(self, element_id):
+        try:
+            print(f"removing data by id ",element_id)
+            self.remove_data_by_id(element_id)
+        except Exception as e:
+            print(f"can not removing data by id ", element_id)
+            self.logger.message(e)
+            pass
+        return element_id
 
     def add_element(self, values):
         table_names = self.get_all_table_names()
@@ -497,4 +512,4 @@ def init_database(data_base_name="gui_conf"):
 # db.find_data(table_name="TestTable", num_id=1234)
 # db.update_data({"id": 1234, "age": 35})
 # # db.remove_data_by_id("1234")
-# init_database()
+init_database()
