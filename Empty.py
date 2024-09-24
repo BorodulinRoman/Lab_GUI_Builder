@@ -16,7 +16,8 @@ import threading
 
 
 class AddDataWindow:
-    def __init__(self, frame, database):
+    def __init__(self, frame, database, callback = None):
+        self.callback = None
         self.frame = frame
         self.database = database
         self.new_window = None
@@ -24,13 +25,8 @@ class AddDataWindow:
         self.port_var = {}  # Initialize port_var as an empty dictionary
         self.addkey = False
 
-    def open_new_window(self, labels, scopes_list, name="Add packet label"):
-        self.labels = {}
-        add_thread = threading.Thread(target=self.open_new_window_thread,
-                                      args=(labels, scopes_list, name))
-        add_thread.start()
-
-    def open_new_window_thread(self, labels, boxs=None, name="Add packet label"):
+    def open_new_window(self, labels, boxs=None, name="Add packet label", callback=None):
+        self.callback = callback
         self.addkey = True
         if labels is None:
             return 0
@@ -45,11 +41,13 @@ class AddDataWindow:
         total_blocks = len(boxs) + len([label for label in labels if label != "location"])
 
         # Calculate the dynamic height of the window based on the number of blocks
-        window_height = 50 + (total_blocks * 50)  # 50px per block
+        window_height = 60 + (total_blocks * 60)  # 50px per block
         self.new_window.geometry(f"300x{window_height}")
 
         # OptionMenu for scopes
         for box_name, box in boxs.items():
+            if box is None:
+                continue
             self.port_var[box_name] = tk.StringVar()
             self.port_var[box_name].set(box_name)
             if not len(box):
@@ -60,7 +58,9 @@ class AddDataWindow:
             temp_box.pack(pady=(10, 0))
 
         # Create Entry widgets for each label except "location"
-        for idx, (label, _) in enumerate(self.labels.items()):
+        for idx, (label, some_data) in enumerate(self.labels.items()):
+            if some_data is None:
+                continue
             if label == "location":
                 continue
 
@@ -93,8 +93,11 @@ class AddDataWindow:
         self.new_window.destroy()
 
     def _update_database(self):
-        self.database.switch_database("gui_conf")
-        self.database.add_element(self.labels)
+        if self.callback is not None:
+            self.callback(self.labels)
+        else:
+            self.database.switch_database("gui_conf")
+            self.database.add_element(self.labels)
 
 
 class ScriptRunnerApp:
@@ -235,19 +238,6 @@ class RightClickMenu(tk.LabelFrame):
             self.menu.add_command(label='Info', command=self.get_info)
             self.menu.add_command(label='Enable Change Mode', command=self.confirm_enable_change_mode)
 
-    def add_scope(self):
-        try:
-            self.scopes = ScopeUSB(self.logger)
-            scopes_list = [scope for scope in self.scopes.scopes.keys()]
-            scopes_type = [scope["scope_type"] for scope in self.scopes.scopes.values()]
-            self.logger.message(f"For KeySight Get scope name from,  Utility -> I/O -> VISA Address ")
-            self.add_window.open_new_window({"scope_number": ""},
-                                        {"scope_address": scopes_list, "scope_type": scopes_type},
-                                            "Add new Scope")
-
-        except Exception as e:
-            self.logger.message(f"Can't Add label to scopes, {e}")
-# shira
     def del_label(self):
         """Delete the label and save the setup."""
         try:
@@ -270,43 +260,63 @@ class RightClickMenu(tk.LabelFrame):
         create_menu.add_command(label='Entry window', command=lambda: self.open_creation_window(x, y, drag_rcm))
         return create_menu
 
+    def add_scope(self):
+        try:
+            self.scopes = ScopeUSB(self.logger)
+            scopes_list = [scope for scope in self.scopes.scopes.keys()]
+            scopes_type = [scope["scope_type"] for scope in self.scopes.scopes.values()]
+            self.logger.message(f"For KeySight Get scope name from,  Utility -> I/O -> VISA Address ")
+            self.add_window.open_new_window({"scope_number": ""},
+                                        {"scope_address": scopes_list, "scope_type": scopes_type},
+                                            "Add new Scope")
+
+        except Exception as e:
+            self.logger.message(f"Can't Add label to scopes, {e}")
+
     def open_creation_window(self, x, y, cls):
-        """Opens the InputWindow for user to input settings and create a new widget."""
-        default_values = {'label_name': 'New Widget'}  # Set the default name
-        InputWindow(self.root, "Create New Widget",
-                    lambda values: self.create_new_widget_with_settings(values, x, y, cls), default_values,
-                    {"Dimension": ['150x400', '520x400', '820x600', '320x600', '920x200', '260x200']})
+        label = {'label_name': 'New Widget'}  # Set the default name
+        boxs = {"Dimension": ['150x400', '520x400', '820x600', '320x600', '920x200', '260x200']}
+        self.add_window.open_new_window(label, boxs, "Create New Widget",
+                                        lambda values: self.create_new_widget_with_settings(values, x, y, cls))
 
     def packet_label(self, x, y, cls):
-        """Opens the InputWindow for user to input settings and create a new widget."""
-        default_values = {'label_name': 'New Packet', 'maxByte': 0, 'minByte': 0,
-                          'maxBit': 0, 'minBit': 0,
-                          'info_table': "enter comport"}
-        InputWindow(self.root, "Create New Widget",
-                    lambda values: self.create_new_widget_with_settings(values, x, y, cls), default_values,
-                    {"Dimension": ['130x40', '300x40', '600x40']})
+        dic_ids = {}
+        ids_data = self.db.find_data("com_info", "com_list", "Type")
+        for id_label in ids_data:
+            name = self.db.find_data("label_param", id_label['id'])
+            if name:
+                dic_ids[name[0]['label_name']] = id_label['id']
+
+        label = {'label_name': 'New Packet', 'maxByte': 0, 'minByte': 0, 'maxBit': 0, 'minBit': 0}
+        boxs = {"Dimension": ['130x40', '300x40', '600x40'], 'info_table': list(dic_ids.keys())}
+
+        self.add_window.open_new_window(label, boxs, "Create New Widget",
+                                        lambda values: self.create_new_widget_with_settings(values, x, y, cls, dic_ids))
 
     def open_combobox(self, x, y, cls):
-        """Opens the InputWindow for user to input settings and create a new widget."""
-        default_values = {'label_name': 'New combo', "last_conn_info": None, "func": None}  # Set the default name
-        InputWindow(self.root, "Create New Widget",
-                    lambda values: self.create_new_widget_with_settings(values, x, y, cls), default_values,
-                    {"Dimension": ['160x100', '300x100', '600x100'], "Type": ["com_list", "function"]})
+        label = {'label_name': 'New combo', "last_conn_info": None, "func": None}
+        boxs = {"Dimension": ['160x100', '300x100', '600x100'], "Type": ["com_list", "function"]}
+        self.add_window.open_new_window(label, boxs, "Create New Combobox",
+                                        lambda values: self.create_new_widget_with_settings(values, x, y, cls))
 
-    def create_new_widget_with_settings(self, values, x, y, cls):
-        """Creates a new widget with the specified settings."""
-        com_id = {}
+    def create_new_widget_with_settings(self, values, x, y, cls, dict_ids=None):
+        com_id = 0
+        if dict_ids is not None:
+            for key, val in values.items():
+                if val in dict_ids:
+                    values[key] = dict_ids[val]
+                    com_id = dict_ids[val]
+
         try:
+            if "Dimension" in values.keys():
+                values['Width'], values['Height'] = values["Dimension"].split('x')
+            if "info_table" not in values.keys():
+                values['info_table'] = None
             values["x"] = round_to_nearest_10(x - self.winfo_rootx())
             values["y"] = round_to_nearest_10(y - self.winfo_rooty())
             values["parent"] = self.gen_id
             values["class"] = str(cls)
-            if "info_table" not in values.keys():
-                values["info_table"] = None
-                com_id["id"] = 0
-            else:
-                com_id = self.db.find_data("label_param", values["info_table"], "label_name")[0]
-            values["id"] = self.db.add_element(values, int(int(com_id["id"]) / 10000) * 10000)
+            values["id"] = self.db.add_element(values, int(int(com_id)/10000) * 10000)
             frame = self.root.loader.create_frame(values, self)
             frame.place(x=values["x"], y=values["y"])
 
@@ -495,6 +505,7 @@ class ComboboxRightClickMenu(DraggableRightClickMenu):
 
     def on_fun_click(self):
         # Send data if type is function
+        print(self.comport)
         auto_run = self.checkbox_var.get()
         print(auto_run)
 
@@ -597,12 +608,11 @@ class SetupLoader:
             self.create_element(element)
             print("created_el", self.created_elements)
         # Process waiting list until it's empty
+
+
         for wait in self.waiting_list:
             wait.comport = self.root.comport_list[wait("func")]
-        while self.waiting_list:
-            self.waiting_list.copy()
-            self.waiting_list.clear()
-            # frame.comport = self.root.comport_list[element("func")]
+
 
     def create_info_label(self, frame):
         text_widget = tk.Text(frame, height=10, width=108, wrap=tk.WORD, state=tk.DISABLED)
@@ -700,9 +710,9 @@ class SetupLoader:
                     log=self.logger)
 
         if "ComboboxRightClickMenu" in class_name and element["Type"] == "com_list":
-            self.root.comport_list[frame_id] = frame
+            self.root.comport_list[str(frame_id)] = frame
 
-        if "ComboboxRightClickMenu" in class_name and element["Type"] == "func":
+        if "ComboboxRightClickMenu" in class_name and element["Type"] == "function":
             if element("func") in self.root.comport_list.keys():
                 frame.comport = self.root.comport_list[element("func")]
             else:
@@ -711,8 +721,7 @@ class SetupLoader:
         if "DataDraggableRightClickMenu" in class_name:
             try:
                 self.db.switch_database('gui_conf')
-                combo_id = self.db.find_data("label_param", element["info_table"], "label_name")[0]["id"]
-                self.root.comport_list[combo_id].data_list.append(frame)
+                self.root.comport_list[str(element["info_table"])].data_list.append(frame)
 
             except Exception as e:
                 self.logger.message(f"Can't create element {element}, {e}", "ERROR")

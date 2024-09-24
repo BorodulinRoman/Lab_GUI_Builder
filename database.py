@@ -222,12 +222,12 @@ class Database:
         except Error as e:
             self.logger.message(f"Failed to remove data: {e}")
 
-    def find_data(self, table_name, num_id=None, feature='id'):
+    def find_data(self, table_name, feature_info=None, feature='id'):
         try:
-            if num_id is None:
+            if feature_info is None:
                 sql = f"SELECT * FROM {table_name}"
             else:
-                sql = f"SELECT * FROM {table_name} WHERE {feature} = '{num_id}'"
+                sql = f"SELECT * FROM {table_name} WHERE {feature} = '{feature_info}'"
             print(sql)
             self.cursor.execute(sql)
             columns = self.cursor.column_names
@@ -273,9 +273,9 @@ class Database:
     def add_element(self, values, num_param=0):
         id_data = None
         table_names = self.get_all_table_names()
-        if 'id' in values.keys():
-            values['id'] = int(1 + int(values["parent"]) / 10000) * 10000 + self.generate_unique_id() + num_param
-            id_data = values['id']
+
+        values['id'] = int(1 + int(values["parent"]) / 10000) * 10000 + self.generate_unique_id() + num_param
+        id_data = values['id']
 
         for table_name in table_names:
             temp_values = {}
@@ -346,15 +346,13 @@ def remove_database_info(db):
         db.delete_table(table)
 
 
-
-
 def init_database(data_base_name="gui_conf"):
     create_schema("localhost", "root", "Aa123456", "gui_conf")
     create_schema("localhost", "root", "Aa123456", "reports_list")
     create_schema("localhost", "root", "Aa123456", "logs")
     db = Database(host="localhost", user="root", passwd="Aa123456", database=data_base_name)
     db.connect()
-    #remove_database_info(db)
+    # remove_database_info(db)
 
     db.switch_database('gui_conf')
     columns = {"id": "INT AUTO_INCREMENT PRIMARY KEY",
