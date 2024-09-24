@@ -240,6 +240,9 @@ class RightClickMenu(tk.LabelFrame):
 
     def del_label(self):
         """Delete the label and save the setup."""
+        answer = messagebox.askyesno("Remove Element", "Are you sure you want to remove element?")
+        if not answer:
+            return
         try:
             temp = self.db.remove_element(self.gen_id)
             self.destroy()  # This destroys the widget
