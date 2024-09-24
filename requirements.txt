@@ -4,3 +4,5 @@ winshell~=0.6
 pywin32
 mysql-connector-python~=9.0.0
 pandas~=2.2.2
+nidaqmx~=1.0.1
+picosdk~=1.1

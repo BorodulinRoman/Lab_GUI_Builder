@@ -1,7 +1,7 @@
 import json
 from copy import deepcopy
 import time
-from DeviceManager import get_start_time, get_start_time_in_sec, KeySightScopeUSB
+from DeviceManager import get_start_time, get_start_time_in_sec, ScopeUSB
 import os
 import winshell
 import webbrowser
@@ -180,7 +180,7 @@ class Script:
     def __init__(self, logger, database, tester="RelayCTRL"):
         self.port = None
         self.path = None
-        self.scope = KeySightScopeUSB(logger)
+        self.scope = ScopeUSB(logger)
         self.stop_flag = 1
         self.logger = logger
         self.last_line = None

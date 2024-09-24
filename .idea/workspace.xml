@@ -4,9 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="03566363-8df4-4cd8-b209-5c6ef035168c" name="Changes" comment="init comport for thread update">
+    <list default="true" id="03566363-8df4-4cd8-b209-5c6ef035168c" name="Changes" comment="init comport for thread update function connection">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DeviceManager.py" beforeDir="false" afterPath="$PROJECT_DIR$/DeviceManager.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Empty.py" beforeDir="false" afterPath="$PROJECT_DIR$/Empty.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ReportsAndScriptRun.py" beforeDir="false" afterPath="$PROJECT_DIR$/ReportsAndScriptRun.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database.py" beforeDir="false" afterPath="$PROJECT_DIR$/database.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -176,17 +180,17 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Python.Empty" />
-      <item itemvalue="Python.sender" />
       <item itemvalue="Python.DeviceManager" />
+      <item itemvalue="Python.Empty" />
       <item itemvalue="Python.database" />
+      <item itemvalue="Python.sender" />
       <item itemvalue="Python.test" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.database" />
         <item itemvalue="Python.sender" />
         <item itemvalue="Python.test" />
-        <item itemvalue="Python.database" />
         <item itemvalue="Python.DeviceManager" />
         <item itemvalue="Python.Empty" />
       </list>
@@ -272,7 +276,15 @@
       <option name="project" value="LOCAL‎" />
       <updated>1726477336312</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL‎-00009" summary="init comport for thread update function connection">
+      <option name="closed" value="true" />
+      <created>1726640095931</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL‎-00009" />
+      <option name="project" value="LOCAL‎" />
+      <updated>1726640095932</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -295,7 +307,8 @@
     <MESSAGE value="Search issues fixed" />
     <MESSAGE value="defined comport and store at dictionary." />
     <MESSAGE value="init comport for thread update" />
-    <option name="LAST_COMMIT_MESSAGE" value="init comport for thread update" />
+    <MESSAGE value="init comport for thread update function connection" />
+    <option name="LAST_COMMIT_MESSAGE" value="init comport for thread update function connection" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -306,24 +319,44 @@
           <option name="timeStamp" value="52" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/database.py</url>
-          <line>422</line>
-          <option name="timeStamp" value="98" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/database.py</url>
-          <line>486</line>
-          <option name="timeStamp" value="99" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/BarLine.py</url>
           <line>105</line>
           <option name="timeStamp" value="106" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/Empty.py</url>
-          <line>391</line>
+          <line>495</line>
           <option name="timeStamp" value="107" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/DeviceManager.py</url>
+          <line>173</line>
+          <option name="timeStamp" value="109" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/DeviceManager.py</url>
+          <line>178</line>
+          <option name="timeStamp" value="110" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/Empty.py</url>
+          <line>239</line>
+          <option name="timeStamp" value="111" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/Empty.py</url>
+          <line>240</line>
+          <option name="timeStamp" value="112" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/Empty.py</url>
+          <line>242</line>
+          <option name="timeStamp" value="113" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/DeviceManager.py</url>
+          <line>181</line>
+          <option name="timeStamp" value="114" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

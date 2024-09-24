@@ -2,7 +2,9 @@ import pyvisa
 from pyvisa import constants
 from tkinter import filedialog
 from datetime import datetime
+from nidaqmx.system import System
 import atexit
+import picosdk
 
 
 def extract_bits(byte_string_list, low, high):
@@ -140,8 +142,7 @@ class VisaDeviceManager:
             return None
 
 
-
-class KeySightScopeUSB:
+class ScopeUSB:
     def __init__(self, logger):
         self.logger = logger
         self.scopes = {}
@@ -150,16 +151,48 @@ class KeySightScopeUSB:
         self.init()
 
     def init(self):
+        # Initialize VISA resources
         for resource_name in self.rm.list_resources():
             try:
                 resource_split_name = resource_name.split('::')
                 dec_list = [str(int(item, 16)) if '0x' in item else item for item in resource_split_name]
                 dec_list.remove(dec_list[-2])
                 resource_name = '::'.join(dec_list)
-                self.scopes[resource_name] = self.rm.open_resource(resource_name)
+                self.scopes[resource_name] = {"scope_address": self.rm.open_resource(resource_name),
+                                              'scope_type': "KeySight"}
+
                 self.logger.message(self.scopes[resource_name].query('*IDN?'))
             except Exception as e:
-                self.logger.message(e)
+                self.logger.message(f"Error with VISA resource {resource_name}: {e}")
+
+        # Initialize NI-DAQ devices
+        try:
+            system = System.local()
+            for device in system.devices:
+                # Here you can customize how much device info you want to log and save
+                device_info = {
+                    'scope_address': device.name,
+                    'scope_type': device.product_type,
+                }
+
+                self.scopes[device.name] = device_info
+                self.logger.message(f"NI-DAQ device added: {device_info}")
+        except Exception as e:
+            self.logger.message(f"Error initializing NI-DAQ devices: {e}")
+
+        # Initialize PicoScope devices
+        try:
+            # Example initialization, adjust based on actual API calls for PicoScope
+            pico_scope = picosdk.open_picoscope()
+            pico_devices = picosdk.discover_devices()
+            for device in pico_devices:
+                self.scopes[device.serial_number] = {
+                    'scope_address': device.handle,
+                    'scope_type': 'PicoScope'
+                }
+                self.logger.message(f"PicoScope device added: Serial {device.serial_number}")
+        except Exception as e:
+            self.logger.message(f"Error initializing PicoScope devices: {e}")
 
     def reset(self, scp_id):
         self.scopes[scp_id].write('*RST')

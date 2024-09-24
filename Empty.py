@@ -3,12 +3,98 @@ from tkinter import Menu, messagebox
 from test import InputWindow, round_to_nearest_10
 import threading
 import datetime
-from DeviceManager import VisaDeviceManager, extract_bits
+from DeviceManager import VisaDeviceManager, extract_bits, ScopeUSB
 from database import Database, Logger
 from ReportsAndScriptRun import Script
 from tkinter import filedialog
 from BarLine import *
-import multiprocessing
+# import multiprocessing
+
+
+import tkinter as tk
+import threading
+
+
+class AddDataWindow:
+    def __init__(self, frame, database):
+        self.frame = frame
+        self.database = database
+        self.new_window = None
+        self.labels = {}
+        self.port_var = {}  # Initialize port_var as an empty dictionary
+        self.addkey = False
+
+    def open_new_window(self, labels, scopes_list, name="Add packet label"):
+        self.labels = {}
+        add_thread = threading.Thread(target=self.open_new_window_thread,
+                                      args=(labels, scopes_list, name))
+        add_thread.start()
+
+    def open_new_window_thread(self, labels, boxs=None, name="Add packet label"):
+        self.addkey = True
+        if labels is None:
+            return 0
+
+        # Create a new window
+        self.new_window = tk.Toplevel(self.frame)
+        self.new_window.title(name)
+
+        self.labels = labels
+
+        # Count the number of blocks (OptionMenus and Entries)
+        total_blocks = len(boxs) + len([label for label in labels if label != "location"])
+
+        # Calculate the dynamic height of the window based on the number of blocks
+        window_height = 50 + (total_blocks * 50)  # 50px per block
+        self.new_window.geometry(f"300x{window_height}")
+
+        # OptionMenu for scopes
+        for box_name, box in boxs.items():
+            self.port_var[box_name] = tk.StringVar()
+            self.port_var[box_name].set(box_name)
+            if not len(box):
+                box = ["None"]
+
+            # Create an OptionMenu widget
+            temp_box = tk.OptionMenu(self.new_window, self.port_var[box_name], *box)
+            temp_box.pack(pady=(10, 0))
+
+        # Create Entry widgets for each label except "location"
+        for idx, (label, _) in enumerate(self.labels.items()):
+            if label == "location":
+                continue
+
+            # Label for the entry
+            lbl = tk.Label(self.new_window, text=label)
+            lbl.pack(pady=(10, 0))
+
+            # Entry widget
+            entry = tk.Entry(self.new_window)
+            entry.pack(pady=(0, 10))
+
+            # Save entry widget reference in the labels dict
+            self.labels[label] = entry
+
+        # OK button to close the window and save the data
+        ok_button = tk.Button(self.new_window, text="OK", command=self.on_ok)
+        ok_button.pack(pady=10)
+
+    def on_ok(self):
+        # Save the data from Entry widgets
+        for label, widget in self.labels.items():
+            if isinstance(widget, tk.Entry):
+                self.labels[label] = widget.get()  # Get the text from the Entry widget
+
+        # Save the selected option from OptionMenu (port_var)
+        for name, var in self.port_var.items():
+            self.labels[name] = var.get()  # Get the selected scope
+        self.addkey = False
+        self._update_database()
+        self.new_window.destroy()
+
+    def _update_database(self):
+        self.database.switch_database("gui_conf")
+        self.database.add_element(self.labels)
 
 
 class ScriptRunnerApp:
@@ -107,6 +193,7 @@ class RightClickMenu(tk.LabelFrame):
 
     def __init__(self, main_root, parent_info, values, log, gen_id="0000", width=0, height=0, text=None):
         """Initialize the RightClickMenu with a root, parent, label, width, height, and optional text."""
+        self.scopes = None
         self.logger = log
         super().__init__(parent_info, text=text if text else values["label_name"])
         self.config(width=int(values['Width']), height=int(values['Height']))
@@ -114,6 +201,7 @@ class RightClickMenu(tk.LabelFrame):
         self.menu = None
         self.x_start = None
         self.y_start = None
+        self.add_window = AddDataWindow(main_root, database=db_gui)
         self.root = main_root  # Reference to the root window
         self.visaDevices = VisaDeviceManager(logger=self.logger)
         self.root.com_list = self.visaDevices.find_devices()
@@ -134,6 +222,7 @@ class RightClickMenu(tk.LabelFrame):
         """Create the context menu based on the current state."""
         self.menu = Menu(self, tearoff=0)
         if self.root.change_mode:
+            self.menu.add_command(label='Info', command=self.get_info)
             self.menu.add_command(label='Disable Change Mode', command=self.disable_change_mode)
             if self.gen_id not in [0, 2, 3, 4]:
                 self.menu.add_command(label='Remove', command=self.del_label)
@@ -141,8 +230,23 @@ class RightClickMenu(tk.LabelFrame):
                 self.menu.add_cascade(label='New', menu=self.build_menu(x, y))  # Add the submenu to the main menu
 
         else:
+            if self.gen_id == 4:
+                self.menu.add_command(label='Add Scope', command=self.add_scope)
             self.menu.add_command(label='Info', command=self.get_info)
             self.menu.add_command(label='Enable Change Mode', command=self.confirm_enable_change_mode)
+
+    def add_scope(self):
+        try:
+            self.scopes = ScopeUSB(self.logger)
+            scopes_list = [scope for scope in self.scopes.scopes.keys()]
+            scopes_type = [scope["scope_type"] for scope in self.scopes.scopes.values()]
+            self.logger.message(f"For KeySight Get scope name from,  Utility -> I/O -> VISA Address ")
+            self.add_window.open_new_window({"scope_number": ""},
+                                        {"scope_address": scopes_list, "scope_type": scopes_type},
+                                            "Add new Scope")
+
+        except Exception as e:
+            self.logger.message(f"Can't Add label to scopes, {e}")
 
     def del_label(self):
         """Delete the label and save the setup."""
@@ -455,11 +559,10 @@ class ComboboxRightClickMenu(DraggableRightClickMenu):
             # print(f"all thread finished in {stop-start} ns")
             self.data = None
 
-
     def _update_data_label(self, data_label):
         time.sleep(0.001)
         list_bytes = [self.data[int(some_bit)] for some_bit in range(int(data_label.low_byte),
-                                                                          int(data_label.high_byte) + 1)]
+                                                                     int(data_label.high_byte) + 1)]
         data = extract_bits(list_bytes[::data_label.reverse], data_label.low_bit, data_label.high_bit)
         data_label.data_info.config(text=data)
 
@@ -499,7 +602,7 @@ class SetupLoader:
         while self.waiting_list:
             self.waiting_list.copy()
             self.waiting_list.clear()
-            #frame.comport = self.root.comport_list[element("func")]
+            # frame.comport = self.root.comport_list[element("func")]
 
     def create_info_label(self, frame):
         text_widget = tk.Text(frame, height=10, width=108, wrap=tk.WORD, state=tk.DISABLED)
