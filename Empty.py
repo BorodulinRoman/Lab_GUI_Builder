@@ -247,7 +247,7 @@ class RightClickMenu(tk.LabelFrame):
 
         except Exception as e:
             self.logger.message(f"Can't Add label to scopes, {e}")
-
+# shira
     def del_label(self):
         """Delete the label and save the setup."""
         try:
