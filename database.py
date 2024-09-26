@@ -352,7 +352,7 @@ def init_database(data_base_name="gui_conf"):
     create_schema("localhost", "root", "Aa123456", "logs")
     db = Database(host="localhost", user="root", passwd="Aa123456", database=data_base_name)
     db.connect()
-    remove_database_info(db)
+    # remove_database_info(db)
 
     db.switch_database('gui_conf')
     columns = {"id": "INT AUTO_INCREMENT PRIMARY KEY",
@@ -513,4 +513,4 @@ def init_database(data_base_name="gui_conf"):
 # db.find_data(table_name="TestTable", num_id=1234)
 # db.update_data({"id": 1234, "age": 35})
 # # db.remove_data_by_id("1234")
-# init_database()
+init_database()
