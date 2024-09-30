@@ -17,7 +17,7 @@ class PrintLoger:
 
 class Logger:
     def __init__(self, name):
-        self.db = Database("logs")
+        self.db = Database(name)
         self.table_name = datetime.now().strftime(f"{name}%y%d%H%M")
         self.log_queue = Queue()
         self.text_widget = None
@@ -338,31 +338,31 @@ class Database:
         return random.choice(available_ids)
 
 
-def remove_database_info(db):
-    db.switch_database('gui_conf')
+def remove_database_info(db, data_base_name="gui"):
+    db.switch_database(f"{data_base_name}_conf")
     for table in db.get_all_table_names():
         db.delete_table(table)
 
-    db.switch_database('reports_list')
+    db.switch_database(f"{data_base_name}_reports_list")
     for table in db.get_all_table_names():
         db.delete_table(table)
 
-    db.switch_database('logs')
+    db.switch_database(f"{data_base_name}_logs")
     for table in db.get_all_table_names():
         db.delete_table(table)
 
 
 
 
-def init_database(data_base_name="gui_conf"):
-    create_schema("localhost", "root", "Aa123456", "gui_conf")
-    create_schema("localhost", "root", "Aa123456", "reports_list")
-    create_schema("localhost", "root", "Aa123456", "logs")
-    db = Database(host="localhost", user="root", passwd="Aa123456", database=data_base_name)
+def init_database(data_base_name):
+    create_schema("localhost", "root", "Aa123456", f"{data_base_name}_conf")
+    create_schema("localhost", "root", "Aa123456", f"{data_base_name}_reports_list")
+    create_schema("localhost", "root", "Aa123456", f"{data_base_name}_logs")
+    db = Database(host="localhost", user="root", passwd="Aa123456", database=f"{data_base_name}_conf")
     db.connect()
     # remove_database_info(db)
 
-    db.switch_database('gui_conf')
+    db.switch_database(f'{data_base_name}_conf')
     columns = {"id": "INT AUTO_INCREMENT PRIMARY KEY",
                "parent": "INT",
                "x": "INT",
@@ -441,7 +441,7 @@ def init_database(data_base_name="gui_conf"):
     db.add_data_to_table("label_param", data_info)
     db.add_data_to_table("label_param", data_scope)
 
-    db.switch_database('reports_list')
+    db.switch_database(f"{data_base_name}_reports_list")
     columns = {"ResultStatus": "INT",
                "project_name": "VARCHAR(255)",
                "test_name": "VARCHAR(255)",
@@ -512,4 +512,4 @@ def init_database(data_base_name="gui_conf"):
 # db.find_data(table_name="TestTable", num_id=1234)
 # db.update_data({"id": 1234, "age": 35})
 # # db.remove_data_by_id("1234")
-init_database()
+# init_database()

@@ -387,12 +387,13 @@ class ComboboxRightClickMenu(DraggableRightClickMenu):
 
 
 class SetupLoader:
-    def __init__(self, root, database, logger):
+    def __init__(self, root, database, logger, gui_name):
         self.script = None
         self.db = database
         self.root = root
         self.logger_setup = Logger('setup')
         self.logger = logger
+        self.gui_name = gui_name
         self.elements_dict = {}
         self.created_elements = {}
         self.waiting_list = []
@@ -520,13 +521,13 @@ class SetupLoader:
 if __name__ == "__main__":
     root_main = tk.Tk()
     root_main.change_mode = False
+    gui_name = 'lr2'
+    logger = Logger(f"{gui_name}_logs")
+    db_gui = Database(f"{gui_name}_conf", logger)
 
-    logger = Logger("log")
-    db_gui = Database("gui_conf", logger)
-
-    root_main.loader = SetupLoader(root_main, db_gui, logger)
+    root_main.loader = SetupLoader(root_main, db_gui, logger, gui_name)
     root_main.loader.load_setup()
     db_gui.logger = root_main.loader.logger
-    enu_bar = MenuBar(root_main, db_gui)
+    enu_bar = MenuBar(root_main, db_gui, gui_name)
     # root_main.attributes('-alpha', 0.95)
     root_main.mainloop()
