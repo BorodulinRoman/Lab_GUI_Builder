@@ -1,7 +1,5 @@
 import time
 from tkinter import Menu, messagebox
-from test import InputWindow, round_to_nearest_10
-import threading
 import datetime
 from DeviceManager import VisaDeviceManager, extract_bits, ScopeUSB
 from database import Database, Logger
@@ -9,14 +7,19 @@ from ReportsAndScriptRun import Script
 from tkinter import filedialog
 from BarLine import *
 # import multiprocessing
-
-
 import tkinter as tk
 import threading
 
 
+def round_to_nearest_10(n):
+    if n < 0:
+        return 0
+    """Round the number to the nearest multiple of 10, rounding up on ties."""
+    return ((n + 5) // 10) * 10
+
+
 class AddDataWindow:
-    def __init__(self, frame, database, callback = None):
+    def __init__(self, frame, database):
         self.callback = None
         self.frame = frame
         self.database = database
@@ -231,7 +234,7 @@ class RightClickMenu(tk.LabelFrame):
         if self.root.change_mode:
             self.menu.add_command(label='Info', command=self.get_info)
             self.menu.add_command(label='Disable Change Mode', command=self.disable_change_mode)
-            if self.gen_id not in [0,1, 2, 3, 4]:
+            if self.gen_id not in [0, 1, 2, 3, 4]:
                 self.menu.add_command(label='Remove', command=self.del_label)
             if self.gen_id not in [2, 3, 4] and self.element['Type'] is None:
                 self.menu.add_cascade(label='New', menu=self.build_menu(x, y))  # Add the submenu to the main menu
@@ -271,9 +274,9 @@ class RightClickMenu(tk.LabelFrame):
         comt_rcm = ComTransmitRightClickMenu
         comb_rcm = ButtonTransmitRightClickMenu
         create_menu = Menu(menu, tearoff=0)  # Create a new submenu
-        create_menu.add_command(label='Port Connection', command = lambda: self.open_com_box(x, y, comp_rcm))
-        create_menu.add_command(label='Transmit box', command = lambda: self.open_transmit_box(x, y, comt_rcm))
-        create_menu.add_command(label='Button Transmit', command = lambda: self.open_button(x, y, comb_rcm))
+        create_menu.add_command(label='Port Connection', command=lambda: self.open_com_box(x, y, comp_rcm))
+        create_menu.add_command(label='Transmit box', command=lambda: self.open_transmit_box(x, y, comt_rcm))
+        create_menu.add_command(label='Button Transmit', command=lambda: self.open_button(x, y, comb_rcm))
         return create_menu
 
     def add_scope(self):
@@ -283,7 +286,7 @@ class RightClickMenu(tk.LabelFrame):
             scopes_type = [scope["scope_type"] for scope in self.scopes.scopes.values()]
             self.logger.message(f"For KeySight Get scope name from,  Utility -> I/O -> VISA Address ")
             self.add_window.open_new_window({"scope_number": ""},
-                                        {"scope_address": scopes_list, "scope_type": scopes_type},
+                                            {"scope_address": scopes_list, "scope_type": scopes_type},
                                             "Add new Scope")
 
         except Exception as e:
@@ -328,7 +331,7 @@ class RightClickMenu(tk.LabelFrame):
     def open_button(self, x, y, cls):
         dic_ids = self.get_coms_data()
         label = {'label_name': 'New combo', "last_conn_info": None, "func": "Some_data"}
-        boxs = {'info_table': list(dic_ids.keys()),"Dimension": ['50x60']}
+        boxs = {'info_table': list(dic_ids.keys()), "Dimension": ['50x60']}
         self.add_window.open_new_window(label, boxs, "Create New Button transmit box",
                                         lambda values: self.create_new_widget_with_settings(values, x, y, cls))
 
@@ -482,9 +485,9 @@ class ComPortRightClickMenu(DraggableRightClickMenu):
         self.data_list = []
         self.width = values.get('Width', 150)
         self.height = values.get('Height', 100)
-        self.init_box(values, main_root)
+        self.init_box(values)
 
-    def init_box(self, values, main_root):
+    def init_box(self, values):
         self.top_frame = tk.Frame(self)
         self.top_frame.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
         self.type = values["Type"]
@@ -515,7 +518,6 @@ class ComPortRightClickMenu(DraggableRightClickMenu):
         # Force the size change by using place geometry manager
         self.place_configure(width=self.width, height=self.height)
 
-
     def update_combo_com(self):
         self.val_list = self.port.find_devices()
         self.val_list.insert(0, "select or set")
@@ -530,7 +532,6 @@ class ComPortRightClickMenu(DraggableRightClickMenu):
         self.port.device_name = selected_value
         self.logger.message(f"Selected value: {selected_value}")
         # Add any additional functionality you need on selection
-
 
     def update_all_data_label(self, packet):
         for data_label in self.data_list:
@@ -556,7 +557,7 @@ class ComPortRightClickMenu(DraggableRightClickMenu):
             self.combobox.config(state="disabled")  # Disable the combobox
             self.is_started = True
             # self.update_all_data_label("------")
-            process = threading.Thread(target=self.update_data_labels,args=("------",))
+            process = threading.Thread(target=self.update_data_labels, args=("------",))
             process.start()
 
         # Send data if type is function
@@ -670,10 +671,7 @@ class ComTransmitRightClickMenu(DraggableRightClickMenu):
         # Add any additional functionality you need on selection
 
     def on_fun_click(self):
-        # Send data if type is function
-        print(self.comport)
-        auto_run = self.checkbox_var.get()
-        print(auto_run)
+        print(self.element)
 
     def update_data_labels(self):
         threads = []
@@ -727,9 +725,9 @@ class ButtonTransmitRightClickMenu(DraggableRightClickMenu):
         self.data_list = []
         self.width = values.get('Width', 150)
         self.height = values.get('Height', 100)
-        self.init_box(values, main_root)
+        self.init_box(values)
 
-    def init_box(self, values, main_root):
+    def init_box(self, values):
         self.top_frame = tk.Frame(self)
         self.top_frame.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
         self.type = values["Type"]
@@ -741,7 +739,6 @@ class ButtonTransmitRightClickMenu(DraggableRightClickMenu):
     def on_fun_click(self):
         # Send data if type is function
         print(self.element)
-
 
     def _update_data_label(self, data_label):
         time.sleep(0.001)
@@ -782,10 +779,8 @@ class SetupLoader:
             print("created_el", self.created_elements)
         # Process waiting list until it's empty
 
-
         for wait in self.waiting_list:
             wait.comport = self.root.comport_list[wait("func")]
-
 
     def create_info_label(self, frame):
         text_widget = tk.Text(frame, height=10, width=108, wrap=tk.WORD, state=tk.DISABLED)
