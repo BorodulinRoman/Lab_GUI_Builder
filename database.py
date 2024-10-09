@@ -273,7 +273,6 @@ class Database:
     def add_element(self, values, num_param=0):
         id_data = None
         table_names = self.get_all_table_names()
-
         values['id'] = int(1 + int(values["parent"]) / 10000) * 10000 + self.generate_unique_id() + num_param
         id_data = values['id']
 
@@ -364,7 +363,20 @@ def init_database(data_base_name="gui_conf"):
                "label_name": "VARCHAR(255)",
                "class": "VARCHAR(255)",
                "info_table": "VARCHAR(255)"}
+
     db.create_table("label_param", columns)
+
+    columns = {"id": "INT AUTO_INCREMENT PRIMARY KEY",
+               "on_state": "VARCHAR(255)",
+               "off_state": "VARCHAR(255)"}
+
+    db.create_table("buttons", columns)
+
+    columns = {"id": "INT",
+               "function_name": "VARCHAR(255)",
+               "function_info": "VARCHAR(255)"}
+
+    db.create_table("transmit_com", columns)
 
     columns = {"id": "INT AUTO_INCREMENT PRIMARY KEY",
                "maxByte": "INT",
@@ -452,6 +464,7 @@ def init_database(data_base_name="gui_conf"):
                "gui_ver": "VARCHAR(255)",
                "StartTimeFormatted": "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
                "GroupResults": "VARCHAR(255)"}
+
     db.create_table("init_report", columns)
     init_report = {
         "ResultStatus": 0,

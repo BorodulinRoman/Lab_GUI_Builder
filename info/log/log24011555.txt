@@ -1,0 +1,7 @@
+15:56:00:515457-info: Error with VISA resource INSTR: VI_ERROR_RSRC_NFOUND (-1073807343): Insufficient location information or the requested device or resource is not present in the system.
+15:56:00:521452-info: Error with VISA resource INSTR: VI_ERROR_RSRC_NFOUND (-1073807343): Insufficient location information or the requested device or resource is not present in the system.
+15:56:00:526453-info: NI-DAQ device added: {'scope_address': 'Dev2', 'scope_type': 'USB-6009'}
+15:56:00:530478-info: Error initializing PicoScope devices: module 'picosdk' has no attribute 'discover_devices'
+15:56:09:740604-info: Change mode enabled
+15:56:46:325248-ERROR: Key error in widget settings: 'Width'
+15:57:08:769078-ERROR: Key error in widget settings: 'Width'

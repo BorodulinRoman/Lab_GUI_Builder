@@ -3,6 +3,9 @@ import numpy as np
 import threading
 from PyQt5 import QtWidgets, QtCore
 import pyqtgraph as pg
+from scipy.signal import medfilt
+import statistics
+
 
 class RandomDataGenerator(QtCore.QObject):
     data_ready = QtCore.pyqtSignal(float, dict)
@@ -32,43 +35,12 @@ class RandomDataGenerator(QtCore.QObject):
             data = {}
             for i, ch in enumerate(self.channels_enabled):
                 if self.channels_enabled[ch]:
-                    frequency = 1*i  # 1Hz signal frequency
+                    frequency = 1 + i  # 1Hz signal frequency
                     voltage = np.sin(2 * np.pi * frequency * self.time) + np.random.normal(0, 0.1)
-                    data[ch] = voltage * i
+                    data[ch] = voltage
 
             self.data_ready.emit(self.time, data)
 
-
-class MeasurementWidget(QtWidgets.QWidget):
-    def __init__(self, measurement):
-        super().__init__()
-        self.measurement = measurement
-        self.init_ui()
-
-    def init_ui(self):
-        layout = QtWidgets.QVBoxLayout()
-        self.setLayout(layout)
-
-        # Measurement name label
-        name_label = QtWidgets.QLabel(f"<b>{self.measurement.name}</b>")
-        name_label.setAlignment(QtCore.Qt.AlignCenter)
-        layout.addWidget(name_label)
-
-        # Measurement description
-        description = f"{self.measurement.get_description()}"
-        description_label = QtWidgets.QLabel(description)
-        layout.addWidget(description_label)
-
-        # Result
-        self.result_label = QtWidgets.QLabel(f"Result: {self.measurement.result}")
-        layout.addWidget(self.result_label)
-
-        # Set color based on channel
-        color = self.measurement.get_color()
-        self.setStyleSheet(f"background-color: {color}; border: 1px solid black;")
-
-    def update_result(self):
-        self.result_label.setText(f"Result: {self.measurement.result}")
 
 class Measurement:
     def __init__(self, name, measurement_type, channels, params):
@@ -77,23 +49,110 @@ class Measurement:
         self.channels = channels  # List of channels
         self.params = params  # Additional parameters
         self.result = None
+        self.tree_item = None  # Reference to the tree widget item
 
-    def get_description(self):
-        if self.measurement_type == "Average Voltage":
-            return f"Average voltage on channel {self.channels[0]}"
-        elif self.measurement_type == "Frequency":
-            return f"Frequency on channel {self.channels[0]}"
-        elif self.measurement_type == "Delay":
-            return f"Delay between channel {self.channels[0]} ({self.params['edge1']}) and channel {self.channels[1]} ({self.params['edge2']})"
-        else:
-            return "Measurement"
 
-    def get_color(self):
-        if len(self.channels) == 1:
-            colors = {'A': 'lightcoral', 'B': 'lightgreen', 'C': 'lightblue', 'D': 'lightyellow'}
-            return colors.get(self.channels[0], 'white')
-        else:
-            return 'lightgray'
+class AddMeasurementDialog(QtWidgets.QDialog):
+    def __init__(self, channels, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Add Measurement")
+        self.channels = channels
+        self.measurement = None
+        self.setup_ui()
+
+    def setup_ui(self):
+        layout = QtWidgets.QVBoxLayout()
+        self.setLayout(layout)
+
+        # Measurement type selection
+        self.measurement_type_combo = QtWidgets.QComboBox()
+        self.measurement_type_combo.addItems(["Delay", "Frequency", "Average Voltage", "Width", "Min", "Max"])
+        layout.addWidget(QtWidgets.QLabel("Select Measurement Type:"))
+        layout.addWidget(self.measurement_type_combo)
+
+        # Parameters area
+        self.params_widget = QtWidgets.QWidget()
+        self.params_layout = QtWidgets.QFormLayout()
+        self.params_widget.setLayout(self.params_layout)
+        layout.addWidget(self.params_widget)
+
+        # OK/Cancel buttons
+        button_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
+        button_box.accepted.connect(self.accept)
+        button_box.rejected.connect(self.reject)
+        layout.addWidget(button_box)
+
+        self.measurement_type_combo.currentTextChanged.connect(self.update_params)
+
+        self.update_params()
+
+    def update_params(self):
+        # Clear old parameters
+        while self.params_layout.count():
+            item = self.params_layout.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.deleteLater()
+
+        measurement_type = self.measurement_type_combo.currentText()
+
+        if measurement_type == "Delay":
+            self.channel_combo1 = QtWidgets.QComboBox()
+            self.channel_combo1.addItems(self.channels)
+            self.edge_combo1 = QtWidgets.QComboBox()
+            self.edge_combo1.addItems(["RISING", "FALLING"])
+
+            self.channel_combo2 = QtWidgets.QComboBox()
+            self.channel_combo2.addItems(self.channels)
+            self.edge_combo2 = QtWidgets.QComboBox()
+            self.edge_combo2.addItems(["RISING", "FALLING"])
+
+            self.params_layout.addRow("Channel 1:", self.channel_combo1)
+            self.params_layout.addRow("Edge 1:", self.edge_combo1)
+            self.params_layout.addRow("Channel 2:", self.channel_combo2)
+            self.params_layout.addRow("Edge 2:", self.edge_combo2)
+
+        elif measurement_type in ["Frequency", "Average Voltage", "Width", "Min", "Max"]:
+            self.channel_combo = QtWidgets.QComboBox()
+            self.channel_combo.addItems(self.channels)
+            self.params_layout.addRow("Channel:", self.channel_combo)
+
+
+    def get_measurement(self):
+        measurement_type = self.measurement_type_combo.currentText()
+        params = {}
+        channels = []
+
+        if measurement_type == "Delay":
+            ch1 = self.channel_combo1.currentText()
+            edge1 = self.edge_combo1.currentText()
+            ch2 = self.channel_combo2.currentText()
+            edge2 = self.edge_combo2.currentText()
+            channels.extend([ch1, ch2])
+            params['edge1'] = edge1
+            params['edge2'] = edge2
+
+        elif measurement_type in ["Frequency", "Average Voltage", "Width", "Min", "Max"]:
+            ch = self.channel_combo.currentText()
+            channels.append(ch)
+
+        # Automatically generate default name based on measurement type
+        name = self.generate_default_name(measurement_type)
+
+        return Measurement(name, measurement_type, channels, params)
+
+    def generate_default_name(self, measurement_type):
+        default_names = {
+            "Delay": "Pk-Pk",
+            "Frequency": "Frequency",
+            "Average Voltage": "Avr",
+            "Width": "Width",
+            "Min": "Min",
+            "Max": "Max",
+
+
+        }
+        return default_names.get(measurement_type, measurement_type)
 
 
 class RealTimeScopeApp(QtWidgets.QMainWindow):
@@ -107,7 +166,6 @@ class RealTimeScopeApp(QtWidgets.QMainWindow):
         self.run_stop_button = None
         self.overlay_checkbox = None
         self.measurements = []  # List of Measurement objects
-        self.measurement_widgets = []  # List of tuples (Measurement, MeasurementWidget)
         self.setWindowTitle("Real-Time Oscilloscope Simulation")
 
         self.acquiring = False
@@ -157,7 +215,15 @@ class RealTimeScopeApp(QtWidgets.QMainWindow):
         # Initialize plots
         self.channels_enabled = {'A': True, 'B': False, 'C': False, 'D': False}
         self.update_plot_layout()
-
+        self.unit_prefixes = [
+                (1e9, 'G'),  # Giga (1 billion)
+                (1e6, 'M'),  # Mega (1 million)
+                (1e3, 'K'),  # Kilo (1 thousand)
+                (1, ''),  # Base unit (no prefix)
+                (1e-3, 'm'),  # Milli (1 thousandth)
+                (1e-6, 'µ'),  # Micro (1 millionth)
+                (1e-9, 'n')  # Nano (1 billionth)
+            ]
         # Data generator
         self.data_generator = RandomDataGenerator(self.channels_enabled)
         self.data_generator.data_ready.connect(self.update_graph)
@@ -288,52 +354,57 @@ class RealTimeScopeApp(QtWidgets.QMainWindow):
         measurement_layout = QtWidgets.QVBoxLayout()
         self.measurement_panel.setLayout(measurement_layout)
 
-        # Measurement list
-        self.measurement_list = QtWidgets.QListWidget()
-        self.measurement_list.setFixedWidth(200)  # Set fixed width to 200 pixels, height will be dynamic
-        measurement_layout.addWidget(self.measurement_list)
+        # Measurement tree with updated headers
+        self.measurement_tree = QtWidgets.QTreeWidget()
+        self.measurement_tree.setHeaderLabels(["Measurement", "Channel(s)", "Result"])
+        self.measurement_tree.setFixedWidth(300)  # Adjust width as needed
+        measurement_layout.addWidget(self.measurement_tree)
 
         # Context menu for adding/removing measurements
-        self.measurement_list.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.measurement_list.customContextMenuRequested.connect(self.show_measurement_context_menu)
-        self.measurement_list.itemDoubleClicked.connect(self.edit_measurement)
+        self.measurement_tree.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.measurement_tree.customContextMenuRequested.connect(self.show_measurement_context_menu)
 
     def show_measurement_context_menu(self, position):
         menu = QtWidgets.QMenu()
         add_action = menu.addAction("Add Measurement")
         delete_action = menu.addAction("Delete Measurement")
 
-        action = menu.exec_(self.measurement_list.viewport().mapToGlobal(position))
+        action = menu.exec_(self.measurement_tree.viewport().mapToGlobal(position))
 
         if action == add_action:
             self.add_measurement_dialog()
         elif action == delete_action:
             self.remove_measurement()
 
-    def edit_measurement(self, item):
-        # Can implement editing measurement on double-click if needed
-        pass
-
     def add_measurement_dialog(self):
         dialog = AddMeasurementDialog(self.channels_enabled.keys(), self)
         if dialog.exec_():
             measurement = dialog.get_measurement()
             if measurement:
-                self.measurements.append(measurement)
-                widget = MeasurementWidget(measurement)
-                item = QtWidgets.QListWidgetItem()
-                item.setSizeHint(widget.sizeHint())
-                self.measurement_list.addItem(item)
-                self.measurement_list.setItemWidget(item, widget)
-                self.measurement_widgets.append((measurement, widget))
+                self.add_measurement(measurement)
+
+    def add_measurement(self, measurement):
+        self.measurements.append(measurement)
+        # Create a string representation of the channels involved
+        if len(measurement.channels) == 1:
+            channels_str = measurement.channels[0]
+        else:
+            channels_str = ''.join(measurement.channels)  # e.g., "AB" for channels A and B
+        # Create a tree item for the measurement
+        item = QtWidgets.QTreeWidgetItem([measurement.name, channels_str, ""])
+        measurement.tree_item = item
+        self.measurement_tree.addTopLevelItem(item)
 
     def remove_measurement(self):
-        selected_items = self.measurement_list.selectedItems()
+        selected_items = self.measurement_tree.selectedItems()
         if selected_items:
-            index = self.measurement_list.row(selected_items[0])
-            self.measurement_list.takeItem(index)
-            self.measurements.pop(index)
-            self.measurement_widgets.pop(index)
+            item = selected_items[0]
+            index = self.measurement_tree.indexOfTopLevelItem(item)
+            self.measurement_tree.takeTopLevelItem(index)
+            # Remove from measurements list
+            measurement = self.measurements.pop(index)
+            # Clean up
+            measurement.tree_item = None
 
     def update_channels(self):
         self.channels_enabled = {ch: cb.isChecked() for ch, cb in self.channel_checkboxes.items()}
@@ -368,14 +439,6 @@ class RealTimeScopeApp(QtWidgets.QMainWindow):
             self.update_trigger_line()
         except Exception as e:
             print(f"Error updating voltage scale: {e}")
-
-    def toggle_acquisition(self):
-        if self.acquiring:
-            self.stop_acquisition()
-            self.run_stop_button.setText("RUN")
-        else:
-            self.start_acquisition()
-            self.run_stop_button.setText("STOP")
 
     def start_acquisition(self):
         if not self.acquiring:
@@ -503,7 +566,7 @@ class RealTimeScopeApp(QtWidgets.QMainWindow):
                 self.update_plot_x_range(ch)
 
     def update_measurements(self):
-        for measurement, widget in self.measurement_widgets:
+        for measurement in self.measurements:
             if measurement.measurement_type == "Delay":
                 # Measure delay between channels with specified edges
                 ch1, ch2 = measurement.channels
@@ -513,65 +576,142 @@ class RealTimeScopeApp(QtWidgets.QMainWindow):
                 time2 = self.find_edge_time(ch2, edge2)
                 if time1 is not None and time2 is not None:
                     delay = abs(time2 - time1)
-                    measurement.result = f"{delay:.3f} s"
-                else:
-                    measurement.result = "Edge not found"
+                    self._units_convert(measurement, delay)
             elif measurement.measurement_type == "Frequency":
                 # Calculate frequency
                 ch = measurement.channels[0]
                 freq = self.calculate_frequency(ch)
-                if freq is not None:
-                    measurement.result = f"{freq:.2f} Hz"
-                else:
-                    measurement.result = "Cannot calculate"
+                self._units_convert(measurement, freq, 'Hz')
             elif measurement.measurement_type == "Average Voltage":
                 # Calculate average voltage
                 ch = measurement.channels[0]
-                voltages = self.data_buffer.get(ch, {}).get('voltage', [])
-                if voltages:
-                    avg_voltage = np.mean(voltages)
-                    measurement.result = f"{avg_voltage:.2f} V"
-                else:
-                    measurement.result = "No data"
-            widget.update_result()
+                voltages = statistics.median(self.data_buffer.get(ch, {}).get('voltage', []))
+                print(voltages)
+                self._units_convert(measurement, voltages, 'V')
+            elif measurement.measurement_type == "Width":
+                # Calculate frequency
+                ch = measurement.channels[0]
+                width = self.calculate_width(ch)
+                self._units_convert(measurement, width)
+            elif measurement.measurement_type == "Max":
+                # Calculate Max
+                ch = measurement.channels[0]
+                data = self.data_buffer.get(ch, {})
+                voltages = max(data.get('voltage', []))
+                self._units_convert(measurement, voltages, 'hits')
+            elif measurement.measurement_type == "Min":
+                # Calculate Min
+                ch = measurement.channels[0]
+                data = self.data_buffer.get(ch, {})
+                voltages = min(data.get('voltage', []))
+                print(voltages)
+                self._units_convert(measurement, voltages, 'hits')
+            # Update the measurement result in the tree
+            if measurement.tree_item:
+                measurement.tree_item.setText(2, measurement.result)
+
+    def _units_convert(self, measurement, data, unit='Sec'):
+        if data is not None:
+            # Check if the number is negative
+            is_negative = data < 0
+            abs_data = abs(data)  # Work with the absolute value for conversion
+
+            # Define unit prefixes and scaling factors
+            self.unit_prefixes = [
+                (1e9, 'G'),  # Giga (1 billion)
+                (1e6, 'M'),  # Mega (1 million)
+                (1e3, 'K'),  # Kilo (1 thousand)
+                (1, ''),  # Base unit (no prefix)
+                (1e-3, 'm'),  # Milli (1 thousandth)
+                (1e-6, 'µ'),  # Micro (1 millionth)
+                (1e-9, 'n')  # Nano (1 billionth)
+            ]
+
+            # Select appropriate prefix based on the absolute value
+            for factor, prefix in self.unit_prefixes:
+                if abs_data >= factor:
+                    scaled_data = abs_data / factor
+                    # If the number was negative, reapply the negative sign
+                    measurement.result = f"{'-' if is_negative else ''}{scaled_data:.2f} {prefix}{unit}"
+                    break
+        else:
+            measurement.result = "Cannot calculate"
 
     def find_edge_time(self, channel, edge):
         data = self.data_buffer.get(channel, {})
         voltages = data.get('voltage', [])
         times = data.get('time', [])
-        if voltages:
+        if len(voltages) >= 2:
             if edge == 'RISING':
                 for i in range(1, len(voltages)):
-                    if voltages[i-1] < 0 and voltages[i] >= 0:
+                    if voltages[i-1] < self.trigger_level and voltages[i] >= self.trigger_level:
                         return times[i]
             elif edge == 'FALLING':
                 for i in range(1, len(voltages)):
-                    if voltages[i-1] > 0 and voltages[i] <= 0:
+                    if voltages[i-1] > self.trigger_level and voltages[i] <= self.trigger_level:
                         return times[i]
         return None
 
-    def calculate_frequency(self, channel):
+    def calculate_frequency(self, channel, threshold_ratio=0.5, rising_percentage=0.9, use_filter=True):
+        data = self.data_buffer.get(channel, {})
+        voltages = data.get('voltage', [])
+        mid_start = int(len(voltages)/2)
+
+        period = self.calculate_width(channel, mid_start)
+        if period is None:
+            return None
+
+        frequency = 1 / period if period > 0 else None
+
+        return frequency
+
+    def calculate_width(self, channel, start_index=1, threshold_ratio=0.5, rising_percentage=0.9, use_filter=True):
         data = self.data_buffer.get(channel, {})
         voltages = data.get('voltage', [])
         times = data.get('time', [])
-        if voltages:
-            crossings = []
-            for i in range(1, len(voltages)):
-                if voltages[i-1] < 0 and voltages[i] >= 0:
-                    crossings.append(times[i])
-            if len(crossings) >= 2:
-                periods = [crossings[i+1] - crossings[i] for i in range(len(crossings)-1)]
-                avg_period = np.mean(periods)
-                frequency = 1 / avg_period if avg_period != 0 else None
-                return frequency
-        return None
 
-    def change_trigger_mode(self, mode):
-        self.trigger_mode = mode
-        self.triggered = False  # Reset trigger
-        if mode == 'SINGLE':
-            self.stop_acquisition()
-            self.run_stop_button.setText("RUN")
+        # Check if there are enough data points
+        if len(voltages) < 4 or len(times) < 4:
+            return None
+
+        # Calculate the 50% threshold of the peak-to-peak voltage
+        min_voltage = min(voltages)
+        max_voltage = max(voltages)
+        mid_voltage = min_voltage + (max_voltage - min_voltage) * threshold_ratio
+
+        # Midpoint to start looking for the first rising point
+        mid_data = int(len(voltages) / 2)
+
+        # Find the first rising point
+        first_rising_index = None
+        for i in range(start_index, len(voltages)):
+            prev_d = (voltages[i - 2] + voltages[i - 3]) / 2 if i >= 3 else voltages[i - 1]
+            next_d = (voltages[i] + voltages[i - 1]) / 2
+            if prev_d < mid_voltage < next_d:
+                first_rising_index = i - 2  # Save the index of the first rising point
+                break
+
+        # If no first rising point is found, return None
+        if first_rising_index is None:
+            return None
+
+        # Find the second rising point after the first one
+        second_rising_index = None
+        for i in range(first_rising_index + 4, len(voltages)):
+            prev_d = (voltages[i - 2] + voltages[i - 3]) / 2 if i >= 3 else voltages[i - 1]
+            next_d = (voltages[i] + voltages[i - 1]) / 2
+
+            if prev_d < mid_voltage < next_d:
+                second_rising_index = i - 2
+                break
+
+        # If no second rising point is found, return None
+        if second_rising_index is None:
+            return None
+
+        # Calculate the time difference between the two rising points
+        width = times[second_rising_index] - times[first_rising_index]
+        return width
 
     def change_trigger_channel(self, channel):
         self.trigger_channel = channel
@@ -591,7 +731,7 @@ class RealTimeScopeApp(QtWidgets.QMainWindow):
     def check_trigger(self):
         data = self.data_buffer.get(self.trigger_channel, {})
         voltages = data.get('voltage', [])
-        if voltages:
+        if len(voltages) >= 2:
             if self.trigger_edge == "RISING" and voltages[-2] < self.trigger_level <= voltages[-1]:
                 return True
             elif self.trigger_edge == "FALLING" and voltages[-2] > self.trigger_level >= voltages[-1]:
@@ -619,105 +759,6 @@ class RealTimeScopeApp(QtWidgets.QMainWindow):
     def closeEvent(self, event):
         self.stop_acquisition()
         event.accept()  # Close the application
-
-class AddMeasurementDialog(QtWidgets.QDialog):
-    def __init__(self, channels, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Add Measurement")
-        self.channels = channels
-        self.measurement = None
-        self.setup_ui()
-
-    def setup_ui(self):
-        layout = QtWidgets.QVBoxLayout()
-        self.setLayout(layout)
-
-        # Measurement type selection
-        self.measurement_type_combo = QtWidgets.QComboBox()
-        self.measurement_type_combo.addItems(["Delay", "Frequency", "Average Voltage"])
-        layout.addWidget(QtWidgets.QLabel("Select Measurement Type:"))
-        layout.addWidget(self.measurement_type_combo)
-
-        # Parameters area
-        self.params_widget = QtWidgets.QWidget()
-        self.params_layout = QtWidgets.QFormLayout()
-        self.params_widget.setLayout(self.params_layout)
-        layout.addWidget(self.params_widget)
-
-        # OK/Cancel buttons
-        button_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
-        button_box.accepted.connect(self.accept)
-        button_box.rejected.connect(self.reject)
-        layout.addWidget(button_box)
-
-        self.measurement_type_combo.currentTextChanged.connect(self.update_params)
-
-        self.update_params()
-
-    def update_params(self):
-        # Clear old parameters
-        while self.params_layout.count():
-            item = self.params_layout.takeAt(0)
-            widget = item.widget()
-            if widget:
-                widget.deleteLater()
-
-        measurement_type = self.measurement_type_combo.currentText()
-
-        if measurement_type == "Delay":
-            self.channel_combo1 = QtWidgets.QComboBox()
-            self.channel_combo1.addItems(self.channels)
-            self.edge_combo1 = QtWidgets.QComboBox()
-            self.edge_combo1.addItems(["RISING", "FALLING"])
-
-            self.channel_combo2 = QtWidgets.QComboBox()
-            self.channel_combo2.addItems(self.channels)
-            self.edge_combo2 = QtWidgets.QComboBox()
-            self.edge_combo2.addItems(["RISING", "FALLING"])
-
-            self.params_layout.addRow("Channel 1:", self.channel_combo1)
-            self.params_layout.addRow("Edge 1:", self.edge_combo1)
-            self.params_layout.addRow("Channel 2:", self.channel_combo2)
-            self.params_layout.addRow("Edge 2:", self.edge_combo2)
-
-        elif measurement_type == "Frequency":
-            self.channel_combo = QtWidgets.QComboBox()
-            self.channel_combo.addItems(self.channels)
-            self.params_layout.addRow("Channel:", self.channel_combo)
-
-        elif measurement_type == "Average Voltage":
-            self.channel_combo = QtWidgets.QComboBox()
-            self.channel_combo.addItems(self.channels)
-            self.params_layout.addRow("Channel:", self.channel_combo)
-
-    def get_measurement(self):
-        name, ok = QtWidgets.QInputDialog.getText(self, "Measurement Name", "Enter name for measurement:")
-        if not ok or not name:
-            return None
-
-        measurement_type = self.measurement_type_combo.currentText()
-        params = {}
-        channels = []
-
-        if measurement_type == "Delay":
-            ch1 = self.channel_combo1.currentText()
-            edge1 = self.edge_combo1.currentText()
-            ch2 = self.channel_combo2.currentText()
-            edge2 = self.edge_combo2.currentText()
-            channels.extend([ch1, ch2])
-            params['edge1'] = edge1
-            params['edge2'] = edge2
-
-        elif measurement_type == "Frequency":
-            ch = self.channel_combo.currentText()
-            channels.append(ch)
-
-        elif measurement_type == "Average Voltage":
-            ch = self.channel_combo.currentText()
-            channels.append(ch)
-
-        return Measurement(name, measurement_type, channels, params)
-
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)

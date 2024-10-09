@@ -1,7 +1,7 @@
 import time
 from tkinter import Menu, messagebox
 import datetime
-from DeviceManager import VisaDeviceManager, extract_bits, ScopeUSB
+from DeviceManager import DeviceManager, extract_bits, ScopeUSB
 from database import Database, Logger
 from ReportsAndScriptRun import Script
 from tkinter import filedialog
@@ -9,6 +9,7 @@ from BarLine import *
 # import multiprocessing
 import tkinter as tk
 import threading
+from tkinter import simpledialog
 
 
 def round_to_nearest_10(n):
@@ -28,7 +29,7 @@ class AddDataWindow:
         self.port_var = {}  # Initialize port_var as an empty dictionary
         self.addkey = False
 
-    def open_new_window(self, labels, boxs=None, name="Add packet label", callback=None):
+    def open_new_window(self, labels=None, boxs=None, name="Add packet label", callback=None):
         self.callback = callback
         self.addkey = True
         if labels is None:
@@ -212,9 +213,8 @@ class RightClickMenu(tk.LabelFrame):
         self.y_start = None
         self.add_window = AddDataWindow(main_root, database=db_gui)
         self.root = main_root  # Reference to the root window
-        self.visaDevices = VisaDeviceManager(logger=self.logger)
+        self.visaDevices = DeviceManager(logger=self.logger)
         self.root.com_list = self.visaDevices.find_devices()
-        self.root.function = {"Relay1": "FF,AA,DD", "Relay2": "F3,FF,AA", "Relay3": "F6,F0,DA"}
         self.gen_id = gen_id
         self.parent_info = parent_info
         self.config(width=width, height=height, bg=parent_info['bg'])  # Match parent's background
@@ -238,7 +238,8 @@ class RightClickMenu(tk.LabelFrame):
                 self.menu.add_command(label='Remove', command=self.del_label)
             if self.gen_id not in [2, 3, 4] and self.element['Type'] is None:
                 self.menu.add_cascade(label='New', menu=self.build_menu(x, y))  # Add the submenu to the main menu
-
+            if 'ComTransmitRightClickMenu' in self.element["class"]:
+                self.menu.add_command(label='Add Functions', command=self.add_functions)
         else:
             if self.gen_id == 4:
                 self.menu.add_command(label='Add Scope', command=self.add_scope)
@@ -298,6 +299,9 @@ class RightClickMenu(tk.LabelFrame):
         self.add_window.open_new_window(label, boxs, "Create New Widget",
                                         lambda values: self.create_new_widget_with_settings(values, x, y, cls))
 
+    def add_functions(self):
+        self.add_window.open_new_window(name="Add Functions")
+
     def get_coms_data(self):
         dic_ids = {}
         ids_data = self.db.find_data("com_info", "com_list", "Type")
@@ -326,14 +330,14 @@ class RightClickMenu(tk.LabelFrame):
         label = {'label_name': 'New combo', "last_conn_info": None, "func": None}
         boxs = {"Dimension": ['160x100', '300x100', '600x100'], 'info_table': list(dic_ids.keys())}
         self.add_window.open_new_window(label, boxs, "Create New Com transmit box",
-                                        lambda values: self.create_new_widget_with_settings(values, x, y, cls))
+                                        lambda values: self.create_new_widget_with_settings(values, x, y, cls, dic_ids))
 
     def open_button(self, x, y, cls):
         dic_ids = self.get_coms_data()
-        label = {'label_name': 'New combo', "last_conn_info": None, "func": "Some_data"}
-        boxs = {'info_table': list(dic_ids.keys()), "Dimension": ['50x60']}
+        label = {'label_name': 'New combo', "on_state": "", "off_state": ""}
+        boxs = {'info_table': list(dic_ids.keys()), "Dimension": ['50x60', '70x60', '90x60']}
         self.add_window.open_new_window(label, boxs, "Create New Button transmit box",
-                                        lambda values: self.create_new_widget_with_settings(values, x, y, cls))
+                                        lambda values: self.create_new_widget_with_settings(values, x, y, cls, dic_ids))
 
     def create_new_widget_with_settings(self, values, x, y, cls, dict_ids=None):
         com_id = 0
@@ -454,7 +458,7 @@ class DataDraggableRightClickMenu(DraggableRightClickMenu):
         self.init()
 
     def init(self):
-        self.data_info = tk.Label(self, text="")
+        self.data_info = tk.Label(self, text="" )
         self.data_info.place(x=2, y=0)
         if self.low_byte > self.high_byte:
             temp = self.low_byte
@@ -504,7 +508,7 @@ class ComPortRightClickMenu(DraggableRightClickMenu):
         self.combobox.bind("<<ComboboxSelected>>", self.on_combobox_select)
 
         # Create a toggle Button under the combobox
-        self.port = VisaDeviceManager(self.logger)
+        self.port = DeviceManager(self.logger)
         self.update_combo_com()
         self.button = tk.Button(self, text="Start", command=self.on_com_click, font=("Arial", 10))
         com_info = self.db.find_data("com_info", self.gen_id)[0]
@@ -539,6 +543,7 @@ class ComPortRightClickMenu(DraggableRightClickMenu):
 
     def on_com_click(self):
         """Callback function when the button is clicked."""
+
         if self.is_started:
             self.button.config(text="Start", fg="black", font=("Arial", 10))
             self.combobox.config(state="normal")  # Enable the combobox
@@ -557,7 +562,7 @@ class ComPortRightClickMenu(DraggableRightClickMenu):
             self.combobox.config(state="disabled")  # Disable the combobox
             self.is_started = True
             # self.update_all_data_label("------")
-            process = threading.Thread(target=self.update_data_labels, args=("------",))
+            process = threading.Thread(target=self.update_data_labels)
             process.start()
 
         # Send data if type is function
@@ -570,7 +575,7 @@ class ComPortRightClickMenu(DraggableRightClickMenu):
             self.logger.message(f"Button clicked! Current combobox selection: {selected_value}")
             # Add any additional functionality you need on button click
 
-    def update_data_labels(self):
+    def update_data_labels(self, data=None):
         threads = []
         while self.port.device and self.main_root.winfo_exists():
             time.sleep(0.1)
@@ -620,6 +625,7 @@ class ComTransmitRightClickMenu(DraggableRightClickMenu):
         self.combobox = None
         self.button = None
         self.is_started = False
+        self.uut = None
         self.data_list = []
         self.width = values.get('Width', 150)
         self.height = values.get('Height', 100)
@@ -642,12 +648,11 @@ class ComTransmitRightClickMenu(DraggableRightClickMenu):
         self.combobox.bind("<<ComboboxSelected>>", self.on_combobox_select)
 
         # Create a toggle Button under the combobox
-        if self.type == "function":
-            self.val_list = getattr(main_root, values["Type"], {})
-            self.button = tk.Button(self, text="Send", command=self.on_fun_click, font=("Arial", 10))
-            self.checkbox_var = tk.IntVar()
-            self.checkbox = tk.Checkbutton(self, text="AUTO RUN", variable=self.checkbox_var)
-            self.checkbox.pack(side=tk.LEFT, padx=5, pady=5)
+        self.val_list = getattr(main_root, values["Type"], {})
+        self.button = tk.Button(self, text="Send", command=self.on_fun_click, font=("Arial", 10))
+        self.checkbox_var = tk.IntVar()
+        self.checkbox = tk.Checkbutton(self, text="AUTO RUN", variable=self.checkbox_var)
+        self.checkbox.pack(side=tk.LEFT, padx=5, pady=5)
         self.button.pack(side=tk.TOP, padx=5, pady=5)
 
         self.config(width=self.width, height=self.height)
@@ -661,17 +666,15 @@ class ComTransmitRightClickMenu(DraggableRightClickMenu):
         self.combobox.config(values=self.val_list)
 
     def on_combobox_select(self, event):
-        """Callback function when a combobox item is selected."""
-        if self.type == "com_list":
-            self.update_combo_com()
-        print(event)
         selected_value = self.combobox.get()
         self.port.device_name = selected_value
         self.logger.message(f"Selected value: {selected_value}")
         # Add any additional functionality you need on selection
 
     def on_fun_click(self):
-        print(self.element)
+        self.uut.write("RELAY, 0&0, 1&0, 10")
+        time.sleep(1)
+        self.uut.write("RELAY, 0&1, 1&1, 10")
 
     def update_data_labels(self):
         threads = []
@@ -722,8 +725,10 @@ class ButtonTransmitRightClickMenu(DraggableRightClickMenu):
         self.combobox = None
         self.button = None
         self.is_started = False
+        self.function = None
+        self.uut = None
         self.data_list = []
-        self.width = values.get('Width', 150)
+        self.width = values.get('Width', 180)
         self.height = values.get('Height', 100)
         self.init_box(values)
 
@@ -731,14 +736,26 @@ class ButtonTransmitRightClickMenu(DraggableRightClickMenu):
         self.top_frame = tk.Frame(self)
         self.top_frame.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
         self.type = values["Type"]
-        self.button = tk.Button(self, text="Send", command=self.on_fun_click, font=("Arial", 10))
+        self.button = tk.Button(self, text="  ON  ", command=self.on_fun_click, font=("Arial", 10))
         self.button.pack(padx=0, pady=0)
+        self.is_started = False  # Default state is 'Off'
         self.config(width=self.width, height=self.height)
         self.place_configure(width=self.width, height=self.height)
 
+
     def on_fun_click(self):
-        # Send data if type is function
-        print(self.element)
+        # Toggle state and button text
+        if not self.is_started:
+            self.button.config(text="  OFF  ")  # Change text to 'Stop'
+            self.is_started = True
+            self.uut.write(self.element['on_state'])
+
+            print(self.function)
+        else:
+            self.button.config(text="  ON  ")  # Change text to 'Start'
+            self.is_started = False
+            self.uut.write(self.element['off_state'])
+            print(self.function)
 
     def _update_data_label(self, data_label):
         time.sleep(0.001)
@@ -778,9 +795,6 @@ class SetupLoader:
             self.create_element(element)
             print("created_el", self.created_elements)
         # Process waiting list until it's empty
-
-        for wait in self.waiting_list:
-            wait.comport = self.root.comport_list[wait("func")]
 
     def create_info_label(self, frame):
         text_widget = tk.Text(frame, height=10, width=108, wrap=tk.WORD, state=tk.DISABLED)
@@ -877,24 +891,18 @@ class SetupLoader:
                     gen_id=element.get('id', ''),
                     log=self.logger)
 
-        if "ComPortRightClickMenu" in class_name and element["Type"] == "com_list":
-            self.root.comport_list[str(frame_id)] = frame
-
-        if "ComPortRightClickMenu" in class_name and element["Type"] == "function":
-            if element("func") in self.root.comport_list.keys():
-                frame.comport = self.root.comport_list[element("func")]
-            else:
-                self.waiting_list.append(frame)
-
-        if "DataDraggableRightClickMenu" in class_name:
-            try:
-                self.db.switch_database('gui_conf')
+        try:
+            self.db.switch_database('gui_conf')
+            if "ComPortRightClickMenu" in class_name:
+                self.root.comport_list[str(frame_id)] = frame
+            elif "ComTransmitRightClickMenu" in class_name or "ButtonTransmitRightClickMenu" in class_name:
+                frame.uut = self.root.comport_list[str(element["info_table"])].port
+            elif "DataDraggableRightClickMenu" in class_name:
                 self.root.comport_list[str(element["info_table"])].data_list.append(frame)
-
-            except Exception as e:
-                self.logger.message(f"Can't create element {element}, {e}", "ERROR")
-                frame.destroy()
-                return None
+        except Exception as e:
+            self.logger.message(f"Can't create element {element}, {e}", "ERROR")
+            frame.destroy()
+            return None
 
         if frame_id == 4:
             self.create_info_scope(frame)

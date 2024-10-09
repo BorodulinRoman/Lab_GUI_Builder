@@ -490,6 +490,45 @@ class RealTimeScopeApp(QtWidgets.QMainWindow):
         event.accept()  # Allow the application to close
 
 
+import nidaqmx
+import time
+import threading
+
+
+# Function to pulse two lines with a software-based busy-wait delay in a separate thread
+def pulse_output_with_threading(device_name, line1, line2, delay_ms, port=0):
+    if device_name is None:
+        print("Device with the name dev1 not found")
+        return
+
+    def perform_pulse():
+        with nidaqmx.Task() as task:
+            task.do_channels.add_do_chan(f"{device_name}/port{port}/line{line1}")
+            task.do_channels.add_do_chan(f"{device_name}/port{port}/line{line2}")
+
+            # Activate first line
+            task.write([True, False])  # Turn on line1, keep line2 off
+
+            # Busy-wait loop for the delay (in milliseconds)
+            start_time = time.perf_counter()
+            while (time.perf_counter() - start_time) < (delay_ms / 1000.0):
+                pass  # Do nothing, just wait precisely
+
+            # Activate second line
+            task.write([False, True])  # Turn off line1, turn on line2
+
+    # Create a thread for the timing-sensitive pulse task
+    pulse_thread = threading.Thread(target=perform_pulse)
+
+    # Set the thread priority (for some operating systems this can help)
+    pulse_thread.start()
+    pulse_thread.join()  # Wait for the thread to complete
+
+
+if __name__ == "__main__":
+    # Example: Pulse line1 for 2 milliseconds before switching to line2
+    device_name = "Dev1"
+    pulse_output_with_threading(device_name, line1=1, line2=2, delay_ms=2)
 def main():
     app = QtWidgets.QApplication(sys.argv)
     main_window = RealTimeScopeApp()

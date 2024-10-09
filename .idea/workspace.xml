@@ -4,7 +4,17 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
+<<<<<<< HEAD
     <list default="true" id="03566363-8df4-4cd8-b209-5c6ef035168c" name="Changes" comment="Create Scope miniGui for Pico scope and NI scop needs" />
+=======
+    <list default="true" id="03566363-8df4-4cd8-b209-5c6ef035168c" name="Changes" comment="init comport for thread update function connection-update">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Empty.py" beforeDir="false" afterPath="$PROJECT_DIR$/Empty.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database.py" beforeDir="false" afterPath="$PROJECT_DIR$/database.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test.py" beforeDir="false" afterPath="$PROJECT_DIR$/test.py" afterDir="false" />
+    </list>
+>>>>>>> 7dd2763241e0dcbd2db67a6adc748368fc16e045
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -39,6 +49,7 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
+<<<<<<< HEAD
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
     &quot;Python.DeviceManager.executor&quot;: &quot;Run&quot;,
@@ -54,6 +65,22 @@
     &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
     &quot;last_opened_file_path&quot;: &quot;C:/Users/ROMANBO/Documents/GitHub/Lab_GUI_Builder/info&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
+=======
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Python.DeviceManager.executor": "Run",
+    "Python.Empty.executor": "Run",
+    "Python.Scope_app.executor": "Run",
+    "Python.database.executor": "Run",
+    "Python.sender.executor": "Run",
+    "Python.test.executor": "Run",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "Communication-protocol__update__Datalable",
+    "ignore.virus.scanning.warn.message": "true",
+    "last_opened_file_path": "C:/Users/ROMANBO/Documents/GitHub/Lab_GUI_Builder/info",
+    "settings.editor.selected.configurable": "preferences.lookFeel"
+>>>>>>> 7dd2763241e0dcbd2db67a6adc748368fc16e045
   }
 }</component>
   <component name="RecentsManager">
@@ -199,7 +226,10 @@
     <list>
       <item itemvalue="Python.Empty" />
       <item itemvalue="Python.Scope_app" />
+<<<<<<< HEAD
       <item itemvalue="Python.test2" />
+=======
+>>>>>>> 7dd2763241e0dcbd2db67a6adc748368fc16e045
       <item itemvalue="Python.sender" />
       <item itemvalue="Python.database" />
       <item itemvalue="Python.test" />
@@ -207,10 +237,17 @@
     <recent_temporary>
       <list>
         <item itemvalue="Python.Scope_app" />
+<<<<<<< HEAD
         <item itemvalue="Python.test2" />
+=======
+>>>>>>> 7dd2763241e0dcbd2db67a6adc748368fc16e045
         <item itemvalue="Python.database" />
         <item itemvalue="Python.test" />
+<<<<<<< HEAD
         <item itemvalue="Python.sender" />
+=======
+        <item itemvalue="Python.DeviceManager" />
+>>>>>>> 7dd2763241e0dcbd2db67a6adc748368fc16e045
       </list>
     </recent_temporary>
   </component>
@@ -390,6 +427,74 @@
           <line>214</line>
           <option name="timeStamp" value="114" />
         </line-breakpoint>
+<<<<<<< HEAD
+=======
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/Empty.py</url>
+          <line>873</line>
+          <option name="timeStamp" value="212" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/Empty.py</url>
+          <line>727</line>
+          <option name="timeStamp" value="213" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/Empty.py</url>
+          <line>709</line>
+          <option name="timeStamp" value="214" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/Empty.py</url>
+          <line>708</line>
+          <option name="timeStamp" value="215" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/Empty.py</url>
+          <line>730</line>
+          <option name="timeStamp" value="216" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/test.py</url>
+          <line>80</line>
+          <option name="timeStamp" value="217" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/Scope_app.py</url>
+          <line>761</line>
+          <option name="timeStamp" value="220" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/Scope_app.py</url>
+          <line>704</line>
+          <option name="timeStamp" value="243" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/Scope_app.py</url>
+          <line>690</line>
+          <option name="timeStamp" value="244" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/Scope_app.py</url>
+          <line>708</line>
+          <option name="timeStamp" value="245" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/Scope_app.py</url>
+          <line>712</line>
+          <option name="timeStamp" value="246" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/Scope_app.py</url>
+          <line>599</line>
+          <option name="timeStamp" value="248" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/Scope_app.py</url>
+          <line>597</line>
+          <option name="timeStamp" value="249" />
+        </line-breakpoint>
+>>>>>>> 7dd2763241e0dcbd2db67a6adc748368fc16e045
       </breakpoints>
       <default-breakpoints>
         <breakpoint type="python-exception">
