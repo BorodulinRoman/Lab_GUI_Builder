@@ -10,6 +10,7 @@ class FindReportWindow:
     def __init__(self, parent, database, gui_name):
         self.results_tree = None
         self.search_entry = None
+        self.gui_name = gui_name
         self.report = f'{gui_name}_reports_list'
         self.logs = f'{gui_name}_logs'
         self.window = parent
@@ -187,9 +188,9 @@ class FindReportWindow:
                     subprocess.call(['xdg-open', temp_file_path])  # For Linux
 
     def _open_report(self, item_name):
-        old_database_name = self.database.database
+        name = self.database.database
         self.database.switch_database(self.report)
-        report_builder = Report(self.database)
+        report_builder = Report(self.database,self.gui_name)
         show_report = {}
 
         report_path = os.path.join(os.getcwd(), "info/reports")
@@ -223,11 +224,12 @@ class FindReportWindow:
         show_report["StartTimeFormatted"] = dt.strftime("%Y-%m-%d %H:%M:%S")
         report_builder.report = show_report
         report_builder.build_report()
-        self.database.switch_database(old_database_name)
+        self.database.switch_database(name)
 
 
 class FeatureWindow:
     def __init__(self, parent, database, gui_name):
+        self.search_var = None
         self.database = database
         self.ok_button = None
         self.combo = None

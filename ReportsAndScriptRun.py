@@ -1,7 +1,7 @@
 import json
 from copy import deepcopy
 import time
-from DeviceManager import get_start_time,get_start_time_in_sec, KeySightScopeUSB
+from DeviceManager import get_start_time, get_start_time_in_sec, ScopeUSB
 import os
 import winshell
 import webbrowser
@@ -54,7 +54,7 @@ def get_bytes_range(bytes_string):
 
 
 class Report:
-    def __init__(self, database):
+    def __init__(self, database, gui_name):
         self.db = database
         self.script_name = None
         self.test = None
@@ -66,7 +66,7 @@ class Report:
         # self.init_table = load_config('info/init_table.json')
         # self.init_test = load_config('info/init_test.json')
 
-        self.db.switch_database('reports_list')
+        self.db.switch_database(f'{gui_name}_reports_list')
         self.init_report = self.db.find_data("init_report", 0, "ResultStatus")[0]
         self.init_table = self.db.find_data("init_table", 2, "ResultStatus")[0]
         self.init_test = self.db.find_data("init_test", 0, "ResultStatus")[0]
@@ -107,7 +107,8 @@ class Report:
         tables = report_copy["GroupResults"]
         try:
             report_copy["GroupResults"] = "_".join(self.script_name.split(" "))
-        except:
+        except Exception as e:
+            print(e)
             report_copy["GroupResults"] = self.script_name
 
         self.db.add_data_to_table("init_report", report_copy)
@@ -176,17 +177,17 @@ class Report:
 
 
 class Script:
-    def __init__(self, logger, database, tester="RelayCTRL"):
+    def __init__(self, logger, database, gui_name, tester="RelayCTRL"):
         self.port = None
         self.path = None
-        self.scope = KeySightScopeUSB(logger)
+        self.scope = ScopeUSB(logger)
         self.stop_flag = 1
         self.logger = logger
         self.last_line = None
         self.uuts = None
         self.cmd_button = []
         self.response = None
-        self.report = Report(database)
+        self.report = Report(database, gui_name)
         self.tester = tester
         self.peripheral = load_config('info/peripheral.json')
         self.relay_cmd = self.peripheral["ports"][self.tester]["script"]

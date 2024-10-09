@@ -67,12 +67,14 @@ class Logger:
 
             # Mark the queue task as done
             self.log_queue.task_done()
-
-            # Optionally update a text widget or print the message
-            if self.text_widget is not None:
-                self.text_widget.after(10, self._update_text_widget, f"[{timestamp}] {log_level.upper()}: {message}\n")
-            else:
-                print(f"[{timestamp}] {log_level.upper()}: {message}")
+            try:
+                # Optionally update a text widget or print the message
+                if self.text_widget is not None:
+                    self.text_widget.after(10, self._update_text_widget, f"[{timestamp}] {log_level.upper()}: {message}\n")
+                else:
+                    print(f"[{timestamp}] {log_level.upper()}: {message}")
+            except Exception as e:
+                print(e)
 
     def _update_text_widget(self, formatted_message):
         try:
@@ -207,7 +209,7 @@ class Database:
         return temp_column_name_list
 
     def remove_data_by_id(self, id_value):
-        self.switch_database("gui_conf")
+        self.switch_database(f"{self.database}")
         # Get all table names
         table_names = self.get_all_table_names()
         for table_name in table_names:
@@ -224,12 +226,12 @@ class Database:
             except Error as e:
                 self.logger.message(f"Failed to remove data: {e}")
 
-    def find_data(self, table_name, num_id=None, feature='id'):
+    def find_data(self, table_name, feature_info=None, feature='id'):
         try:
-            if num_id is None:
+            if feature_info is None:
                 sql = f"SELECT * FROM {table_name}"
             else:
-                sql = f"SELECT * FROM {table_name} WHERE {feature} = '{num_id}'"
+                sql = f"SELECT * FROM {table_name} WHERE {feature} = '{feature_info}'"
             print(sql)
             self.cursor.execute(sql)
             columns = self.cursor.column_names
@@ -242,7 +244,6 @@ class Database:
             self.logger.message(f"Failed to find data in {table_name}: {e}")
 
     def update(self, info):
-        self.switch_database("gui_conf")
         try:
             table_list = self.get_all_table_names()
             id_value = info.get('id')
@@ -283,9 +284,12 @@ class Database:
             pass
         return element_id
 
-    def add_element(self, values):
+    def add_element(self, values, num_param=0):
+        id_data = None
         table_names = self.get_all_table_names()
-        values['id'] = int(1 + int(values["parent"]) / 10000) * 10000 + self.generate_unique_id()
+        values['id'] = int(1 + int(values["parent"]) / 10000) * 10000 + self.generate_unique_id() + num_param
+        id_data = values['id']
+
         for table_name in table_names:
             temp_values = {}
             columns = self.get_columns(table_name)
@@ -298,7 +302,7 @@ class Database:
                     break
             if temp_values:
                 self.add_data_to_table(table_name, temp_values)
-        return values['id']
+        return id_data
 
     def get_info(self, id_num):
         tables = self.get_all_table_names()
@@ -314,13 +318,16 @@ class Database:
         tables = self.get_all_table_names()
         list_features = []
         for table in tables:
-            query = f"SELECT * FROM {table} WHERE {feature} ORDER BY {feature} ASC"
-            self.cursor.execute(query)
+            try:
+                query = f"SELECT * FROM {table} WHERE {feature} ORDER BY {feature} ASC"
+                self.cursor.execute(query)
 
-            results = self.cursor.fetchall()
-            for result in results:
-                if result not in list_features:
-                    list_features.append(result[0])
+                results = self.cursor.fetchall()
+                for result in results:
+                    if result not in list_features:
+                        list_features.append(result[0])
+            except:
+                pass
         self.logger.message(f"list features {list_features}")
         return list_features
 
@@ -372,7 +379,20 @@ def init_database(data_base_name):
                "label_name": "VARCHAR(255)",
                "class": "VARCHAR(255)",
                "info_table": "VARCHAR(255)"}
+
     db.create_table("label_param", columns)
+
+    columns = {"id": "INT AUTO_INCREMENT PRIMARY KEY",
+               "on_state": "VARCHAR(255)",
+               "off_state": "VARCHAR(255)"}
+
+    db.create_table("buttons", columns)
+
+    columns = {"id": "INT",
+               "function_name": "VARCHAR(255)",
+               "function_info": "VARCHAR(255)"}
+
+    db.create_table("transmit_com", columns)
 
     columns = {"id": "INT AUTO_INCREMENT PRIMARY KEY",
                "maxByte": "INT",
@@ -388,6 +408,7 @@ def init_database(data_base_name):
                "func": "VARCHAR(255)"}
 
     db.create_table("com_info", columns)
+
     data_main = {
         "Width": "1250",
         "Height": "850",
@@ -435,12 +456,21 @@ def init_database(data_base_name):
         "id": "000004",
         "info_table": ""
     }
+
+
 # id => id length = 6 , first 2 is depth, last 4 is id random generated by function
     db.add_data_to_table("label_param", data_main)
     db.add_data_to_table("label_param", data_script)
     db.add_data_to_table("label_param", data_info)
     db.add_data_to_table("label_param", data_scope)
 
+    columns_scope = {"scope_number": "VARCHAR(255)",
+                     "scope_address": "VARCHAR(255)",
+                     "scope_type": "VARCHAR(255)"}
+
+    db.create_table("scopes", columns_scope)
+
+    db.switch_database('reports_list')
     db.switch_database(f"{data_base_name}_reports_list")
     columns = {"ResultStatus": "INT",
                "project_name": "VARCHAR(255)",

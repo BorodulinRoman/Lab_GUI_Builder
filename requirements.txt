@@ -3,3 +3,14 @@ pyvisa~=1.14.1
 winshell~=0.6
 pywin32
 mysql-connector-python~=9.0.0
+pandas~=2.2.2
+nidaqmx~=1.0.1
+picosdk~=1.1
+numpy~=2.1.1
+pyqtgraph~=0.13.7
+<<<<<<< HEAD
+PyQt5~=5.15.11
+=======
+PyQt5~=5.15.11
+scipy~=1.14.0
+>>>>>>> 7dd2763241e0dcbd2db67a6adc748368fc16e045
