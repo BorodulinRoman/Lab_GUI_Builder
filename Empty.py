@@ -766,13 +766,13 @@ class ButtonTransmitRightClickMenu(DraggableRightClickMenu):
 
 
 class SetupLoader:
-    def __init__(self, root, database, log):
-        self.scope_name = None
+    def __init__(self, root, database, log, gui_name):
         self.script = None
         self.db = database
         self.root = root
-        self.logger_setup = Logger('setup')
+        self.logger_setup = Logger(f'{gui_name}_setup')
         self.logger = log
+        self.gui_name = gui_name
         self.elements_dict = {}
         self.created_elements = {}
         self.waiting_list = []
@@ -829,13 +829,9 @@ class SetupLoader:
         else:
             if parent_id not in self.created_elements:
                 parent_element = self.elements_dict.get(parent_id)
-                if parent_element:
-                    self.logger_setup.message(
-                        f"Parent element {parent_id} not yet created, adding {element_id} to waiting list")
-                    self.waiting_list.append(element)
-                    return None
-                else:
+                if not parent_element:
                     self.logger_setup.message(f"Warning: Parent element with ID {parent_id} not found.")
+                    self.db.remove_element(element_id)
                     return None
             parent_info = self.created_elements[parent_id]
 
@@ -919,14 +915,13 @@ if __name__ == "__main__":
     root_main = tk.Tk()
     root_main.change_mode = False
     root_main.comport_list = {}
+    gui_name = 'lr2'
+    logger = Logger(f"{gui_name}_logs")
+    db_gui = Database(f"{gui_name}_conf", logger)
 
-    logger = Logger("log")
-    db_gui = Database("gui_conf", logger)
-
-    root_main.loader = SetupLoader(root_main, db_gui, logger)
+    root_main.loader = SetupLoader(root_main, db_gui, logger, gui_name)
     root_main.loader.load_setup()
     db_gui.logger = root_main.loader.logger
-    enu_bar = MenuBar(root_main, db_gui)
+    enu_bar = MenuBar(root_main, db_gui, gui_name)
     # root_main.attributes('-alpha', 0.95)
-    time.sleep(0.01)
     root_main.mainloop()

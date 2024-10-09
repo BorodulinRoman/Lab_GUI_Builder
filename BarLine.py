@@ -7,10 +7,12 @@ import pandas as pd
 
 
 class FindReportWindow:
-    def __init__(self, parent, database):
+    def __init__(self, parent, database, gui_name):
         self.results_tree = None
         self.search_entry = None
-        self.report = 'reports_list'
+        self.gui_name = gui_name
+        self.report = f'{gui_name}_reports_list'
+        self.logs = f'{gui_name}_logs'
         self.window = parent
         self.database = database
         self.search_type = tk.StringVar(value="Logs")
@@ -84,6 +86,7 @@ class FindReportWindow:
         if search_type == "Logs":
             results = self.search_logs(search_query)
 
+
         # Sort the results based on the selected column and order
         results = sorted(results, key=lambda x: x[self.sort_by.get()], reverse=not self.sort_order.get())
 
@@ -106,7 +109,7 @@ class FindReportWindow:
         return results
 
     def search_logs(self, query):
-        self.database.switch_database('logs')  # Switch to the 'logs' database
+        self.database.switch_database(self.logs)  # Switch to the 'logs' database
 
         table_names = self.database.get_all_table_names()  # Get all table names
         results = []
@@ -125,6 +128,7 @@ class FindReportWindow:
                         "Date": first_timestamp[0].strftime("%Y-%m-%d %H:%M:%S"),  # Format the timestamp
                     })
         return results
+
 
     def sort_column(self, col):
         if self.sort_by.get() == col:
@@ -145,6 +149,8 @@ class FindReportWindow:
             self._open_log_file(item_name)
         else:
             print("Unknown item type")
+
+
 
     def _open_log_file(self, item_name):
         # Ensure the 'log' directory exists
@@ -183,8 +189,8 @@ class FindReportWindow:
 
     def _open_report(self, item_name):
         name = self.database.database
-        self.database.switch_database('reports_list')
-        report_builder = Report(self.database)
+        self.database.switch_database(self.report)
+        report_builder = Report(self.database,self.gui_name)
         show_report = {}
 
         report_path = os.path.join(os.getcwd(), "info/reports")
@@ -222,11 +228,12 @@ class FindReportWindow:
 
 
 class FeatureWindow:
-    def __init__(self, parent, database):
+    def __init__(self, parent, database, gui_name):
         self.search_var = None
         self.database = database
         self.ok_button = None
         self.combo = None
+        self.gui_name = gui_name
         self.feature_vars = None
         self.tree = None
         self.top = None
@@ -276,7 +283,7 @@ class FeatureWindow:
         self.ok_button.grid(row=3, column=0, padx=10, pady=10)
 
     def _get_features(self):
-        self.database.switch_database('reports_list')  # Switch to the 'logs' database
+        self.database.switch_database(f'{self.gui_name}_reports_list')  # Switch to the 'logs' database
         results = []
         steps = self.database.find_data(table_name="init_test", feature="StepName")  # Get all table names
         for step in steps:
@@ -355,7 +362,7 @@ class FeatureWindow:
 
 
 class MenuBar:
-    def __init__(self, root, database):
+    def __init__(self, root, database, gui_name):
         self.logger = database.logger
         self.menubar = tk.Menu(root)
         root.config(menu=self.menubar)
@@ -364,7 +371,7 @@ class MenuBar:
         self.view_menu = tk.Menu(self.menubar, tearoff=0)
         self.add_menu = tk.Menu(self.menubar, tearoff=0)
         self.info_menu = tk.Menu(self.menubar, tearoff=0)
-
+        self.gui_name = gui_name
         self.create_file_menu()
         self.create_view_menu()
         self.create_add_menu()
@@ -403,11 +410,11 @@ class MenuBar:
     def report(self):
         root_report = tk.Toplevel(self.menubar)  # Use Toplevel instead of Tk
         root_report.title("Find Report")  # Set a different title for the new window
-        find_report_window = FindReportWindow(root_report, self.database)
+        find_report_window = FindReportWindow(root_report, self.database, self.gui_name)
         self.logger.message(find_report_window)
 
     def features_info(self):
-        FeatureWindow(self.menubar, self.database)
+        FeatureWindow(self.menubar,self.database, self.gui_name)
 
     def add_item(self):
         self.logger.message("Add Item")
