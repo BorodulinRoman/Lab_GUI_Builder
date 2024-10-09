@@ -54,7 +54,7 @@ def get_bytes_range(bytes_string):
 
 
 class Report:
-    def __init__(self, database):
+    def __init__(self, database, gui_name):
         self.db = database
         self.script_name = None
         self.test = None
@@ -66,7 +66,7 @@ class Report:
         # self.init_table = load_config('info/init_table.json')
         # self.init_test = load_config('info/init_test.json')
 
-        self.db.switch_database('reports_list')
+        self.db.switch_database(f'{gui_name}_reports_list')
         self.init_report = self.db.find_data("init_report", 0, "ResultStatus")[0]
         self.init_table = self.db.find_data("init_table", 2, "ResultStatus")[0]
         self.init_test = self.db.find_data("init_test", 0, "ResultStatus")[0]
@@ -177,7 +177,7 @@ class Report:
 
 
 class Script:
-    def __init__(self, logger, database, tester="RelayCTRL"):
+    def __init__(self, logger, database, gui_name, tester="RelayCTRL"):
         self.port = None
         self.path = None
         self.scope = ScopeUSB(logger)
@@ -187,7 +187,7 @@ class Script:
         self.uuts = None
         self.cmd_button = []
         self.response = None
-        self.report = Report(database)
+        self.report = Report(database, gui_name)
         self.tester = tester
         self.peripheral = load_config('info/peripheral.json')
         self.relay_cmd = self.peripheral["ports"][self.tester]["script"]

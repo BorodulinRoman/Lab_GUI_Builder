@@ -106,7 +106,7 @@ class AddDataWindow:
 
 class ScriptRunnerApp:
     def __init__(self, root, loger, database):
-        self.script = Script(loger, database)
+        self.script = Script(loger, database, gui_name=gui_name)
         self.logger = loger
         self.load_button = None
         self.info_label = None

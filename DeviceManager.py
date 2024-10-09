@@ -61,13 +61,16 @@ class DeviceManager:
         atexit.register(self.cleanup)
 
     def cleanup(self):
-        """Cleanup resources before exiting."""
-        if "ASRL" in self.device_name and self.device:
-            self.device.close()
-            self.logger.message("Cleanly disconnected from VISA device on exit")
-        elif "Dev" in self.device_name  and self.ni_controller:
-            self.ni_controller.close()
-            self.logger.message("Cleanly disconnected from NI device on exit")
+        try:
+            """Cleanup resources before exiting."""
+            if "ASRL" in self.device_name and self.device:
+                self.device.close()
+                self.logger.message("Cleanly disconnected from VISA device on exit")
+            elif "Dev" in self.device_name  and self.ni_controller:
+                self.ni_controller.close()
+                self.logger.message("Cleanly disconnected from NI device on exit")
+        except Exception as e:
+            self.logger.message(e, 'ERROR')
 
     def find_devices(self):
         """Find all connected devices (both VISA and NI devices)."""
