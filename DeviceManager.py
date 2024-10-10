@@ -1,4 +1,4 @@
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
 from datetime import datetime
 from nidaqmx.system import System
 import picosdk
@@ -7,6 +7,7 @@ import nidaqmx
 import atexit
 import time
 import threading
+
 
 def extract_bits(byte_string_list, low, high):
     try:
@@ -82,13 +83,17 @@ class DeviceManager:
         return all_devices
 
     def connect(self):
-        """Connect to a specific device based on the type selected (VISA or NI)."""
-        if "ASRL" in self.device_name:
-            return self.connect_visa()
-        elif "Dev" in self.device_name:
-            return self.connect_ni()
-        else:
-            self.logger.message("Unsupported device type selected")
+        try:
+            """Connect to a specific device based on the type selected (VISA or NI)."""
+            if "ASRL" in self.device_name:
+                return self.connect_visa()
+            elif "Dev" in self.device_name:
+                return self.connect_ni()
+            else:
+                self.logger.message("Unsupported device type selected")
+                return False
+        except Exception as e:
+            messagebox.showerror("Connection Error", f"Error: {e}")
             return False
 
     def connect_visa(self):

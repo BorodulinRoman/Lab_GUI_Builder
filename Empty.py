@@ -9,7 +9,7 @@ from BarLine import *
 # import multiprocessing
 import tkinter as tk
 import threading
-from tkinter import simpledialog
+# from tkinter import simpledialog
 
 
 def round_to_nearest_10(n):
@@ -20,7 +20,8 @@ def round_to_nearest_10(n):
 
 
 class AddDataWindow:
-    def __init__(self, frame, database):
+    def __init__(self, frame, database, gui_name):
+        self.gui_name = gui_name
         self.callback = None
         self.frame = frame
         self.database = database
@@ -100,12 +101,12 @@ class AddDataWindow:
         if self.callback is not None:
             self.callback(self.labels)
         else:
-            self.database.switch_database("gui_conf")
+            self.database.switch_database(f"{self.gui_name}_conf")
             self.database.add_element(self.labels)
 
 
 class ScriptRunnerApp:
-    def __init__(self, root, loger, database):
+    def __init__(self, root, loger, database, gui_name):
         self.script = Script(loger, database, gui_name=gui_name)
         self.logger = loger
         self.load_button = None
@@ -202,6 +203,7 @@ class RightClickMenu(tk.LabelFrame):
         """Initialize the RightClickMenu with a root, parent, label, width, height, and optional text."""
         self.scopes = None
         self.logger = log
+        self.gui_name = main_root.gui_name
         self.element = values
         if "Type" not in values.keys():
             self.element["Type"] = None
@@ -211,7 +213,7 @@ class RightClickMenu(tk.LabelFrame):
         self.menu = None
         self.x_start = None
         self.y_start = None
-        self.add_window = AddDataWindow(main_root, database=db_gui)
+        self.add_window = AddDataWindow(main_root, database=db_gui, gui_name=self.gui_name)
         self.root = main_root  # Reference to the root window
         self.visaDevices = DeviceManager(logger=self.logger)
         self.root.com_list = self.visaDevices.find_devices()
@@ -219,7 +221,7 @@ class RightClickMenu(tk.LabelFrame):
         self.parent_info = parent_info
         self.config(width=width, height=height, bg=parent_info['bg'])  # Match parent's background
         self.grid_propagate(False)
-        self.db = Database("gui_conf", self.logger)
+        self.db = Database(f"{self.gui_name}_conf", self.logger)
         self.bind("<Button-3>", self.show_menu)
 
     def show_menu(self, event):
@@ -458,7 +460,7 @@ class DataDraggableRightClickMenu(DraggableRightClickMenu):
         self.init()
 
     def init(self):
-        self.data_info = tk.Label(self, text="" )
+        self.data_info = tk.Label(self, text="")
         self.data_info.place(x=2, y=0)
         if self.low_byte > self.high_byte:
             temp = self.low_byte
@@ -551,10 +553,12 @@ class ComPortRightClickMenu(DraggableRightClickMenu):
             self.port.disconnect()
             self.update_all_data_label("")
         else:
-            if not self.port.connect():
+            answer = self.port.connect()
+            if not answer:
                 self.logger.message("Port in use")
+                messagebox.showerror("Connection Error", f"Port in use")
                 return False
-            self.db.switch_database("gui_conf")
+            self.db.switch_database(f"{self.gui_name}_conf")
             com_info = self.db.find_data("com_info", self.gen_id)[0]
             com_info["last_conn_info"] = self.port.device_name
             self.db.update(com_info)
@@ -742,7 +746,6 @@ class ButtonTransmitRightClickMenu(DraggableRightClickMenu):
         self.config(width=self.width, height=self.height)
         self.place_configure(width=self.width, height=self.height)
 
-
     def on_fun_click(self):
         # Toggle state and button text
         if not self.is_started:
@@ -809,7 +812,7 @@ class SetupLoader:
         self.scope_name.place(x=5, y=5)
 
     def create_script_label(self, frame):
-        ScriptRunnerApp(frame, self.logger, self.db)
+        ScriptRunnerApp(frame, self.logger, self.db, self.gui_name)
 
     def create_element(self, element):
         element_id = element.get('id', '')
@@ -888,7 +891,7 @@ class SetupLoader:
                     log=self.logger)
 
         try:
-            self.db.switch_database('gui_conf')
+            self.db.switch_database(f"{self.gui_name}_conf")
             if "ComPortRightClickMenu" in class_name:
                 self.root.comport_list[str(frame_id)] = frame
             elif "ComTransmitRightClickMenu" in class_name or "ButtonTransmitRightClickMenu" in class_name:
@@ -915,13 +918,13 @@ if __name__ == "__main__":
     root_main = tk.Tk()
     root_main.change_mode = False
     root_main.comport_list = {}
-    gui_name = 'lr2'
-    logger = Logger(f"{gui_name}_logs")
-    db_gui = Database(f"{gui_name}_conf", logger)
+    root_main.gui_name = 'lr2'
+    logger = Logger(f"{root_main.gui_name}_logs")
+    db_gui = Database(f"{root_main.gui_name}_conf", logger)
 
-    root_main.loader = SetupLoader(root_main, db_gui, logger, gui_name)
+    root_main.loader = SetupLoader(root_main, db_gui, logger, root_main.gui_name)
     root_main.loader.load_setup()
     db_gui.logger = root_main.loader.logger
-    enu_bar = MenuBar(root_main, db_gui, gui_name)
+    enu_bar = MenuBar(root_main, db_gui, root_main.gui_name)
     # root_main.attributes('-alpha', 0.95)
     root_main.mainloop()
