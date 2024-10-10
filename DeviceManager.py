@@ -367,7 +367,8 @@ class NI6009Controller:
                     # Switch to the target state after the delay
                     task.write([state_1, state_2])  # Ensure all states are boolean
                     self.logger.message(
-                        f"Pulsed line {line1} to {'High' if state1 else 'Low'} and line {line2} to {'High' if state2 else 'Low'} after {delay_ms}ms delay."
+                        f"Pulsed line {line1} to {'High' if state1 else 'Low'} and line {line2}"
+                        f" to {'High' if state2 else 'Low'} after {delay_ms}ms delay."
                     )
             except Exception as e:
                 self.logger.message(f"Error during pulse operation: {e}")

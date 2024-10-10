@@ -556,7 +556,7 @@ class ComPortRightClickMenu(DraggableRightClickMenu):
             answer = self.port.connect()
             if not answer:
                 self.logger.message("Port in use")
-                messagebox.showerror("Connection Error", f"Port in use")
+                messagebox.showerror("Connection Error!", f"Port in use")
                 return False
             self.db.switch_database(f"{self.gui_name}_conf")
             com_info = self.db.find_data("com_info", self.gen_id)[0]

@@ -220,7 +220,6 @@ class Script:
         return self.stop_flag
 
     def power_supply(self, list_line):
-        print(list_line)
         return list_line
 
     def scope_scripts(self, list_line, data):

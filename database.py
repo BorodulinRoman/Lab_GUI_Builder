@@ -6,7 +6,7 @@ from queue import Queue
 import threading
 import tkinter as tk
 
-
+# database
 class PrintLoger:
     def __init__(self):
         self.info = "logger"

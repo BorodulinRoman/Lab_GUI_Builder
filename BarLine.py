@@ -5,7 +5,7 @@ import subprocess
 from ReportsAndScriptRun import Report
 import pandas as pd
 
-
+#BarLine
 class FindReportWindow:
     def __init__(self, parent, database, gui_name):
         self.results_tree = None
