@@ -68,6 +68,7 @@ def get_start_time():
 class DeviceManager:
     def __init__(self, logger):
         self.logger = logger
+        self.baud_rate = 11500
         self.rm = pyvisa.ResourceManager()
         self.device = None
         self.device_name = None
@@ -115,8 +116,8 @@ class DeviceManager:
         if not is_port_in_use(f'COM{int(match.group(1))}'):
             self.device = self.rm.open_resource(self.device_name)
             self.logger.message(f"Connected to VISA device: {self.device_name}")
-            self.device.timeout = 100  # Set timeout to 1 second
-            self.device.baud_rate = 9600
+            self.device.timeout = 5000  # Set timeout to 1 second
+            self.device.baud_rate = self.baud_rate
             return True
         else:
             self.logger.message(f"Failed to connect to VISA device")
@@ -144,7 +145,7 @@ class DeviceManager:
         """Send a command to the connected device (VISA or NI)."""
         if "ASRL" in self.device_name and self.device:
             try:
-                self.device.write(command)
+                self.device.write("AA,BB")
                 self.logger.message(f"Command '{command}' sent to VISA device")
             except Exception as e:
                 self.logger.message(f"Failed to send command to VISA device: {str(e)}")
@@ -158,6 +159,7 @@ class DeviceManager:
         if "ASRL" in self.device_name and self.device:
             try:
                 response = self.device.read()
+                print(response)
                 return response
             except Exception as e:
                 self.logger.message(f"Failed to read from VISA device: {str(e)}")

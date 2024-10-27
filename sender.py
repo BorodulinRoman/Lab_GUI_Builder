@@ -11,11 +11,11 @@ def hex_to_bytes(hex_string):
     return byte_array
 
 # Open resources for the instruments
-instrument4 = rm.open_resource('ASRL4::INSTR')
+instrument4 = rm.open_resource('ASRL3::INSTR')
 packet_hex = 'AA,3D,FF,00,EF,55'
 packet = hex_to_bytes(packet_hex)
 # Set up your instruments
-instrument4.baud_rate = 4000000
+instrument4.baud_rate = 115200
 instrument4.timeout = 1  # in milliseconds
 
 counter = 0

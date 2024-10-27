@@ -322,15 +322,15 @@ class RightClickMenu(tk.LabelFrame):
                                         lambda values: self.create_new_widget_with_settings(values, x, y, cls, dic_ids))
 
     def open_com_box(self, x, y, cls):
-        label = {'label_name': 'New combo', "last_conn_info": None, "func": None}
-        boxs = {"Dimension": ['160x100', '300x100', '600x100']}
+        label = {'label_name': 'New combo', "last_conn_info": None, "baud_rate": "115200"}
+        boxs = {"Dimension": ['250x70']}
         self.add_window.open_new_window(label, boxs, "Create New Com Communication",
                                         lambda values: self.create_new_widget_with_settings(values, x, y, cls))
 
     def open_transmit_box(self, x, y, cls):
         dic_ids = self.get_coms_data()
         label = {'label_name': 'New combo', "last_conn_info": None, "func": None}
-        boxs = {"Dimension": ['160x100', '300x100', '600x100'], 'info_table': list(dic_ids.keys())}
+        boxs = {"Dimension": ['160x100', '260x100', '600x100'], 'info_table': list(dic_ids.keys())}
         self.add_window.open_new_window(label, boxs, "Create New Com transmit box",
                                         lambda values: self.create_new_widget_with_settings(values, x, y, cls, dic_ids))
 
@@ -502,7 +502,7 @@ class ComPortRightClickMenu(DraggableRightClickMenu):
 
         # Retrieve the list from main_root based on the type specified in values
         self.combobox = ttk.Combobox(self.top_frame, values=list(self.val_list))
-        self.combobox.pack(side=tk.LEFT, padx=5, pady=5)
+        self.combobox.pack(side=tk.RIGHT, padx=5, pady=5)
         self.combobox.set(self.val_list[0])
 
         # Bind the combobox selection event to a callback function
@@ -511,13 +511,14 @@ class ComPortRightClickMenu(DraggableRightClickMenu):
         # Create a toggle Button under the combobox
         self.port = DeviceManager(self.logger)
         self.update_combo_com()
-        self.button = tk.Button(self, text="Start", command=self.on_com_click, font=("Arial", 10))
+        self.button = tk.Button(self.top_frame, text="Start", command=self.on_com_click, font=("Arial", 10))
         com_info = self.db.find_data("com_info", self.gen_id)[0]
         if com_info["last_conn_info"] != "None" and com_info["last_conn_info"] in self.port.find_devices():
             self.port.device_name = com_info["last_conn_info"]
+            self.port.baud_rate = int(com_info["baud_rate"])
             self.on_com_click()
             self.combobox.set(self.port.device_name)
-        self.button.pack(side=tk.TOP, padx=5, pady=5)
+        self.button.pack(side=tk.LEFT, padx=5, pady=5)
         self.config(width=self.width, height=self.height)
 
         # Force the size change by using place geometry manager
@@ -566,8 +567,9 @@ class ComPortRightClickMenu(DraggableRightClickMenu):
             self.combobox.config(state="disabled")  # Disable the combobox
             self.is_started = True
             # self.update_all_data_label("------")
-            # process = threading.Thread(target=self.update_data_labels)
-            # process.start()
+
+            process = threading.Thread(target=self.update_data_labels)
+            process.start()
 
         # Send data if type is function
         if self.val_list and callable(self.combobox.get()):
@@ -581,7 +583,7 @@ class ComPortRightClickMenu(DraggableRightClickMenu):
 
     def update_data_labels(self, data=None):
         threads = []
-        while self.port.device and self.main_root.winfo_exists():
+        while self.port.device and self.main_root.winfo_exists() and self.data_list:
             time.sleep(0.1)
             # print("run process")
             self.data = self.port.read()
@@ -623,7 +625,9 @@ class ComTransmitRightClickMenu(DraggableRightClickMenu):
         self.logger = log
         self.checkbox_var = None
         self.checkbox = None
-        self.val_list = ["select or set"]
+        self.val_list = {"select or set": "",
+                         "RELAY 0&1 OFF": "RELAY, 0&0, 1&0, 10",
+                         "RELAY 0&1 ON": "RELAY, 0&1, 1&1, 10"}
         self.top_frame = None
         self.label = None
         self.combobox = None
@@ -638,21 +642,19 @@ class ComTransmitRightClickMenu(DraggableRightClickMenu):
     def init_box(self, values, main_root):
         self.top_frame = tk.Frame(self)
         self.top_frame.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
-        self.type = values["Type"]
+        # self.type = values["Type"]
         # Create a Label
-        self.label = tk.Label(self.top_frame, text=values["label_name"])
-        self.label.pack(side=tk.LEFT, padx=5, pady=5)
+        # self.label = tk.Label(self.top_frame, text=values["label_name"])
+        # self.label.pack(side=tk.LEFT, padx=5, pady=5)
 
         # Retrieve the list from main_root based on the type specified in values
-        self.combobox = ttk.Combobox(self.top_frame, values=list(self.val_list))
+        self.combobox = ttk.Combobox(self.top_frame, values=list(self.val_list.keys()))
         self.combobox.pack(side=tk.LEFT, padx=5, pady=5)
-        self.combobox.set(self.val_list[0])
+        self.combobox.set(list(self.val_list.keys())[0])
 
         # Bind the combobox selection event to a callback function
         self.combobox.bind("<<ComboboxSelected>>", self.on_combobox_select)
 
-        # Create a toggle Button under the combobox
-        self.val_list = getattr(main_root, values["Type"], {})
         self.button = tk.Button(self, text="Send", command=self.on_fun_click, font=("Arial", 10))
         self.checkbox_var = tk.IntVar()
         self.checkbox = tk.Checkbutton(self, text="AUTO RUN", variable=self.checkbox_var)
@@ -665,27 +667,22 @@ class ComTransmitRightClickMenu(DraggableRightClickMenu):
         self.place_configure(width=self.width, height=self.height)
 
     def update_combo_com(self):
-        self.val_list = self.port.find_devices()
-        self.val_list.insert(0, "select or set")
         self.combobox.config(values=self.val_list)
 
     def on_combobox_select(self, event):
         selected_value = self.combobox.get()
-        self.port.device_name = selected_value
         self.logger.message(f"Selected value: {selected_value}")
         # Add any additional functionality you need on selection
 
     def on_fun_click(self):
-        self.uut.write("RELAY, 0&0, 1&0, 10")
-        time.sleep(1)
-        self.uut.write("RELAY, 0&1, 1&1, 10")
+        self.uut.write(self.val_list[self.combobox.get()])
 
     def update_data_labels(self):
         threads = []
-        while self.port.device and self.main_root.winfo_exists():
+        while self.uut.device and self.main_root.winfo_exists():
             time.sleep(0.1)
             # print("run process")
-            self.data = self.port.query_read()
+            self.data = self.uut.query_read()
             # start = time.time_ns()
             for data_label in self.data_list:
                 if self.data is None:
@@ -800,7 +797,7 @@ class SetupLoader:
         # Process waiting list until it's empty
 
     def create_info_label(self, frame):
-        text_widget = tk.Text(frame, height=10, width=108, wrap=tk.WORD, state=tk.DISABLED)
+        text_widget = tk.Text(frame, height=10, width=140, wrap=tk.WORD, state=tk.DISABLED)
         scrollbar = tk.Scrollbar(frame, command=text_widget.yview)
         text_widget.config(yscrollcommand=scrollbar.set)
         text_widget.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
@@ -918,9 +915,14 @@ if __name__ == "__main__":
     root_main = tk.Tk()
     root_main.change_mode = False
     root_main.comport_list = {}
-    root_main.gui_name = 'OldGUI'
-    init_database(root_main.gui_name)
-    logger = Logger(f"{root_main.gui_name}_logs")
+    root_main.gui_name = 'OLD'
+
+    try:
+        logger = Logger(f"{root_main.gui_name}_logs")
+    except:
+        init_database(root_main.gui_name)
+        logger = Logger(f"{root_main.gui_name}_logs")
+
     db_gui = Database(f"{root_main.gui_name}_conf", logger)
 
     root_main.loader = SetupLoader(root_main, db_gui, logger, root_main.gui_name)
