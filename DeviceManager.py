@@ -7,6 +7,19 @@ import nidaqmx
 import atexit
 import time
 import threading
+import serial
+import serial.tools.list_ports
+import re
+
+
+def is_port_in_use(port_name):
+    """Check if a COM port is in use without taking full control."""
+    try:
+        # Attempt to open the port in a non-exclusive mode
+        with serial.Serial(port=port_name, baudrate=9600, timeout=1) as ser:
+            return False  # Port is not in use if we can open it successfully
+    except serial.SerialException:
+        return True  # Port is already in use or cannot be accessed
 
 
 def extract_bits(byte_string_list, low, high):
@@ -98,14 +111,15 @@ class DeviceManager:
 
     def connect_visa(self):
         """Connect to a VISA device."""
-        try:
+        match = re.search(r'ASRL(\d+)::INSTR', self.device_name)
+        if not is_port_in_use(f'COM{int(match.group(1))}'):
             self.device = self.rm.open_resource(self.device_name)
             self.logger.message(f"Connected to VISA device: {self.device_name}")
-            self.device.timeout = 1000  # Set timeout to 1 second
+            self.device.timeout = 100  # Set timeout to 1 second
             self.device.baud_rate = 9600
             return True
-        except Exception as e:
-            self.logger.message(f"Failed to connect to VISA device: {str(e)}")
+        else:
+            self.logger.message(f"Failed to connect to VISA device")
             return False
 
     def connect_ni(self):

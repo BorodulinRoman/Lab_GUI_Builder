@@ -2,7 +2,7 @@ import time
 from tkinter import Menu, messagebox
 import datetime
 from DeviceManager import DeviceManager, extract_bits, ScopeUSB
-from database import Database, Logger
+from database import Database, Logger, init_database
 from ReportsAndScriptRun import Script
 from tkinter import filedialog
 from BarLine import *
@@ -297,7 +297,7 @@ class RightClickMenu(tk.LabelFrame):
 
     def open_creation_window(self, x, y, cls):
         label = {'label_name': 'New Widget'}  # Set the default name
-        boxs = {"Dimension": ['150x400', '520x400', '820x600', '320x600', '920x200', '260x200']}
+        boxs = {"Dimension": ['250x400', '520x400', '900x400', '300x600', '900x200', '250x200']}
         self.add_window.open_new_window(label, boxs, "Create New Widget",
                                         lambda values: self.create_new_widget_with_settings(values, x, y, cls))
 
@@ -452,7 +452,6 @@ class DataDraggableRightClickMenu(DraggableRightClickMenu):
         super().__init__(main_root, parent_info, values, log, gen_id=gen_id)
         self.reverse = 1
         self.data_info = None
-        print("roman ", values)
         self.low_bit = values["minBit"]
         self.high_bit = values["maxBit"]
         self.low_byte = values["minByte"]
@@ -498,8 +497,8 @@ class ComPortRightClickMenu(DraggableRightClickMenu):
         self.top_frame.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
         self.type = values["Type"]
         # Create a Label
-        self.label = tk.Label(self.top_frame, text=values["label_name"])
-        self.label.pack(side=tk.LEFT, padx=5, pady=5)
+        #self.label = tk.Label(self.top_frame, text=values["label_name"])
+        #self.label.pack(side=tk.LEFT, padx=5, pady=5)
 
         # Retrieve the list from main_root based on the type specified in values
         self.combobox = ttk.Combobox(self.top_frame, values=list(self.val_list))
@@ -554,6 +553,7 @@ class ComPortRightClickMenu(DraggableRightClickMenu):
             self.update_all_data_label("")
         else:
             answer = self.port.connect()
+            print(answer)
             if not answer:
                 self.logger.message("Port in use")
                 messagebox.showerror("Connection Error!", f"Port in use")
@@ -566,8 +566,8 @@ class ComPortRightClickMenu(DraggableRightClickMenu):
             self.combobox.config(state="disabled")  # Disable the combobox
             self.is_started = True
             # self.update_all_data_label("------")
-            process = threading.Thread(target=self.update_data_labels)
-            process.start()
+            # process = threading.Thread(target=self.update_data_labels)
+            # process.start()
 
         # Send data if type is function
         if self.val_list and callable(self.combobox.get()):
@@ -584,7 +584,7 @@ class ComPortRightClickMenu(DraggableRightClickMenu):
         while self.port.device and self.main_root.winfo_exists():
             time.sleep(0.1)
             # print("run process")
-            self.data = self.port.query_read()
+            self.data = self.port.read()
             # start = time.time_ns()
             for data_label in self.data_list:
                 if self.data is None:
@@ -918,7 +918,8 @@ if __name__ == "__main__":
     root_main = tk.Tk()
     root_main.change_mode = False
     root_main.comport_list = {}
-    root_main.gui_name = 'lr2'
+    root_main.gui_name = 'OldGUI'
+    init_database(root_main.gui_name)
     logger = Logger(f"{root_main.gui_name}_logs")
     db_gui = Database(f"{root_main.gui_name}_conf", logger)
 

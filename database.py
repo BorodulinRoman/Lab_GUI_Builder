@@ -359,12 +359,11 @@ def remove_database_info(db, data_base_name="gui"):
         db.delete_table(table)
 
 
-
-
 def init_database(data_base_name):
     create_schema("localhost", "root", "Aa123456", f"{data_base_name}_conf")
     create_schema("localhost", "root", "Aa123456", f"{data_base_name}_reports_list")
     create_schema("localhost", "root", "Aa123456", f"{data_base_name}_logs")
+    create_schema("localhost", "root", "Aa123456", f"{data_base_name}_setup")
     db = Database(host="localhost", user="root", passwd="Aa123456", database=f"{data_base_name}_conf")
     db.connect()
     # remove_database_info(db)
