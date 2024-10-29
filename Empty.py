@@ -586,7 +586,7 @@ class ComPortRightClickMenu(DraggableRightClickMenu):
         while self.port.device and self.main_root.winfo_exists() and self.data_list:
             time.sleep(0.1)
             # print("run process")
-            self.data = self.port.read()
+            self.data = self.port.continuous_read()
             # start = time.time_ns()
             for data_label in self.data_list:
                 if self.data is None:

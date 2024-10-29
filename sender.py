@@ -1,36 +1,35 @@
-import pyvisa as visa
-import time
-from datetime import datetime
+import pyvisa
 
-# Create the resource manager
-rm = visa.ResourceManager()
-print(rm.list_resources())
-def hex_to_bytes(hex_string):
-    hex_values = hex_string.split(',')
-    byte_array = bytes(int(h, 16) for h in hex_values)
-    return byte_array
+# Initialize the PyVISA resource manager
+rm = pyvisa.ResourceManager()
 
-# Open resources for the instruments
-instrument4 = rm.open_resource('ASRL3::INSTR')
-packet_hex = 'AA,3D,FF,00,EF,55'
-packet = hex_to_bytes(packet_hex)
-# Set up your instruments
-instrument4.baud_rate = 115200
-instrument4.timeout = 1  # in milliseconds
+# List all connected devices (optional, for checking connected ports)
+print("Available Resources:", rm.list_resources())
 
-counter = 0
+# Connect to the ASRL port (change 'ASRL1::INSTR' to the actual port name, like 'ASRL2::INSTR')
 try:
+    # Open the ASRL port with specific configurations
+    device = rm.open_resource('ASRL4::INSTR')
+    device.baud_rate = 115200  # Adjust based on your device
+    device.data_bits = 8  # Commonly 7 or 8 bits
+    device.parity = pyvisa.constants.Parity.none  # Parity: none, even, or odd
+    device.stop_bits = pyvisa.constants.StopBits.one  # 1, 1.5, or 2 stop bits
+    device.timeout = 5000  # Set timeout in milliseconds (5 seconds here)
+
+    # Read data in a loop or as needed
     while True:
-        counter += 1
         try:
-            if counter >= 255:
-                counter = 0
-            instrument4.write(f"{hex(255 - counter)[2:].upper()},{packet_hex},{hex(counter)[2:].upper()}")  # Send command
-        except visa.errors.VisaIOError as e:
-            if e.error_code == visa.constants.VI_ERROR_TMO:
-                print("No data received. Sending trigger command...")
-        except KeyboardInterrupt:
+
+            # Read from the device (adjust read_termination and chunk size as necessary)
+            data = device.query(" ")
+            print("Data received:", data)
+
+        except pyvisa.errors.VisaIOError as e:
+            print(f"Read error: {e}")
             break
-finally:
-    instrument4.close()
-    print("Cleanup complete.")
+
+    # Close the connection
+    device.close()
+
+except pyvisa.errors.VisaIOError as e:
+    print(f"Connection error: {e}")

@@ -116,7 +116,7 @@ class DeviceManager:
         if not is_port_in_use(f'COM{int(match.group(1))}'):
             self.device = self.rm.open_resource(self.device_name)
             self.logger.message(f"Connected to VISA device: {self.device_name}")
-            self.device.timeout = 5000  # Set timeout to 1 second
+            self.device.timeout = 500  # Set timeout to 1 second
             self.device.baud_rate = self.baud_rate
             return True
         else:
@@ -154,20 +154,25 @@ class DeviceManager:
         else:
             self.logger.message("No device connected to send command")
 
-    def read(self):
+    def continuous_read(self):
         """Read response from the connected device."""
         if "ASRL" in self.device_name and self.device:
             try:
-                response = self.device.read()
-                print(response)
-                return response
+                response = self.device.read()  # Attempt to read data
+                print("Raw response:", response)  # Print the raw response to diagnose type
+                if isinstance(response, (bytes, str)):
+                    print("Received data:", response)
+                    return response
+                else:
+                    self.logger.message(f"Unexpected response type: {type(response)}", 'ERROR')
+                    return None
             except Exception as e:
-                self.logger.message(f"Failed to read from VISA device: {str(e)}")
+                self.logger.message(f"Failed to read from VISA device: {str(e)}", 'ERROR')
+                print(f"Read error: {str(e)}")
                 return None
-        elif "Dev" in self.device_name and self.ni_controller:
-            return None  # No direct read function for NI in this example
         else:
-            self.logger.message("No device connected to read from")
+            self.logger.message("No device connected to read from", 'ERROR')
+            print("No device connected")
             return None
 
 # Usage Example:
