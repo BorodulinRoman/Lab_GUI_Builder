@@ -10,7 +10,7 @@ from BarLine import *
 import tkinter as tk
 import threading
 # from tkinter import simpledialog
-
+#shira
 
 def round_to_nearest_10(n):
     if n < 0:
@@ -554,7 +554,6 @@ class ComPortRightClickMenu(DraggableRightClickMenu):
             self.update_all_data_label("")
         else:
             answer = self.port.connect()
-            print(answer)
             if not answer:
                 self.logger.message("Port in use")
                 messagebox.showerror("Connection Error!", f"Port in use")
@@ -585,9 +584,10 @@ class ComPortRightClickMenu(DraggableRightClickMenu):
         threads = []
         while self.port.device and self.main_root.winfo_exists() and self.data_list:
             time.sleep(0.1)
-            # print("run process")
             self.data = self.port.continuous_read()
             # start = time.time_ns()
+            if self.data is None:
+                continue
             for data_label in self.data_list:
                 if self.data is None:
                     break
@@ -595,7 +595,6 @@ class ComPortRightClickMenu(DraggableRightClickMenu):
                     threads.append(threading.Thread(target=self._update_data_label, args=(data_label,)))
                     threads[-1].start()
                 except Exception as e:
-                    print(e)
                     pass
             for thread in threads:
                 thread.join()
@@ -606,9 +605,9 @@ class ComPortRightClickMenu(DraggableRightClickMenu):
 
     def _update_data_label(self, data_label):
         time.sleep(0.001)
-        list_bytes = [self.data[int(some_bit)] for some_bit in range(int(data_label.low_byte),
-                                                                     int(data_label.high_byte) + 1)]
-        data = extract_bits(list_bytes[::data_label.reverse], data_label.low_bit, data_label.high_bit)
+        list_bytes = [self.data[i] for i in range(len(self.data))]
+
+        data = extract_bits(list_bytes[data_label.low_byte:1+data_label.high_byte:data_label.reverse], data_label.low_bit, data_label.high_bit)
         data_label.data_info.config(text=data)
 
 
@@ -702,10 +701,7 @@ class ComTransmitRightClickMenu(DraggableRightClickMenu):
 
     def _update_data_label(self, data_label):
         time.sleep(0.001)
-        list_bytes = [self.data[int(some_bit)] for some_bit in range(int(data_label.low_byte),
-                                                                     int(data_label.high_byte) + 1)]
-        data = extract_bits(list_bytes[::data_label.reverse], data_label.low_bit, data_label.high_bit)
-        data_label.data_info.config(text=data)
+
 
 
 class ButtonTransmitRightClickMenu(DraggableRightClickMenu):
@@ -749,7 +745,6 @@ class ButtonTransmitRightClickMenu(DraggableRightClickMenu):
             self.button.config(text="  OFF  ")  # Change text to 'Stop'
             self.is_started = True
             self.uut.write(self.element['on_state'])
-
             print(self.function)
         else:
             self.button.config(text="  ON  ")  # Change text to 'Start'
@@ -759,10 +754,7 @@ class ButtonTransmitRightClickMenu(DraggableRightClickMenu):
 
     def _update_data_label(self, data_label):
         time.sleep(0.001)
-        list_bytes = [self.data[int(some_bit)] for some_bit in range(int(data_label.low_byte),
-                                                                     int(data_label.high_byte) + 1)]
-        data = extract_bits(list_bytes[::data_label.reverse], data_label.low_bit, data_label.high_bit)
-        data_label.data_info.config(text=data)
+
 
 
 class SetupLoader:

@@ -22,29 +22,51 @@ def is_port_in_use(port_name):
         return True  # Port is already in use or cannot be accessed
 
 
-def extract_bits(byte_string_list, low, high):
-    try:
-        # Convert byte strings to integers
-        byte_list = [int(byte_str, 16) for byte_str in byte_string_list]
+def extract_bits(lst, low, high, format_type='decimal'):
+    print("list data is : ", lst)
+    result = []
+    for num in lst:
+        if format_type == "binary":
+            formatted_num = format(num, '08b')
+        elif format_type == "hex":
+            formatted_num = format(num, '02X')
+        elif format_type == "decimal":
+            formatted_num = str(num)
+        else:
+            raise ValueError("Invalid format type. Choose 'binary', 'hex', or 'decimal'.")
 
-        # Calculate the total bit span
-        total_bits = len(byte_list) * 8
-        # Validate range
-        if not (0 <= low <= high < total_bits):
-            raise ValueError("Low and high must be within the range determined by the byte list size.")
+        # חיתוך לפי low ו-high
+        if high >= 8:
+            result.append(formatted_num)
+        else:
+            if format_type == "binary":
+                sliced_formatted = formatted_num[-high:][low:]
+                result.append(sliced_formatted)
+            elif high < 7 or low > 0:
+                # Combine bytes and extract bits for hex and decimal formats
+                combined_bytes = 0
+                for i, byte in enumerate(lst):
+                    combined_bytes |= byte << (8 * i)
 
-        # Combine bytes into a single integer
-        combined_bytes = 0
-        for i, byte in enumerate(byte_list):
-            combined_bytes |= byte << (8 * i)
+                # Mask and extract bits
+                mask = (1 << (high - low + 1)) - 1
+                extracted_value = (combined_bytes >> low) & mask
 
-        # Mask and extract bits
-        mask = (1 << (high - low + 1)) - 1
-        extracted_value = (combined_bytes >> low) & mask
+                # Append formatted extracted value
+                if format_type == "hex":
+                    result.append(format(extracted_value, 'X'))
+                elif format_type == "decimal":
+                    result.append(str(extracted_value))
+            else:
+                result.append(str(formatted_num))
 
-        return int(extracted_value)  # Return as integer for flexible formatting
-    except Exception as e:
-        return "------"
+    if high >= 8:
+        return ''.join(result)
+    elif high < 8 and len(lst) > 1:
+        return ','.join(result)
+    else:
+        return result[-1]
+
 
 
 def get_start_time_in_sec():
@@ -114,10 +136,16 @@ class DeviceManager:
         """Connect to a VISA device."""
         match = re.search(r'ASRL(\d+)::INSTR', self.device_name)
         if not is_port_in_use(f'COM{int(match.group(1))}'):
-            self.device = self.rm.open_resource(self.device_name)
+            self.device = self.rm.open_resource(
+                self.device_name,
+                baud_rate=self.baud_rate,
+                data_bits=8,
+                parity=pyvisa.constants.Parity.none,
+                stop_bits=pyvisa.constants.StopBits.one,
+                read_termination='\n'
+            )
             self.logger.message(f"Connected to VISA device: {self.device_name}")
             self.device.timeout = 500  # Set timeout to 1 second
-            self.device.baud_rate = self.baud_rate
             return True
         else:
             self.logger.message(f"Failed to connect to VISA device")
@@ -160,15 +188,12 @@ class DeviceManager:
             try:
                 response = self.device.read()  # Attempt to read data
                 print("Raw response:", response)  # Print the raw response to diagnose type
-                if isinstance(response, (bytes, str)):
-                    print("Received data:", response)
-                    return response
+                if response:
+                    return bytes.fromhex(response)
                 else:
                     self.logger.message(f"Unexpected response type: {type(response)}", 'ERROR')
                     return None
             except Exception as e:
-                self.logger.message(f"Failed to read from VISA device: {str(e)}", 'ERROR')
-                print(f"Read error: {str(e)}")
                 return None
         else:
             self.logger.message("No device connected to read from", 'ERROR')
