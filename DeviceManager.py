@@ -1,9 +1,9 @@
 from tkinter import filedialog, messagebox
 from datetime import datetime
 from nidaqmx.system import System
+import nidaqmx
 import picosdk
 import pyvisa
-import nidaqmx
 import atexit
 import time
 import threading
@@ -35,7 +35,6 @@ def extract_bits(lst, low, high, format_type='decimal'):
         else:
             raise ValueError("Invalid format type. Choose 'binary', 'hex', or 'decimal'.")
 
-        # חיתוך לפי low ו-high
         if high >= 8:
             result.append(formatted_num)
         else:
@@ -68,7 +67,6 @@ def extract_bits(lst, low, high, format_type='decimal'):
         return result[-1]
 
 
-
 def get_start_time_in_sec():
     # Placeholder function; replace with your actual implementation
     return datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -90,7 +88,8 @@ def get_start_time():
 class DeviceManager:
     def __init__(self, logger):
         self.logger = logger
-        self.baud_rate = 11500
+        self.baud_rate = 1000000
+        self.timeout = 500
         self.rm = pyvisa.ResourceManager()
         self.device = None
         self.device_name = None
@@ -103,7 +102,7 @@ class DeviceManager:
             if "ASRL" in self.device_name and self.device:
                 self.device.close()
                 self.logger.message("Cleanly disconnected from VISA device on exit")
-            elif "Dev" in self.device_name  and self.ni_controller:
+            elif "Dev" in self.device_name and self.ni_controller:
                 self.ni_controller.close()
                 self.logger.message("Cleanly disconnected from NI device on exit")
         except Exception as e:
@@ -142,10 +141,10 @@ class DeviceManager:
                 data_bits=8,
                 parity=pyvisa.constants.Parity.none,
                 stop_bits=pyvisa.constants.StopBits.one,
-                read_termination='\n'
+                read_termination=''  # No termination character
             )
             self.logger.message(f"Connected to VISA device: {self.device_name}")
-            self.device.timeout = 500  # Set timeout to 1 second
+            self.device.timeout = self.timeout
             return True
         else:
             self.logger.message(f"Failed to connect to VISA device")
@@ -173,7 +172,7 @@ class DeviceManager:
         """Send a command to the connected device (VISA or NI)."""
         if "ASRL" in self.device_name and self.device:
             try:
-                self.device.write("AA,BB")
+                self.device.write(command)
                 self.logger.message(f"Command '{command}' sent to VISA device")
             except Exception as e:
                 self.logger.message(f"Failed to send command to VISA device: {str(e)}")
@@ -186,7 +185,7 @@ class DeviceManager:
         """Read response from the connected device."""
         if "ASRL" in self.device_name and self.device:
             try:
-                response = self.device.read()  # Attempt to read data
+                response = self.device.read_bytes(self.device.bytes_in_buffer).decode()
                 print("Raw response:", response)  # Print the raw response to diagnose type
                 if response:
                     return bytes.fromhex(response)
@@ -194,13 +193,13 @@ class DeviceManager:
                     self.logger.message(f"Unexpected response type: {type(response)}", 'ERROR')
                     return None
             except Exception as e:
+                print(e)
                 return None
         else:
             self.logger.message("No device connected to read from", 'ERROR')
             print("No device connected")
             return None
 
-# Usage Example:
 
 class ScopeUSB:
     def __init__(self, logger):
@@ -453,5 +452,3 @@ class NI6009Controller:
 #
 #
 #     dev.close()
-
-

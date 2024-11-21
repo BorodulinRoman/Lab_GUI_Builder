@@ -4,8 +4,164 @@ import os
 import subprocess
 from ReportsAndScriptRun import Report
 import pandas as pd
-
+from database import init_database
 #BarLine
+
+
+class AddDataWindow:
+    def __init__(self, frame, database, gui_name):
+        self.gui_name = gui_name
+        self.callback = None
+        self.frame = frame
+        self.database = database
+        self.new_window = None
+        self.labels = {}
+        self.port_var = {}
+        self.addkey = False
+        self.functions = {}  # Store functions added
+
+    def open_new_window(self, labels=None, boxs=None, name="Add packet label", callback=None, add_functions=False):
+        self.callback = callback
+        self.addkey = True
+        if labels is None:
+            return 0
+
+        # Create a new window
+        self.new_window = tk.Toplevel(self.frame)
+        self.new_window.title(name)
+
+        self.labels = labels
+        if boxs is None:
+            boxs = {}
+
+        # Count the number of blocks (OptionMenus and Entries)
+        total_blocks = len(boxs) + len([label for label in labels if label != "location"])
+        window_height = 60 + (total_blocks * 60)
+        self.new_window.geometry(f"300x{window_height}")
+
+        # OptionMenu for scopes
+        for box_name, box in boxs.items():
+            if box is None:
+                continue
+            self.port_var[box_name] = tk.StringVar()
+            self.port_var[box_name].set(box_name)
+            if not len(box):
+                box = ["None"]
+
+            temp_box = tk.OptionMenu(self.new_window, self.port_var[box_name], *box)
+            temp_box.pack(pady=(10, 0))
+
+        # Create Entry widgets for each label except "location"
+        for idx, (label, some_data) in enumerate(self.labels.items()):
+            if some_data is None:
+                continue
+            if label == "location":
+                continue
+
+            lbl = tk.Label(self.new_window, text=label)
+            lbl.pack(pady=(10, 0))
+
+            entry = tk.Entry(self.new_window)
+            entry.insert(0, some_data)
+            entry.pack(pady=(0, 10))
+
+            self.labels[label] = entry
+
+        # Add "+" button if add_functions flag is True
+        if add_functions:
+            # Frame to hold "Add" and "Remove" buttons side by side
+            button_frame = tk.Frame(self.new_window)
+            button_frame.pack(pady=(10, 0))
+
+            add_function_button = tk.Button(button_frame, text="Add", command=self.open_function_window)
+            add_function_button.pack(side=tk.LEFT, padx=(0, 5))  # Left-align and add space between buttons
+
+            remove_function_button = tk.Button(button_frame, text="Remove", command=self.remove_function)
+            remove_function_button.pack(side=tk.LEFT)
+
+            # ComboBox for functions added
+            self.function_combo = ttk.Combobox(self.new_window, values=list(self.functions.keys()))
+            self.function_combo.pack(pady=(10, 0))
+
+
+        ok_button = tk.Button(self.new_window, text="OK", command=self.on_ok)
+        ok_button.pack(pady=10)
+
+    def open_function_window(self):
+        function_window = tk.Toplevel(self.new_window)
+        function_window.title("Add Function")
+
+        function_name_label = tk.Label(function_window, text="Function Name:")
+        function_name_label.pack(pady=(10, 0))
+        function_name_entry = tk.Entry(function_window)
+        function_name_entry.pack(pady=(0, 10))
+
+        function_data_label = tk.Label(function_window, text="Function Data:")
+        function_data_label.pack(pady=(10, 0))
+        function_data_entry = tk.Entry(function_window)
+        function_data_entry.pack(pady=(0, 10))
+
+        save_button = tk.Button(function_window, text="Save", command=lambda: self.save_function(function_name_entry, function_data_entry, function_window))
+        save_button.pack(pady=(10, 0))
+
+    def save_function(self, function_name_entry, function_data_entry, function_window):
+        function_name = function_name_entry.get()
+        function_data = function_data_entry.get()
+
+        if function_name and function_data:
+            # Initialize lists if they don't exist in labels
+            if "function_name" not in self.labels:
+                self.labels["function_name"] = []
+            if "function_info" not in self.labels:
+                self.labels["function_info"] = []
+
+            # Add the function name and data to labels
+            self.labels["function_name"].append(function_name)
+            self.labels["function_info"].append(function_data)
+
+            # Update ComboBox values
+            self.function_combo['values'] = self.labels["function_name"]
+
+            # Close the function window
+            function_window.destroy()
+
+    def remove_function(self):
+        selected_function = self.function_combo.get()
+        if selected_function:
+            # Find the index of the selected function in function_name list
+            try:
+                index = self.labels["function_name"].index(selected_function)
+
+                # Remove function name and corresponding info by index
+                self.labels["function_name"].pop(index)
+                self.labels["function_info"].pop(index)
+
+                # Update ComboBox values and clear selection
+                self.function_combo['values'] = self.labels["function_name"]
+                self.function_combo.set('')  # Clear ComboBox selection
+            except ValueError:
+                pass  # If the function is not found, do nothing
+
+    def on_ok(self):
+        for label, widget in self.labels.items():
+            if isinstance(widget, tk.Entry):
+                self.labels[label] = widget.get()
+
+        for name, var in self.port_var.items():
+            self.labels[name] = var.get()
+
+        self.addkey = False
+        self._update_database()
+        self.new_window.destroy()
+
+    def _update_database(self):
+        if self.callback is not None:
+            self.callback(self.labels)
+        else:
+            self.database.switch_database(f"{self.gui_name}_conf")
+            self.database.add_element(self.labels)
+
+
 class FindReportWindow:
     def __init__(self, parent, database, gui_name):
         self.results_tree = None
@@ -365,12 +521,15 @@ class MenuBar:
     def __init__(self, root, database, gui_name):
         self.logger = database.logger
         self.menubar = tk.Menu(root)
+        self.root = root
         root.config(menu=self.menubar)
+        self.add_window = AddDataWindow(frame=root,database=database, gui_name="loader_info")
         self.database = database
         self.file_menu = tk.Menu(self.menubar, tearoff=0)
         self.view_menu = tk.Menu(self.menubar, tearoff=0)
         self.add_menu = tk.Menu(self.menubar, tearoff=0)
         self.info_menu = tk.Menu(self.menubar, tearoff=0)
+        self.load_setup_menu = tk.Menu(self.file_menu, tearoff=0)  # Submenu for "Load Setup"
         self.gui_name = gui_name
         self.create_file_menu()
         self.create_view_menu()
@@ -380,9 +539,26 @@ class MenuBar:
     def create_file_menu(self):
         self.menubar.add_cascade(label="File", menu=self.file_menu)
         self.file_menu.add_command(label="New Setup", command=self.new_setup)
-        self.file_menu.add_command(label="Load Setup", command=self.load_setup)
+        self.file_menu.add_command(label="Copy Setup", command=self.copy_setup)
+        self.file_menu.add_cascade(label="Load Setup", menu=self.load_setup_menu)
+        self.database.switch_database("loader_info")
+        # List of options
+
+        options = [option['gui_names'] for option in self.database.find_data(table_name='all_gui', feature='gui_names')]
+
+        for option in options:
+            self.load_setup_menu.add_command(
+                label=option,
+                command=lambda opt=option: self.load_setup_option(opt)
+            )
+
         self.file_menu.add_separator()
         self.file_menu.add_command(label="Exit", command=self.exit_app)
+
+    def load_setup_option(self, option_name):
+        self.logger.message(f"Option {option_name} selected")
+        self.open_gui({"gui_names":option_name})
+        # Implement the logic based on the selected option
 
     def create_view_menu(self):
         self.menubar.add_cascade(label="Tools", menu=self.view_menu)
@@ -399,6 +575,33 @@ class MenuBar:
 
     def new_setup(self):
         self.logger.message("New Setup")
+        self.database.switch_database("loader_info")
+        self.add_window.open_new_window(labels={'gui_names': ""}, callback=lambda values: self._new_setup(values))
+
+    def _new_setup(self, values):
+        self.database.add_data_to_table('all_gui', values)
+        init_database(values['gui_names'])
+        self.open_gui(values)
+
+    def open_gui(self,values):
+        last_guis = self.database.find_data(table_name='main_gui', feature="last_gui")
+        self.database.switch_database("loader_info")
+        for last in last_guis:
+            self.database.remove_data_feature(table_name="main_gui",
+                                              feature="last_gui",
+                                              value=last["last_gui"])
+        self.database.add_data_to_table('main_gui', {"last_gui": values['gui_names']})
+        self.root.destroy()
+        from Empty import lab_runner
+        lab_runner(values['gui_names'])
+
+    def copy_setup(self):
+        self.logger.message("New Setup")
+        self.database.switch_database("loader_info")
+        self.add_window.open_new_window(labels={'gui_names': ""}, callback=lambda values: self._copy_setup(values))
+
+    def _copy_setup(self,values):
+        print(values)
 
     def load_setup(self):
         self.logger.message("Load Setup")
@@ -414,7 +617,7 @@ class MenuBar:
         self.logger.message(find_report_window)
 
     def features_info(self):
-        FeatureWindow(self.menubar,self.database, self.gui_name)
+        FeatureWindow(self.menubar, self.database, self.gui_name)
 
     def add_item(self):
         self.logger.message("Add Item")

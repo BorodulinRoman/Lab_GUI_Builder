@@ -226,6 +226,19 @@ class Database:
             except Error as e:
                 self.logger.message(f"Failed to remove data: {e}")
 
+    def remove_data_feature(self, table_name, feature, value):
+        # Check if the table has a column named "ID"
+        try:
+            val1 = f"DELETE FROM {table_name} WHERE {feature} = '{value}'"
+
+
+            self.cursor.execute(val1)
+            self.connection.commit()
+            self.logger.message(f"Data with  {feature} {value} removed from {table_name}.")
+
+        except Error as e:
+            self.logger.message(f"Failed to remove data: {e}")
+
     def find_data(self, table_name, feature_info=None, feature='id'):
         try:
             if feature_info is None:
@@ -242,34 +255,59 @@ class Database:
             return result
         except Error as e:
             self.logger.message(f"Failed to find data in {table_name}: {e}")
+            return None
 
     def update(self, info):
+        print("Starting Update:", info)
         try:
-            table_list = self.get_all_table_names()
+            # Validate the 'id' parameter
             id_value = info.get('id')
             if id_value is None:
                 raise ValueError("The 'id' parameter is required in the info dictionary.")
+
+            # Retrieve the table list
+            table_list = self.get_all_table_names()
+
             for table_name in table_list:
+                if table_name == "transmit_com":
+                    continue
                 # Find the data based on the provided ID
                 records = self.find_data(table_name, id_value)
                 if not records:
                     self.logger.message(f"No data found with ID {id_value} in {table_name}.")
+                    continue
+                # Use the latest record from find_data
+                records = records[-1]
 
-                # Prepare the update statement
-                update_columns = ', '.join([f"{key} = %s" for key in info if key != 'id'])
-                update_values = [info[key] for key in info if key != 'id']
+                # Update records with values from info
+                for column in records.keys():
+                    if column in ['id', 'class']:
+                        continue
+                    if column in info:  # Only update columns present in info
+                        if column in ["function_name","function_info"]:
+                            continue
+                        records[column] = info[column]
+
+                # Prepare the SET clause and values for the SQL query
+                update_columns = ', '.join([f"{key} = %s" for key in records if key != 'id'])
+                update_values = [records[key] for key in records if key != 'id']
 
                 # Execute the update command
                 try:
-                    self.cursor.execute(f"UPDATE {table_name} SET {update_columns} WHERE id = %s",
-                                        update_values + [id_value])
+                    update_query = f"UPDATE {table_name} SET {update_columns} WHERE id = %s"
+                    self.cursor.execute(update_query, update_values + [id_value])
                     self.connection.commit()
                     self.logger.message(f"Data with ID {id_value} updated in {table_name}.")
-                except Exception as e:
+                except mysql.connector.Error as e:
                     self.logger.message(f"Failed to update data in {table_name}: {e}")
-                    pass
-        except Error as e:
-            self.logger.message(f"Failed to update data in: {e}")
+                    continue  # Continue to the next table if there's an error in this one
+
+        except mysql.connector.Error as e:
+            self.logger.message(f"Database error during update: {e}")
+        except ValueError as ve:
+            self.logger.message(f"Value error: {ve}")
+        except Exception as e:
+            self.logger.message(f"Unexpected error during update: {e}")
 
     #def remove_element(self, num_id):
     #    self.logger.message(f"Remove element {num_id}")
@@ -285,9 +323,9 @@ class Database:
         return element_id
 
     def add_element(self, values, num_param=0):
-        id_data = None
         table_names = self.get_all_table_names()
-        values['id'] = int(1 + int(values["parent"]) / 10000) * 10000 + self.generate_unique_id() + num_param
+        if "id" not in values.keys():
+            values['id'] = int(1 + int(values["parent"]) / 10000) * 10000 + self.generate_unique_id() + num_param
         id_data = values['id']
 
         for table_name in table_names:
@@ -359,6 +397,28 @@ def remove_database_info(db, data_base_name="gui"):
         db.delete_table(table)
 
 
+def init_loader(data_base_name='old'):
+    create_schema("localhost", "root", "Aa123456", "loader_info")
+
+    db = Database(host="localhost", user="root", passwd="Aa123456", database=f"loader_info")
+    db.connect()
+
+    columns = {"last_gui": "VARCHAR(255)"}
+    db.create_table("main_gui", columns)
+
+    if not db.find_data(table_name='main_gui', feature='last_gui'):
+        data = {"last_gui": data_base_name}
+        db.add_data_to_table("main_gui", data)
+
+    columns = {"gui_names": "VARCHAR(255)"}
+    db.create_table("all_gui", columns)
+    if not db.find_data(table_name='all_gui', feature_info='OLD', feature='gui_names'):
+        data_all = {"gui_names": data_base_name}
+        db.add_data_to_table("all_gui", data_all)
+
+    init_database(data_base_name)
+
+
 def init_database(data_base_name):
     create_schema("localhost", "root", "Aa123456", f"{data_base_name}_conf")
     create_schema("localhost", "root", "Aa123456", f"{data_base_name}_reports_list")
@@ -404,7 +464,8 @@ def init_database(data_base_name):
     columns = {"id": "INT AUTO_INCREMENT PRIMARY KEY",
                "Type": "VARCHAR(255)",
                "last_conn_info": "VARCHAR(255)",
-               "baud_rate": "VARCHAR(255)"}
+               "baud_rate": "VARCHAR(255)",
+               "frame_rate": "VARCHAR(255)"}
 
     db.create_table("com_info", columns)
 

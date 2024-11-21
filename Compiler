@@ -1,0 +1,3 @@
+pyinstaller --onefile Empty.pyw
+
+pyinstaller Empty.pyw

@@ -6,6 +6,10 @@ import os
 import winshell
 import webbrowser
 from datetime import datetime
+from tkinter import filedialog
+import datetime
+import tkinter as tk
+import threading
 
 
 def load_config(file_path):
@@ -382,3 +386,94 @@ class Script:
         self.report.build_new_test(results)
 
         return results
+
+
+class ScriptRunnerApp:
+    def __init__(self, root, loger, database, gui_name):
+        self.script = Script(loger, database, gui_name=gui_name)
+        self.logger = loger
+        self.load_button = None
+        self.info_label = None
+        self.start_button = None
+        self.stop_button = None
+        self.script_lines = None
+        self.root = root
+
+        self.filepath = ""
+        self.running = False
+        self.init()
+        # Create Load Button
+
+    def init(self):
+        self.load_button = tk.Button(self.root, text="Load file", command=self.load_script)
+        self.load_button.place(x=15, y=35, width=60, height=30)
+
+        # Create Label
+        self.info_label = tk.Label(self.root, text="----------------------------")
+        self.info_label.place(x=5, y=5)
+
+        # Create Start Button
+        self.start_button = tk.Button(self.root, text="Start", command=self.start_script)
+        self.start_button.place(x=85, y=35, width=60, height=30)
+        self.start_button.config(state=tk.DISABLED)
+
+        # Create Stop Button
+        self.stop_button = tk.Button(self.root, text="Abort", command=self.stop_script)
+        self.stop_button.place(x=155, y=35, width=60, height=30)
+        self.stop_button.config(state=tk.DISABLED)
+
+    def load_script(self):
+        filetypes = (("Script files", "*.script"), ("All files", "*.*"))
+        filepath = filedialog.askopenfilename(filetypes=filetypes)
+        if filepath:
+            self.filepath = filepath.split("/")[-1]
+            self.info_label.config(text=self.filepath)
+
+            with open(filepath, 'r') as file:
+                lines = file.readlines()
+            self.script_lines = [line.strip() for line in lines]
+            self.start_button.config(state=tk.NORMAL)
+
+        else:
+            self.info_label.config(text="No file selected")
+
+    def start_script(self):
+        self.script.report.script_name = f"{self.filepath[:-7]}{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
+        if self.filepath:
+            self.running = True
+            self.info_label.config(text="Start " + self.filepath)
+            self.load_button.config(state=tk.DISABLED)
+            self.start_button.config(state=tk.DISABLED)
+            self.stop_button.config(state=tk.NORMAL)
+            thread = threading.Thread(target=self.run_script)
+            thread.daemon = True  # Daemonize the thread to ensure it closes when the main program exits
+            thread.start()
+        else:
+            self.info_label.config(text="Please load a script first.")
+
+    def run_script(self):
+        if self.running:
+            self.script.report.build()
+            for line in self.script_lines:
+                if not self.running:
+                    break
+                if len(line) <= 2:
+                    continue
+
+                self.logger.message(f"Run: {line}")
+                self.root.update_idletasks()
+                self.script.run(line)
+
+        self.start_button.config(state=tk.NORMAL)
+        self.load_button.config(state=tk.NORMAL)
+        self.stop_button.config(state=tk.DISABLED)
+        # todo change it to Database save
+        self.script.report.save_report()
+        self.logger.message("Done!")
+
+    def stop_script(self):
+        self.running = False
+        self.start_button.config(state=tk.NORMAL)
+        self.load_button.config(state=tk.NORMAL)
+        self.stop_button.config(state=tk.DISABLED)
+        self.info_label.config(text=f"Script {self.filepath} stopped!")
