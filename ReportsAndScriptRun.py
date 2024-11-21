@@ -1,10 +1,15 @@
 import json
 from copy import deepcopy
 import time
-from DeviceManager import get_start_time_in_sec, get_start_time, KeySightScopeUSB
+from DeviceManager import get_start_time, get_start_time_in_sec, ScopeUSB
 import os
-# import winshell
-# import webbrowser
+import winshell
+import webbrowser
+from datetime import datetime
+from tkinter import filedialog
+import datetime
+import tkinter as tk
+import threading
 
 
 def load_config(file_path):
@@ -53,26 +58,36 @@ def get_bytes_range(bytes_string):
 
 
 class Report:
-    def __init__(self):
+    def __init__(self, database, gui_name):
+        self.db = database
+        self.script_name = None
         self.test = None
         self.report = None
         self.table = None
         self.finale = 2
-        self.init_report = load_config('info/init_report.json')
-        self.init_table = load_config('info/init_table.json')
-        self.init_test = load_config('info/init_test.json')
+
+        # self.init_report = load_config('info/init_report.json')
+        # self.init_table = load_config('info/init_table.json')
+        # self.init_test = load_config('info/init_test.json')
+
+        self.db.switch_database(f'{gui_name}_reports_list')
+        self.init_report = self.db.find_data("init_report", 0, "ResultStatus")[0]
+        self.init_table = self.db.find_data("init_table", 2, "ResultStatus")[0]
+        self.init_test = self.db.find_data("init_test", 0, "ResultStatus")[0]
 
     def build(self, data=None):
         self.report = deepcopy(self.init_report)
         self.report["ResultStatus"] = self.finale
         self.report["test_name"] = self.init_report['test_name']
-        self.report["StartTimeFormatted"] = get_start_time()
+        self.report["StartTimeFormatted"] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         self.report["project_name"] = "project"
         self.report["gui_type"] = "GUI_8_Relay"
         self.report["gui_ver"] = "1.0"
 
         self.table = deepcopy(self.init_table)
         self.table["GroupName"] = "Main"
+        self.report["GroupResults"] = []
+        self.table["StepResults"] = []
 
     def build_new_table(self, table_name):
         if len(self.table["StepResults"]):
@@ -80,6 +95,7 @@ class Report:
 
         self.table = deepcopy(self.init_table)
         self.table["GroupName"] = table_name
+        self.table["StepResults"] = []
 
     def build_new_test(self, data):
         self.test = deepcopy(self.init_test)
@@ -90,11 +106,26 @@ class Report:
             self.table["ResultStatus"] = 1
             self.table["NumOfFail"] += 1
 
-    def save_report(self):
-        self.report["ResultStatus"] = self.finale
-        self.report["GroupResults"].append(self.table)
-        original_file_path = 'info/reports/rafael.html'
+    def _save_report_to_database(self):
+        report_copy = deepcopy(self.report.copy())
+        tables = report_copy["GroupResults"]
+        try:
+            report_copy["GroupResults"] = "_".join(self.script_name.split(" "))
+        except Exception as e:
+            print(e)
+            report_copy["GroupResults"] = self.script_name
 
+        self.db.add_data_to_table("init_report", report_copy)
+        for table in tables:
+            tests = table["StepResults"]
+            table["StepResults"] = f"{report_copy['GroupResults']}"
+            self.db.add_data_to_table("init_table", table)
+            for test in tests:
+                test["Description"] = f"{table['GroupName']}_{report_copy['GroupResults']}"
+                self.db.add_data_to_table("init_test", test)
+
+    def build_report(self):
+        original_file_path = 'info/reports/rafael.html'
         try:
             with open(original_file_path, 'r', encoding='utf-8') as file:
                 lines = file.readlines()
@@ -123,40 +154,44 @@ class Report:
             print(f"Error writing to file {new_file_path}: {e}")
             return
 
-        # Reset attributes
+        reports_dir_path = os.path.join(winshell.desktop(), "reports")
+        os.makedirs(reports_dir_path, exist_ok=True)
+
+        # Create the shortcut path within the "Reports" directory
+        shortcut_path = os.path.join(reports_dir_path, f"ReportShortcut_{t}.lnk")
+
+        # Create the shortcut
+        with winshell.shortcut(shortcut_path) as shortcut:
+            shortcut.path = os.path.abspath(new_file_path)
+            shortcut.description = "Shortcut to the latest report"
+            shortcut.working_directory = os.path.dirname(new_file_path)
+
+        # Convert the shortcut path to a URL format and open it
+        folder_url = 'file://' + shortcut_path.replace(os.sep, '/')
+        webbrowser.open(folder_url)
+
+    def save_report(self):
+        self.report["ResultStatus"] = self.finale
+        self.report["GroupResults"].append(self.table)
+        self._save_report_to_database()
+        self.build_report()
         self.test = None
         self.report = None
         self.table = None
-        # OPEN REPORT
-        # reports_dir_path = os.path.join(winshell.desktop(), "reports")
-        # os.makedirs(reports_dir_path, exist_ok=True)
-        #
-        # # Create the shortcut path within the "Reports" directory
-        # shortcut_path = os.path.join(reports_dir_path, f"ReportShortcut_{t}.lnk")
-        #
-        # # Create the shortcut
-        # with winshell.shortcut(shortcut_path) as shortcut:
-        #     shortcut.path = os.path.abspath(new_file_path)
-        #     shortcut.description = "Shortcut to the latest report"
-        #     shortcut.working_directory = os.path.dirname(new_file_path)
-        #
-        # # Convert the shortcut path to a URL format and open it
-        # folder_url = 'file://' + shortcut_path.replace(os.sep, '/')
-        # webbrowser.open(folder_url)
 
 
 class Script:
-    def __init__(self, logger, tester="RelayCTRL"):
+    def __init__(self, logger, database, gui_name, tester="RelayCTRL"):
         self.port = None
         self.path = None
-        self.scope = KeySightScopeUSB(logger)
+        self.scope = ScopeUSB(logger)
         self.stop_flag = 1
         self.logger = logger
         self.last_line = None
         self.uuts = None
         self.cmd_button = []
         self.response = None
-        self.report = Report()
+        self.report = Report(database, gui_name)
         self.tester = tester
         self.peripheral = load_config('info/peripheral.json')
         self.relay_cmd = self.peripheral["ports"][self.tester]["script"]
@@ -189,28 +224,30 @@ class Script:
         return self.stop_flag
 
     def power_supply(self, list_line):
-        print(list_line)
         return list_line
 
     def scope_scripts(self, list_line, data):
-        if "MEAS" in list_line.upper():
-            self.scope.save_meas(scp_id=self.peripheral['scope'][list_line[0]])
-        elif "M" in list_line.upper():
-            self.get_scope_info(scp_id=self.peripheral['scope'][list_line[0]], index=[list_line[-1]], data=data)
-        elif "LDSU" in list_line.upper():
-            self.scope.load_setup(scp_id=self.peripheral['scope'][list_line[0]], file_path=data[0])
-        elif "SING" in list_line.upper():
-            self.scope.single(scp_id=self.peripheral['scope'][list_line[0]])
-        elif "STOP" in list_line.upper():
-            self.scope.stop(scp_id=self.peripheral['scope'][list_line[0]])
-        elif "RST" in list_line.upper():
-            self.scope.reset(scp_id=self.peripheral['scope'][list_line[0]])
-        elif "SVSC" in list_line.upper():
-            temp = self.path.split('/')
-            self.path = "/".join(temp[:-1])
-            self.scope.save_img(scp_id=self.peripheral['scope'][list_line[0]], path=self.path)
-        elif "SAVE" in list_line.upper():
-            self.scope.save_setup(scp_id=self.peripheral['scope'][list_line[0]])
+        try:
+            if "MEAS" in list_line.upper():
+                self.scope.save_meas(scp_id=self.peripheral['scope'][list_line[0]])
+            elif "M" in list_line.upper():
+                self.get_scope_info(scp_id=self.peripheral['scope'][list_line[0]], index=[list_line[-1]], data=data)
+            elif "LDSU" in list_line.upper():
+                self.scope.load_setup(scp_id=self.peripheral['scope'][list_line[0]], file_path=data[0])
+            elif "SING" in list_line.upper():
+                self.scope.single(scp_id=self.peripheral['scope'][list_line[0]])
+            elif "STOP" in list_line.upper():
+                self.scope.stop(scp_id=self.peripheral['scope'][list_line[0]])
+            elif "RST" in list_line.upper():
+                self.scope.reset(scp_id=self.peripheral['scope'][list_line[0]])
+            elif "SVSC" in list_line.upper():
+                temp = self.path.split('/')
+                self.path = "/".join(temp[:-1])
+                self.scope.save_img(scp_id=self.peripheral['scope'][list_line[0]], path=self.path)
+            elif "SAVE" in list_line.upper():
+                self.scope.save_setup(scp_id=self.peripheral['scope'][list_line[0]])
+        except Exception as e:
+            self.logger.message(e, log_level="ERROR")
 
     def relay(self, relay_number, status):
         relay = f"Relay{relay_number}_"
@@ -251,32 +288,42 @@ class Script:
             self.logger.message(f"Error Initiate a {t} mS,{e}")
 
     def get_scope_info(self, scp_id, index, data):
-        result = self.scope.get_measurement_results(scp_id=scp_id, index=int(index[0]))
-        print(result)
         test_name, scale_factor, low_range, high_range, fail_mode = data[:5]
         t = get_start_time()
-        results = {
-            "StepName": test_name,
-            "Description": fail_mode,
-            "Min": str(float(low_range) / (10 ** int(scale_factor))).lower(),
-            "Max": str(float(high_range) / (10 ** int(scale_factor))).lower(),
-            "ResultStatus": 0,
-            "Message": str(float(result) / (10 ** int(scale_factor))),
-            "TestStart": t
-        }
-        min_val = float(low_range) / 10 ** int(scale_factor)
-        max_val = float(high_range) / 10 ** int(scale_factor)
-        if min_val <= float(result) / (10 ** int(scale_factor)) <= max_val:
-            results["ResultStatus"] = 2
-        else:
-            self.report.init_report['ResultStatus'] = 'Fail'
-            results["ResultStatus"] = 3
-            if int(fail_mode) == 1:
-                self.stop_flag = 0
-                results["ResultStatus"] = 1
+        try:
+            result = self.scope.get_measurement_results(scp_id=scp_id, index=int(index[0]))
+            print(result)
+            results = {
+                "StepName": test_name,
+                "Description": fail_mode,
+                "Min": str(float(low_range) / (10 ** int(scale_factor))).lower(),
+                "Max": str(float(high_range) / (10 ** int(scale_factor))).lower(),
+                "ResultStatus": 0,
+                "Message": str(float(result) / (10 ** int(scale_factor))),
+                "TestStart": t
+            }
+            min_val = float(low_range) / 10 ** int(scale_factor)
+            max_val = float(high_range) / 10 ** int(scale_factor)
+            if min_val <= float(result) / (10 ** int(scale_factor)) <= max_val:
+                results["ResultStatus"] = 2
+            else:
+                self.report.init_report['ResultStatus'] = 'Fail'
+                results["ResultStatus"] = 3
+                if int(fail_mode) == 1:
+                    self.stop_flag = 0
+                    results["ResultStatus"] = 1
 
-        self.report.build_new_test(results)
-
+            self.report.build_new_test(results)
+        except Exception as e:
+            results = {
+                "StepName": test_name,
+                "Description": fail_mode,
+                "Min": str(float(low_range) / (10 ** int(scale_factor))).lower(),
+                "Max": str(float(high_range) / (10 ** int(scale_factor))).lower(),
+                "ResultStatus": 0,
+                "Message": e,
+                "TestStart": t
+            }
         return results
 
     def get_data_info(self, data):
@@ -301,7 +348,9 @@ class Script:
                     self.send_get_command(self.last_line)
             list_bytes = [self.response[int(some_bit)] for some_bit in range(int(low_byte), int(high_byte) + 1)]
         except Exception as e:
-            return f"Problem with response: {e}"
+            results["Message"] = f"Problem with response: {e}"
+            self.report.build_new_test(results)
+            return results
 
         if not len(list_bytes):
             return f"return list empty"
@@ -337,3 +386,94 @@ class Script:
         self.report.build_new_test(results)
 
         return results
+
+
+class ScriptRunnerApp:
+    def __init__(self, root, loger, database, gui_name):
+        self.script = Script(loger, database, gui_name=gui_name)
+        self.logger = loger
+        self.load_button = None
+        self.info_label = None
+        self.start_button = None
+        self.stop_button = None
+        self.script_lines = None
+        self.root = root
+
+        self.filepath = ""
+        self.running = False
+        self.init()
+        # Create Load Button
+
+    def init(self):
+        self.load_button = tk.Button(self.root, text="Load file", command=self.load_script)
+        self.load_button.place(x=15, y=35, width=60, height=30)
+
+        # Create Label
+        self.info_label = tk.Label(self.root, text="----------------------------")
+        self.info_label.place(x=5, y=5)
+
+        # Create Start Button
+        self.start_button = tk.Button(self.root, text="Start", command=self.start_script)
+        self.start_button.place(x=85, y=35, width=60, height=30)
+        self.start_button.config(state=tk.DISABLED)
+
+        # Create Stop Button
+        self.stop_button = tk.Button(self.root, text="Abort", command=self.stop_script)
+        self.stop_button.place(x=155, y=35, width=60, height=30)
+        self.stop_button.config(state=tk.DISABLED)
+
+    def load_script(self):
+        filetypes = (("Script files", "*.script"), ("All files", "*.*"))
+        filepath = filedialog.askopenfilename(filetypes=filetypes)
+        if filepath:
+            self.filepath = filepath.split("/")[-1]
+            self.info_label.config(text=self.filepath)
+
+            with open(filepath, 'r') as file:
+                lines = file.readlines()
+            self.script_lines = [line.strip() for line in lines]
+            self.start_button.config(state=tk.NORMAL)
+
+        else:
+            self.info_label.config(text="No file selected")
+
+    def start_script(self):
+        self.script.report.script_name = f"{self.filepath[:-7]}{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
+        if self.filepath:
+            self.running = True
+            self.info_label.config(text="Start " + self.filepath)
+            self.load_button.config(state=tk.DISABLED)
+            self.start_button.config(state=tk.DISABLED)
+            self.stop_button.config(state=tk.NORMAL)
+            thread = threading.Thread(target=self.run_script)
+            thread.daemon = True  # Daemonize the thread to ensure it closes when the main program exits
+            thread.start()
+        else:
+            self.info_label.config(text="Please load a script first.")
+
+    def run_script(self):
+        if self.running:
+            self.script.report.build()
+            for line in self.script_lines:
+                if not self.running:
+                    break
+                if len(line) <= 2:
+                    continue
+
+                self.logger.message(f"Run: {line}")
+                self.root.update_idletasks()
+                self.script.run(line)
+
+        self.start_button.config(state=tk.NORMAL)
+        self.load_button.config(state=tk.NORMAL)
+        self.stop_button.config(state=tk.DISABLED)
+        # todo change it to Database save
+        self.script.report.save_report()
+        self.logger.message("Done!")
+
+    def stop_script(self):
+        self.running = False
+        self.start_button.config(state=tk.NORMAL)
+        self.load_button.config(state=tk.NORMAL)
+        self.stop_button.config(state=tk.DISABLED)
+        self.info_label.config(text=f"Script {self.filepath} stopped!")
