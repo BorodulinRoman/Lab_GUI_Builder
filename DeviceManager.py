@@ -23,48 +23,43 @@ def is_port_in_use(port_name):
 
 
 def extract_bits(lst, low, high, format_type='decimal'):
-    print("list data is : ", lst)
-    result = []
-    for num in lst:
-        if format_type == "binary":
-            formatted_num = format(num, '08b')
-        elif format_type == "hex":
-            formatted_num = format(num, '02X')
-        elif format_type == "decimal":
-            formatted_num = str(num)
+    # Convert hex strings to integers
+    int_list = [int(hex_str, 16) for hex_str in lst]
+
+    if high > 7:
+        # Combine all bytes into one big integer
+        combined_value = 0
+        for val in int_list:
+            combined_value = (combined_value << 8) | val
+        # Create mask to extract bits from 'low' to 'high'
+        mask = ((1 << (high - low + 1)) - 1) << low
+        # Extract bits
+        extracted_bits = (combined_value & mask) >> low
+        # Format the result
+        if format_type == 'binary':
+            result = bin(extracted_bits)
+        elif format_type == 'hexadecimal':
+            result = hex(extracted_bits)
         else:
-            raise ValueError("Invalid format type. Choose 'binary', 'hex', or 'decimal'.")
-
-        if high >= 8:
-            result.append(formatted_num)
-        else:
-            if format_type == "binary":
-                sliced_formatted = formatted_num[-high:][low:]
-                result.append(sliced_formatted)
-            elif high < 7 or low > 0:
-                # Combine bytes and extract bits for hex and decimal formats
-                combined_bytes = 0
-                for i, byte in enumerate(lst):
-                    combined_bytes |= byte << (8 * i)
-
-                # Mask and extract bits
-                mask = (1 << (high - low + 1)) - 1
-                extracted_value = (combined_bytes >> low) & mask
-
-                # Append formatted extracted value
-                if format_type == "hex":
-                    result.append(format(extracted_value, 'X'))
-                elif format_type == "decimal":
-                    result.append(str(extracted_value))
-            else:
-                result.append(str(formatted_num))
-
-    if high >= 8:
-        return ''.join(result)
-    elif high < 8 and len(lst) > 1:
-        return ','.join(result)
+            result = str(extracted_bits)
+        # Return the result as is for a single value
+        return result
     else:
-        return result[-1]
+        # Process each byte separately
+        results = []
+        mask = ((1 << (high - low + 1)) - 1) << low
+        for val in int_list:
+            extracted_bits = (val & mask) >> low
+            # Format the result
+            if format_type == 'binary':
+                formatted_result = bin(extracted_bits)
+            elif format_type == 'hexadecimal':
+                formatted_result = hex(extracted_bits)
+            else:
+                formatted_result = str(extracted_bits)
+            results.append(formatted_result)
+        # Return comma-separated string for multiple values
+        return ','.join(results)
 
 
 def get_start_time_in_sec():
@@ -88,8 +83,12 @@ def get_start_time():
 class DeviceManager:
     def __init__(self, logger):
         self.logger = logger
+        self.start_byte = 2
+        self.header = ''
+        self.response = []
+        self.packet_size = 36
         self.baud_rate = 1000000
-        self.timeout = 500
+        self.timeout = 5
         self.rm = pyvisa.ResourceManager()
         self.device = None
         self.device_name = None
@@ -148,6 +147,7 @@ class DeviceManager:
             return True
         else:
             self.logger.message(f"Failed to connect to VISA device")
+
             return False
 
     def connect_ni(self):
@@ -172,9 +172,10 @@ class DeviceManager:
         """Send a command to the connected device (VISA or NI)."""
         if "ASRL" in self.device_name and self.device:
             try:
-                self.device.write(command)
-                self.logger.message(f"Command '{command}' sent to VISA device")
+                self.device.write_raw(bytes.fromhex(command))
+                self.logger.message(f"Command '{bytes.fromhex(command)}' sent to VISA device")
             except Exception as e:
+                self.device.write(command)
                 self.logger.message(f"Failed to send command to VISA device: {str(e)}")
         elif "Dev" in self.device_name and self.ni_controller:
             self.ni_controller.write(command)
@@ -185,19 +186,38 @@ class DeviceManager:
         """Read response from the connected device."""
         if "ASRL" in self.device_name and self.device:
             try:
-                response = self.device.read_bytes(self.device.bytes_in_buffer).decode()
-                print("Raw response:", response)  # Print the raw response to diagnose type
-                if response:
-                    return bytes.fromhex(response)
-                else:
-                    self.logger.message(f"Unexpected response type: {type(response)}", 'ERROR')
-                    return None
+                if self.device.bytes_in_buffer > self.packet_size * 3:
+                    response = self.device.read_bytes(self.device.bytes_in_buffer)
+                    temp_packet = ''
+                    temp_response = str(response.hex()).split(self.header)
+
+                    if not temp_response:
+                        return None
+
+                    for i, packet in enumerate(temp_response):
+                        if i == 0:
+                            temp_packet = packet
+                            continue
+
+                        data = temp_packet[-self.start_byte * 2:] + self.header + packet[:-self.start_byte * 2]
+                        temp_packet = packet
+
+                        if len(data) == self.packet_size * 2:
+                            self.response.append(data)
+
+                response = None
+                for packet in self.response:
+                    response = [packet[i:i + 2] for i in range(0, len(packet), 2)]
+                    self.logger.message(message=f"{response}", update_info_desk=False)
+
+                self.response = []
+                return response
+
             except Exception as e:
-                print(e)
                 return None
         else:
-            self.logger.message("No device connected to read from", 'ERROR')
-            print("No device connected")
+            time.sleep(0.1)
+            # self.logger.message("No device connected to read from", 'ERROR')
             return None
 
 
@@ -361,16 +381,29 @@ class NI6009Controller:
             relay_params = [param.strip() for param in relay_params]
 
             # Check for simple format: RELAY, <line>, <state>
-            if len(relay_params) == 2:
+            if '&' not in relay_params[0]:
                 line = int(relay_params[0])
                 state = int(relay_params[1])
                 self.set_output(line, state == 1)  # Convert 1 -> True, 0 -> False
-            elif len(relay_params) == 3:
-                # Format: RELAY, line1&state1, line2&state2, delay_ms
-                line1, state1 = map(int, relay_params[0].split('&'))
-                line2, state2 = map(int, relay_params[1].split('&'))
-                delay_ms = int(relay_params[2].strip())
-                self.pulse_output(line1, state1 == 1, line2, state2 == 1, delay_ms)
+            elif '&' in relay_params[0]:
+                lines = []
+                states = []
+                times = []
+                for relay in relay_params:
+
+                    l, s, t = relay.split('&')
+                    lines.append(l)
+                    states.append(bool(s))
+                    if int(t) > 3:
+                        times.append((int(t)-2) / 1000.0)
+                    else:
+                        times.append(0)
+                    # Format: RELAY, line1&state1&delay1, line2&state2&delay1......
+
+                #line2, state2 = map(int, relay_params[1].split('&'))
+                #delay_ms = int(relay_params[2].strip())
+                self.pulse_output_multy(lines, states, times)
+                #self.pulse_output(line1, state1 == 1, line2, state2 == 1, delay_ms)
             else:
                 self.logger.message(f"Invalid command format: {command}")
         except Exception as e:
@@ -385,6 +418,42 @@ class NI6009Controller:
                 self.logger.message(f"Set line {line} to {'High' if value else 'Low'}")
         except Exception as e:
             self.logger.message(f"Failed to set output on line {line}: {e}")
+
+    def pulse_output_multy(self, lines, states, times):
+        """
+        Pulse multiple lines with specified states and delays.
+        :param lines: List of channel lines to pulse (e.g., [0, 1, 2]).
+        :param states: List of target states for each channel (e.g., [1, 0, 1]).
+        :param times: List of delays (in ms) for each channel (e.g., [10, 20, 30]).
+        """
+
+        def perform_pulse():
+            try:
+                with nidaqmx.Task() as task:
+                    # Add all specified lines to the task
+                    for line in lines:
+                        task.do_channels.add_do_chan(f"{self.device_name}/port0/line{line}")
+
+                    for i, state in enumerate(states):  # Use enumerate here
+                        states[i] = not state
+                        task.write(states)  # Set target states
+
+                        # Delay to allow state stabilization
+
+                        start_time = time.perf_counter()
+                        while (time.perf_counter() - start_time) < times[i]:
+                            pass  # Wait for the maximum delay
+
+                    self.logger.message(
+                        f"Pulsed lines {lines} to states {states} with delays {times}ms."
+                    )
+            except Exception as e:
+                self.logger.message(f"Error during pulse operation: {e}")
+
+        # Start the pulse operation in a separate thread
+        pulse_thread = threading.Thread(target=perform_pulse)
+        pulse_thread.start()
+        pulse_thread.join()
 
     def pulse_output(self, line1, state1, line2, state2, delay_ms):
         """Pulse two lines with a specified delay between state changes."""
@@ -422,6 +491,8 @@ class NI6009Controller:
         pulse_thread.start()
         pulse_thread.join()
 
+
+
     def close(self):
         """Close the NI device."""
         if self.ni_device:
@@ -430,7 +501,7 @@ class NI6009Controller:
             self.logger.message(f"NI device {self.device_name} disconnected.")
 
 
-# Example usage
+
 # if __name__ == "__main__":
 #     class Logger:
 #         def message(self, msg):
@@ -447,8 +518,9 @@ class NI6009Controller:
 #         time.sleep(.1)
 #         dev.write("RELAY, 0, 1")  # Set line 0 to High
 #         dev.write("RELAY, 1, 1")  # Set line 0 to Low
+#         dev.write("RELAY, 2, 1")  # Set line 0 to Low
 #         time.sleep(.1)
-#         dev.write("RELAY, 0&0, 1&0, 10")  # Pulse line 0 to Low and line 1 to High, switch after 5 ms delay
 #
+#         dev.write("RELAY, 0&0&10, 1&0&0, 2&0&0")
 #
 #     dev.close()

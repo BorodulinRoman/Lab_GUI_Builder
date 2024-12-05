@@ -1,4 +1,5 @@
 import time
+from datetime import datetime
 from tkinter import Menu, messagebox
 from DeviceManager import DeviceManager, extract_bits, ScopeUSB
 from database import Database, Logger, init_database, init_loader
@@ -58,6 +59,7 @@ class RightClickMenu(tk.LabelFrame):
             self.menu.add_command(label='Disable Change Mode', command=self.disable_change_mode)
             if self.gen_id not in [0, 1, 2, 3, 4]:
                 self.menu.add_command(label='Remove', command=self.del_label)
+            if self.gen_id not in [0, 2, 3, 4]:
                 self.menu.add_command(label='Update', command=self.update_object)
             if self.gen_id not in [2, 3, 4] and self.element['Type'] is None:
                 self.menu.add_cascade(label='New', menu=self.build_menu(x, y))  # Add the submenu to the main menu
@@ -152,7 +154,8 @@ class RightClickMenu(tk.LabelFrame):
                                         lambda values: self.create_new_widget_with_settings(values, x, y, cls, dic_ids))
 
     def open_com_box(self, x, y, cls):
-        label = {'label_name': 'New combo', "last_conn_info": None, "baud_rate": "115200", "frame_rate": "0.005"}
+        label = {'label_name': 'New combo', "last_conn_info": None, "baud_rate": "115200", "frame_rate": "0.005",
+                 "start_byte": '0', "packet_size": 36, "header": ""}
         boxs = {"Dimension": ['220x70']}
         self.add_window.open_new_window(label, boxs, "Create New Com Communication",
                                         lambda values: self.create_new_widget_with_settings(values, x, y, cls))
@@ -246,49 +249,125 @@ class RightClickMenu(tk.LabelFrame):
             self.logger.message(f"No element found with id: {self.gen_id}")
 
 
+
 class DraggableRightClickMenu(RightClickMenu):
-    """A label frame that can be dragged and shows a context menu on right-click."""
+    """A label frame that can be dragged and resized, and shows a context menu on right-click."""
 
     def __init__(self, main_root, parent_info, values, log, gen_id="0000"):
         """Initialize the DraggableRightClickMenu with a root, parent, and label."""
         super().__init__(main_root, parent_info, values, log, gen_id=gen_id, text=values["label_name"])
+
         self.label_name = values["label_name"]
-        self.rounded_x = 0
-        self.rounded_y = 0
-        self.bind("<Button-1>", self.start_drag)
-        self.bind("<B1-Motion>", self.on_drag)
-        self.bind("<ButtonRelease-1>", self.stop_drag)
+        self.rounded_x = values['x']
+        self.rounded_y = values['y']
 
-    def on_drag(self, event):
-        """Drag the label to a new location, rounding the position to the nearest 10."""
+        # Variables for moving and resizing
+        self.resizing = False
+        self.moving = False
+        self.start_x = None
+        self.start_y = None
+        self.start_width = None
+        self.start_height = None
+
+        # Bind mouse events
+        self.bind("<Button-1>", self.start_action)
+        self.bind("<B1-Motion>", self.on_action)
+        self.bind("<ButtonRelease-1>", self.stop_action)
+        self.bind('<Enter>', self.on_enter)
+        self.bind('<Leave>', self.on_leave)
+
+    def on_enter(self, event):
+        """Change cursor when entering the widget."""
         if self.root.change_mode:
-            x = self.winfo_x() - self.x_start + event.x
-            y = self.winfo_y() - self.y_start + event.y
-            self.rounded_x = round_to_nearest_10(x)
-            self.rounded_y = round_to_nearest_10(y)
-            self.place(x=self.rounded_x, y=self.rounded_y)
-            self.logger.message(f"Dragging '{self.cget('text')}' to ({self.rounded_x}, {self.rounded_y})")
+            self.config(cursor="arrow")
 
-    def start_drag(self, event):
-        """Start dragging the label."""
+    def on_leave(self, event):
+        """Reset cursor when leaving the widget."""
         if self.root.change_mode:
-            self.x_start = event.x
-            self.y_start = event.y
+            self.config(cursor="")
 
-    def stop_drag(self, event):
-        """Stop dragging the label and save the setup."""
-        if event and self.root.change_mode:
+    def start_action(self, event):
+        """Determine whether to start moving or resizing."""
+        if self.root.change_mode:
+            self.start_x = event.x
+            self.start_y = event.y
+            self.start_width = self.winfo_width()
+            self.start_height = self.winfo_height()
+
+            border = 10  # Edge detection for resizing
+
+            # Check if near the bottom-right corner for resizing
+            if self.start_x >= self.start_width - border and self.start_y >= self.start_height - border:
+                self.resizing = True
+                self.config(cursor="size_nw_se")
+            else:
+                # Else, enable moving
+                self.moving = True
+                self.config(cursor="fleur")  # Move cursor
+
+    def on_action(self, event):
+        """Handle moving or resizing during mouse motion."""
+        if self.root.change_mode:
+            if self.resizing:
+                # Calculate new size
+                new_width = self.start_width + (event.x - self.start_x)
+                new_height = self.start_height + (event.y - self.start_y)
+
+                # Set minimum size limits
+                min_width = 50
+                min_height = 20
+                new_width = max(new_width, min_width)
+                new_height = max(new_height, min_height)
+
+                # Round sizes to nearest 10
+                new_width = round_to_nearest_10(new_width)
+                new_height = round_to_nearest_10(new_height)
+
+                # Apply new size
+                if new_height is None or new_width is None:
+                    return None
+                self.place_configure(width=new_width, height=new_height)
+                self.logger.message(f"Resizing '{self.cget('text')}' to ({new_width}, {new_height})")
+            elif self.moving:
+                # Calculate new position
+                x = self.winfo_x() - self.start_x + event.x
+                y = self.winfo_y() - self.start_y + event.y
+
+                # Round positions to nearest 10
+                self.rounded_x = round_to_nearest_10(x)
+                self.rounded_y = round_to_nearest_10(y)
+
+                # Apply new position
+                self.place(x=self.rounded_x, y=self.rounded_y)
+                self.logger.message(f"Dragging '{self.cget('text')}' to ({self.rounded_x}, {self.rounded_y})")
+
+    def stop_action(self, event):
+        """Reset states and update the database after moving or resizing."""
+        if self.root.change_mode:
             try:
                 new_element = {
                     "id": self.gen_id,
-                    "x": self.rounded_x,
-                    "y": self.rounded_y
                 }
+                if self.resizing:
+                    new_element["Width"] = self.winfo_width()
+                    new_element["Height"] = self.winfo_height()
+                    self.logger.message(
+                        f"Stopped resizing '{self.cget('text')}' at size ({self.winfo_width()}, {self.winfo_height()})"
+                    )
+                if self.moving:
+                    new_element["x"] = self.rounded_x
+                    new_element["y"] = self.rounded_y
+                    self.logger.message(
+                        f"Stopped dragging '{self.cget('text')}' at ({self.rounded_x}, {self.rounded_y})"
+                    )
                 self.db.update(new_element)
-                self.logger.message(f"Stopped dragging '{self.cget('text')}' at ({self.rounded_x}, {self.rounded_y})")
             except Exception as e:
-                self.logger.message(f"Error updating label position: {e}", log_level="ERROR")
-
+                self.logger.message(f"Error updating label position/size: {e}", log_level="ERROR")
+            finally:
+                # Reset states and cursor
+                self.resizing = False
+                self.moving = False
+                self.config(cursor="arrow")
 
 class DataDraggableRightClickMenu(DraggableRightClickMenu):
     """A draggable label frame that includes a combobox and a toggle button."""
@@ -318,13 +397,15 @@ class ComPortRightClickMenu(DraggableRightClickMenu):
 
     def __init__(self, main_root, parent_info, values, log, gen_id="0000"):
         super().__init__(main_root, parent_info, values, log, gen_id=gen_id)
+        self.update_flag = False
         self.frame_rate = None
+        self.threads = []
         self.data = None
         self.first_val = None
         self.main_root = main_root
         self.type = None
-        self.port = None
         self.logger = log
+        self.port = DeviceManager(self.logger)
         self.checkbox_var = None
         self.checkbox = None
         self.val_list = ["select or set"]
@@ -342,9 +423,6 @@ class ComPortRightClickMenu(DraggableRightClickMenu):
         self.top_frame = tk.Frame(self)
         self.top_frame.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
         self.type = values["Type"]
-        # Create a Label
-        #self.label = tk.Label(self.top_frame, text=values["label_name"])
-        #self.label.pack(side=tk.LEFT, padx=5, pady=5)
 
         # Retrieve the list from main_root based on the type specified in values
         self.combobox = ttk.Combobox(self.top_frame, values=list(self.val_list))
@@ -355,17 +433,23 @@ class ComPortRightClickMenu(DraggableRightClickMenu):
         self.combobox.bind("<<ComboboxSelected>>", self.on_combobox_select)
 
         # Create a toggle Button under the combobox
-        self.port = DeviceManager(self.logger)
         self.update_combo_com()
         self.button = tk.Button(self.top_frame, text="Start", command=self.on_com_click, font=("Arial", 10))
+
         com_info = self.db.find_data("com_info", self.gen_id)[0]
+        self.port.start_byte = int(com_info["start_byte"])
+        self.port.packet_size = int(com_info["packet_size"])
+        self.port.header = com_info["header"]
+
+        self.port.device_name = com_info["last_conn_info"]
+        self.port.baud_rate = int(com_info["baud_rate"])
+        self.frame_rate = float(com_info["frame_rate"])
+        self.port.timeout = int(self.frame_rate * 1000)
+
         if com_info["last_conn_info"] != "None" and com_info["last_conn_info"] in self.port.find_devices():
-            self.port.device_name = com_info["last_conn_info"]
-            self.port.baud_rate = int(com_info["baud_rate"])
-            self.frame_rate = float(com_info["baud_rate"])
-            self.port.timeout = self.frame_rate * 1000
             self.on_com_click()
             self.combobox.set(self.port.device_name)
+
         self.button.pack(side=tk.LEFT, padx=5, pady=5)
         self.config(width=self.width, height=self.height)
 
@@ -405,17 +489,19 @@ class ComPortRightClickMenu(DraggableRightClickMenu):
                 self.logger.message("Port in use")
                 messagebox.showerror("Connection Error!", f"Port in use")
                 return False
+            self.is_started = True
+            process = threading.Thread(target=self.update_data_labels)
+            process.start()
+
             self.db.switch_database(f"{self.gui_name}_conf")
             com_info = self.db.find_data("com_info", self.gen_id)[0]
             com_info["last_conn_info"] = self.port.device_name
             self.db.update(com_info)
             self.button.config(text="Stop", fg="red", font=("Arial", 10))
             self.combobox.config(state="disabled")  # Disable the combobox
-            self.is_started = True
+
             # self.update_all_data_label("------")
 
-            process = threading.Thread(target=self.update_data_labels)
-            process.start()
 
         # Send data if type is function
         if self.val_list and callable(self.combobox.get()):
@@ -428,33 +514,40 @@ class ComPortRightClickMenu(DraggableRightClickMenu):
             # Add any additional functionality you need on button click
 
     def update_data_labels(self, data=None):
-        threads = []
-        while self.port.device and self.main_root.winfo_exists() and self.data_list:
-            time.sleep(self.frame_rate)
-            self.data = self.port.continuous_read()
-            if self.data is None:
-                continue
-            self.logger.message(self.data)
-            for data_label in self.data_list:
+        time.sleep(1)
+        while self.is_started and self.main_root.winfo_exists and self.data_list:
+            try:
+                self.data = self.port.continuous_read()
                 if self.data is None:
-                    break
-                try:
-                    threads.append(threading.Thread(target=self._update_data_label, args=(data_label,)))
-                    threads[-1].start()
-                except Exception as e:
-                    pass
-            for thread in threads:
-                thread.join()
-            threads = []
-            self.data = None
+                    time.sleep(self.frame_rate*2)
+                    continue
 
-    def _update_data_label(self, data_label):
-        time.sleep(self.frame_rate)
-        list_bytes = [self.data[i] for i in range(len(self.data))]
+                self.root.script_runner.response = self.data
+                self._update_data_labels()
 
-        data = extract_bits(list_bytes[data_label.low_byte:1+data_label.high_byte:data_label.reverse],
-                            data_label.low_bit, data_label.high_bit)
-        data_label.data_info.config(text=data)
+            except Exception as e:
+                pass
+
+    def _update_data_labels(self):
+        try:
+            for packet in self.data_list:
+                thread = threading.Thread(target=self._update_label, args=(packet,))
+                thread.start()
+        except Exception as e:
+            pass
+
+    def _update_label(self, label):
+        if self.update_flag:
+            time.sleep(self.frame_rate)
+            return None
+
+        self.update_flag = True
+        list_bytes = self.data[label.low_byte:1 + label.high_byte]
+        if label.reverse < 0:
+            list_bytes = list_bytes[::-1]
+        data = extract_bits(list_bytes, label.low_bit, label.high_bit)
+        label.data_info.config(text=data)
+        self.update_flag = False
 
 
 class ComTransmitRightClickMenu(DraggableRightClickMenu):
@@ -574,12 +667,10 @@ class ButtonTransmitRightClickMenu(DraggableRightClickMenu):
             self.is_started = False
             self.uut.write(self.element['off_state'])
 
-    def _update_data_label(self, data_label):
-        time.sleep(0.001)
-
 
 class SetupLoader:
     def __init__(self, root, database, log, gui_name):
+        self.scope_name = None
         self.script = None
         self.db = database
         self.root = root
@@ -618,7 +709,7 @@ class SetupLoader:
         self.scope_name.place(x=5, y=5)
 
     def create_script_label(self, frame):
-        ScriptRunnerApp(frame, self.logger, self.db, self.gui_name)
+        self.root.script_runner = ScriptRunnerApp(frame, self.logger, self.db, self.gui_name,self.root.ver)
 
     def create_element(self, element):
         element_id = element.get('id', '')
@@ -718,11 +809,27 @@ class SetupLoader:
         return frame
 
 
+def on_closing(root_main):
+    root_main.winfo_exists = False
+    root_main.logger.logger_running = False
+    for _, ports in root_main.comport_list.items():
+        ports.is_started = False
+        for update_thread in ports.threads:
+            if update_thread.is_alive():
+                update_thread.join()
+    root_main.destroy()
+
+
 def lab_runner(gui_name=None):
-    ver = '1.0'
     root_main = tk.Tk()
+    root_main.ver = '1.3'
+    root_main.winfo_exists = True
     root_main.change_mode = False
     root_main.comport_list = {}
+
+
+
+    root_main.protocol("WM_DELETE_WINDOW", lambda: on_closing(root_main))
 
     try:
         loader_db = Database('loader_info')
@@ -734,16 +841,16 @@ def lab_runner(gui_name=None):
         root_main.gui_name = loader_db.find_data(table_name='main_gui')[0]['last_gui']
     else:
         root_main.gui_name = gui_name
-    root_main.title(f"Project {root_main.gui_name} ver {ver}")
+    root_main.title(f"Project {root_main.gui_name} ver {root_main.ver}")
 
-    logger = Logger(f"{root_main.gui_name}_logs")
+    root_main.logger = Logger(f"{root_main.gui_name}_logs")
 
-    db_gui = Database(f"{root_main.gui_name}_conf", logger)
+    db_gui = Database(f"{root_main.gui_name}_conf", root_main.logger)
 
-    root_main.loader = SetupLoader(root_main, db_gui, logger, root_main.gui_name)
+    root_main.loader = SetupLoader(root_main, db_gui, root_main.logger, root_main.gui_name)
     root_main.loader.load_setup()
     db_gui.logger = root_main.loader.logger
-    enu_bar = MenuBar(root_main, db_gui, root_main.gui_name)
+    MenuBar(root_main, db_gui, root_main.gui_name)
     # root_main.attributes('-alpha', 0.95)
     root_main.mainloop()
 

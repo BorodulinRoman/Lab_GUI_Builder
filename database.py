@@ -17,6 +17,7 @@ class PrintLoger:
 
 class Logger:
     def __init__(self, name):
+        self.logger_running = True
         self.db = Database(name)
         self.table_name = datetime.now().strftime(f"{name}%y%d%H%M")
         self.log_queue = Queue()
@@ -39,15 +40,15 @@ class Logger:
         }
         self.db.create_table(self.table_name, columns)
 
-    def message(self, message, log_level="info"):
+    def message(self, message, log_level="info", update_info_desk=True):
         # Convert the message to a string to handle exceptions and other non-string types
         message = str(message)
         # Add the log message to the queue
-        self.log_queue.put((message, log_level))
+        self.log_queue.put((message, log_level, update_info_desk))
 
     def _process_logs(self):
-        while True:
-            message, log_level = self.log_queue.get()
+        while self.logger_running:
+            message, log_level, update_info_desk = self.log_queue.get()
             if message is None:
                 break
 
@@ -69,12 +70,10 @@ class Logger:
             self.log_queue.task_done()
             try:
                 # Optionally update a text widget or print the message
-                if self.text_widget is not None:
-                    self.text_widget.after(10, self._update_text_widget, f"[{timestamp}] {log_level.upper()}: {message}\n")
-                else:
-                    print(f"[{timestamp}] {log_level.upper()}: {message}")
+                if self.text_widget is not None and update_info_desk:
+                    self.text_widget.after(0, self._update_text_widget, f"[{timestamp}] {log_level.upper()}: {message}\n")
             except Exception as e:
-                print(e)
+                pass
 
     def _update_text_widget(self, formatted_message):
         try:
@@ -187,7 +186,6 @@ class Database:
             sql = f"INSERT INTO {table_name} ( {columns} ) VALUES ( {placeholders} )"
             self.cursor.execute(sql, list(data.values()))
             self.connection.commit()
-            self.logger.message(f"Data added to {table_name} successfully.")
         except Error as e:
             self.logger.message(f"Failed to add data to {table_name}: {e}")
 
@@ -465,7 +463,10 @@ def init_database(data_base_name):
                "Type": "VARCHAR(255)",
                "last_conn_info": "VARCHAR(255)",
                "baud_rate": "VARCHAR(255)",
-               "frame_rate": "VARCHAR(255)"}
+               "frame_rate": "VARCHAR(255)",
+               "start_byte": "INT",
+               "packet_size": "INT",
+               "header": "VARCHAR(255)"}
 
     db.create_table("com_info", columns)
 

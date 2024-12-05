@@ -58,8 +58,10 @@ def get_bytes_range(bytes_string):
 
 
 class Report:
-    def __init__(self, database, gui_name):
+    def __init__(self, database, gui_name, gui_ver):
         self.db = database
+        self.gui_name = gui_name
+        self.gui_ver = gui_ver
         self.script_name = None
         self.test = None
         self.report = None
@@ -70,19 +72,20 @@ class Report:
         # self.init_table = load_config('info/init_table.json')
         # self.init_test = load_config('info/init_test.json')
 
-        self.db.switch_database(f'{gui_name}_reports_list')
+        self.db.switch_database(f'{self.gui_name}_reports_list')
         self.init_report = self.db.find_data("init_report", 0, "ResultStatus")[0]
         self.init_table = self.db.find_data("init_table", 2, "ResultStatus")[0]
         self.init_test = self.db.find_data("init_test", 0, "ResultStatus")[0]
 
     def build(self, data=None):
+        self.db.switch_database(f'loader_info')
         self.report = deepcopy(self.init_report)
         self.report["ResultStatus"] = self.finale
         self.report["test_name"] = self.init_report['test_name']
-        self.report["StartTimeFormatted"] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        self.report["project_name"] = "project"
+        self.report["StartTimeFormatted"] = f'{self.report["StartTimeFormatted"]}'
+        self.report["project_name"] = self.gui_name
         self.report["gui_type"] = "GUI_8_Relay"
-        self.report["gui_ver"] = "1.0"
+        self.report["gui_ver"] = self.gui_ver
 
         self.table = deepcopy(self.init_table)
         self.table["GroupName"] = "Main"
@@ -109,6 +112,7 @@ class Report:
     def _save_report_to_database(self):
         report_copy = deepcopy(self.report.copy())
         tables = report_copy["GroupResults"]
+        self.db.switch_database(f'{self.gui_name}_reports_list')
         try:
             report_copy["GroupResults"] = "_".join(self.script_name.split(" "))
         except Exception as e:
@@ -126,6 +130,7 @@ class Report:
 
     def build_report(self):
         original_file_path = 'info/reports/rafael.html'
+
         try:
             with open(original_file_path, 'r', encoding='utf-8') as file:
                 lines = file.readlines()
@@ -135,7 +140,7 @@ class Report:
         except Exception as e:
             print(f"Unexpected error reading file {original_file_path}: {e}")
             return
-
+        print(lines)
         for i, line in enumerate(lines):
             if 'var obj =  paste_results_here' in line:
                 formatted_json = json.dumps(self.report, indent=4)
@@ -181,9 +186,10 @@ class Report:
 
 
 class Script:
-    def __init__(self, logger, database, gui_name, tester="RelayCTRL"):
+    def __init__(self, logger, database, gui_name, gui_ver, tester="RelayCTRL"):
         self.port = None
         self.path = None
+        self.relay_com = None
         self.scope = ScopeUSB(logger)
         self.stop_flag = 1
         self.logger = logger
@@ -191,20 +197,28 @@ class Script:
         self.uuts = None
         self.cmd_button = []
         self.response = None
-        self.report = Report(database, gui_name)
-        self.tester = tester
+        self.report = Report(database, gui_name, gui_ver)
+        #self.tester = tester
         self.peripheral = load_config('info/peripheral.json')
-        self.relay_cmd = self.peripheral["ports"][self.tester]["script"]
+        #self.relay_cmd = self.peripheral["ports"][self.tester]["script"]
 
-    def run(self, line):
-        if "REM" in line:
+    def run(self, line,response):
+        self.response = response
+        if "#" in line:
+            line_without_comment = line.split('#')[0]
+            if not line_without_comment:
+                return
+        else:
+            line_without_comment = line
+
+        if "REM" in line_without_comment:
             return 1
-        if "," in line:
-            list_line = line.split(',')
+
+        if "," in line_without_comment:
+            list_line = line_without_comment.split(',')
         else:
             return 1
-        if "#" in list_line[0]:
-            return 1
+
 
         if "NEWTBL" in list_line[0].upper():
             self.report.build_new_table(list_line[1])
@@ -216,7 +230,7 @@ class Script:
         elif "DELAYMS" in list_line[0].upper():
             self.delay(list_line[1])
         elif "RELAY" in list_line[0].upper():
-            self.logger.message(self.relay(relay_number=list_line[1], status=list_line[2]))
+            self.logger.message(self.relay(relay_number=list_line[1], status=list_line[2], line=line_without_comment))
         elif "CHKMSGBYTE" in list_line[0].upper():
             self.logger.message(self.get_data_info(list_line[1:]))
         elif "SCP" in list_line[0].upper():
@@ -249,21 +263,32 @@ class Script:
         except Exception as e:
             self.logger.message(e, log_level="ERROR")
 
-    def relay(self, relay_number, status):
-        relay = f"Relay{relay_number}_"
+    def relay(self, relay_number, status, line):
+        if self.relay_com is None:
+            for com in self.port:
+                if "Dev" in com.port.device_name:
+                    self.relay_com = com.port
         try:
-            if status == "1":
-                relay += 'ON'
-                return self.send_get_command([self.tester, self.relay_cmd[relay]])
-            elif "0" in status:
-                relay += 'OFF'
-                return self.send_get_command([self.tester, self.relay_cmd[relay]])
-            else:
-                return f"Invalid arguments-{status} for the relay {relay_number} "
+            self.relay_com.write(line)
+            return line
         except Exception as e:
-            return f"Error Relay arguments-{e} "
+            print(e)
+            return None
+        #
+        # relay = f"Relay{relay_number}_"
+        # try:
+        #     if status == "1":
+        #         relay += 'ON'
+        #         return self.send_get_command([self.tester, self.relay_cmd[relay]])
+        #     elif "0" in status:
+        #         relay += 'OFF'
+        #         return self.send_get_command([self.tester, self.relay_cmd[relay]])
+        #     else:
+        #         return f"Invalid arguments-{status} for the relay {relay_number} "
+        # except Exception as e:
+        #     return f"Error Relay arguments-{e} "
 
-    def send_get_command(self, line):
+    def send_command(self, line):
         # Prepare the hex string from the line argument, skipping the first item
         try:
             self.last_line = line
@@ -275,7 +300,7 @@ class Script:
             data_bytes = bytes.fromhex(line[1].replace('x', '').replace(',', ''))
 
         try:
-            self.port.send_packet(hex_string=','.join(line[1:]), button_name=line[0])
+            self.port.write(hex_string=','.join(line[1:]))
             return f"Send data {data_bytes} to {line[0]}"
         except Exception as e:
             return f"Error {e}, Send data {data_bytes} to {line[0]} Failed!"
@@ -342,10 +367,11 @@ class Script:
             "TestStart": t
         }
         try:
-            for i in range(int(retry)):
-                if self.response is None:
-                    self.logger.message("No response re-sending massage")
-                    self.send_get_command(self.last_line)
+            print("romaaaaa", self.response)
+            # for i in range(int(retry)):
+            #     if self.response is None:
+            #         self.logger.message("No response re-sending massage")
+            #         self.(self.last_line)
             list_bytes = [self.response[int(some_bit)] for some_bit in range(int(low_byte), int(high_byte) + 1)]
         except Exception as e:
             results["Message"] = f"Problem with response: {e}"
@@ -389,8 +415,8 @@ class Script:
 
 
 class ScriptRunnerApp:
-    def __init__(self, root, loger, database, gui_name):
-        self.script = Script(loger, database, gui_name=gui_name)
+    def __init__(self, root, loger, database, gui_name, gui_ver):
+        self.script = Script(loger, database, gui_name=gui_name, gui_ver=gui_ver)
         self.logger = loger
         self.load_button = None
         self.info_label = None
@@ -398,6 +424,7 @@ class ScriptRunnerApp:
         self.stop_button = None
         self.script_lines = None
         self.root = root
+        self.response = None
 
         self.filepath = ""
         self.running = False
@@ -452,6 +479,7 @@ class ScriptRunnerApp:
             self.info_label.config(text="Please load a script first.")
 
     def run_script(self):
+        self.script.port = list(self.root.root.comport_list.values())
         if self.running:
             self.script.report.build()
             for line in self.script_lines:
@@ -462,7 +490,7 @@ class ScriptRunnerApp:
 
                 self.logger.message(f"Run: {line}")
                 self.root.update_idletasks()
-                self.script.run(line)
+                self.script.run(line, self.response)
 
         self.start_button.config(state=tk.NORMAL)
         self.load_button.config(state=tk.NORMAL)

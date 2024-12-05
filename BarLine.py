@@ -167,6 +167,7 @@ class FindReportWindow:
         self.results_tree = None
         self.search_entry = None
         self.gui_name = gui_name
+        self.gui_ver = 'test'
         self.report = f'{gui_name}_reports_list'
         self.logs = f'{gui_name}_logs'
         self.window = parent
@@ -346,7 +347,7 @@ class FindReportWindow:
     def _open_report(self, item_name):
         name = self.database.database
         self.database.switch_database(self.report)
-        report_builder = Report(self.database,self.gui_name)
+        report_builder = Report(self.database, self.gui_name, self.gui_ver)
         show_report = {}
 
         report_path = os.path.join(os.getcwd(), "info/reports")
@@ -591,8 +592,9 @@ class MenuBar:
                                               feature="last_gui",
                                               value=last["last_gui"])
         self.database.add_data_to_table('main_gui', {"last_gui": values['gui_names']})
-        self.root.destroy()
+
         from Empty import lab_runner
+        self.root.destroy()
         lab_runner(values['gui_names'])
 
     def copy_setup(self):
