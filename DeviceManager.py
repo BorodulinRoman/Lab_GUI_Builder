@@ -10,7 +10,7 @@ import threading
 import serial
 import serial.tools.list_ports
 import re
-
+from collections import deque
 
 def is_port_in_use(port_name):
     """Check if a COM port is in use without taking full control."""
@@ -85,14 +85,14 @@ class DeviceManager:
         self.logger = logger
         self.start_byte = 2
         self.header = ''
-        self.response = []
+        self.response = deque()  # Use a deque for efficient pops from left
         self.packet_size = 36
         self.baud_rate = 1000000
         self.timeout = 5
         self.rm = pyvisa.ResourceManager()
         self.device = None
         self.device_name = None
-        self.ni_controller = None  # Used for NI6009Controller
+        self.ni_controller = None
         atexit.register(self.cleanup)
 
     def cleanup(self):
@@ -182,7 +182,7 @@ class DeviceManager:
         else:
             self.logger.message("No device connected to send command")
 
-    def continuous_read(self):
+    def continuous_read_old(self):
         """Read response from the connected device."""
         if "ASRL" in self.device_name and self.device:
             try:
@@ -208,18 +208,66 @@ class DeviceManager:
                 response = None
                 for packet in self.response:
                     response = [packet[i:i + 2] for i in range(0, len(packet), 2)]
-                    self.logger.message(message=f"{response}", update_info_desk=False)
+                    #self.logger.message(message=f"{response}", update_info_desk=False)
 
-                self.response = []
+                remove_data = len(self.response)
+                for i in range(remove_data):
+                    self.response.pop(0)
+
                 return response
 
             except Exception as e:
                 return None
         else:
-            time.sleep(0.1)
+            time.sleep(1)
             # self.logger.message("No device connected to read from", 'ERROR')
             return None
 
+    def continuous_read(self):
+        """Read response from the connected device."""
+        if "ASRL" in self.device_name and self.device:
+            try:
+                buffer_size = self.device.bytes_in_buffer
+                # Read smaller chunks if the buffer is huge to avoid massive strings at once
+                if buffer_size > self.packet_size * 3:
+                    response_bytes = self.device.read_bytes(buffer_size)
+                    # Process bytes without converting the entire thing to a hex string upfront
+                    hex_data = response_bytes.hex()
+                    # If self.header is empty string, consider changing the logic
+                    if self.header:
+                        temp_response = hex_data.split(self.header)
+                    else:
+                        # If there's no header, consider a different parsing logic
+                        temp_response = [hex_data]
+
+                    # Rebuild the packets
+                    temp_packet = ''
+                    for i, packet in enumerate(temp_response):
+                        if i == 0:
+                            temp_packet = packet
+                            continue
+                        # Combine with previously incomplete packet
+                        data = temp_packet[-self.start_byte*2:] + self.header + packet[:-self.start_byte*2]
+                        temp_packet = packet
+
+                        if len(data) == self.packet_size * 2:
+                            self.response.append(data)
+
+                # Process the response if available
+                if self.response:
+                    packet = self.response.popleft()
+                    response = [packet[i:i+2] for i in range(0, len(packet), 2)]
+                    #self.logger.message(f"{response}", update_info_desk=False)
+                    return response
+                else:
+                    return None
+
+            except Exception as e:
+                self.logger.message(f"Error during continuous_read: {e}", 'ERROR')
+                return None
+        else:
+            time.sleep(1)
+            return None
 
 class ScopeUSB:
     def __init__(self, logger):
@@ -393,7 +441,7 @@ class NI6009Controller:
 
                     l, s, t = relay.split('&')
                     lines.append(l)
-                    states.append(bool(s))
+                    states.append(not bool(s))
                     if int(t) > 3:
                         times.append((int(t)-2) / 1000.0)
                     else:
@@ -411,13 +459,17 @@ class NI6009Controller:
 
     def set_output(self, line, value):
         """Set a specific digital line to high or low."""
+        port_line = 0
+        if int(line) >= 10:
+            port_line = int(int(line)/10)
+            line = int(line) % 10
         try:
             with nidaqmx.Task() as task:
-                task.do_channels.add_do_chan(f"{self.device_name}/port0/line{line}")
+                task.do_channels.add_do_chan(f"{self.device_name}/port{port_line}/line{line}")
                 task.write([bool(value)])  # Ensure value is a boolean: True/False
-                self.logger.message(f"Set line {line} to {'High' if value else 'Low'}")
+                self.logger.message(f"Set line {port_line}{line} to {'High' if value else 'Low'}")
         except Exception as e:
-            self.logger.message(f"Failed to set output on line {line}: {e}")
+            self.logger.message(f"Failed to set output on line {port_line}{line}: {e}")
 
     def pulse_output_multy(self, lines, states, times):
         """
@@ -428,11 +480,16 @@ class NI6009Controller:
         """
 
         def perform_pulse():
+
             try:
                 with nidaqmx.Task() as task:
                     # Add all specified lines to the task
                     for line in lines:
-                        task.do_channels.add_do_chan(f"{self.device_name}/port0/line{line}")
+                        port_line = 0
+                        if int(line) >= 10:
+                            port_line = int(int(line) / 10)
+                            line = int(line) % 10
+                        task.do_channels.add_do_chan(f"{self.device_name}/port{port_line}/line{line}")
 
                     for i, state in enumerate(states):  # Use enumerate here
                         states[i] = not state
@@ -445,53 +502,18 @@ class NI6009Controller:
                             pass  # Wait for the maximum delay
 
                     self.logger.message(
-                        f"Pulsed lines {lines} to states {states} with delays {times}ms."
+                        f"Pulsed lines {port_line}{line} to states {states} with delays {times}ms."
                     )
             except Exception as e:
                 self.logger.message(f"Error during pulse operation: {e}")
+
+
+
 
         # Start the pulse operation in a separate thread
         pulse_thread = threading.Thread(target=perform_pulse)
         pulse_thread.start()
         pulse_thread.join()
-
-    def pulse_output(self, line1, state1, line2, state2, delay_ms):
-        """Pulse two lines with a specified delay between state changes."""
-        state_1 = bool(state1)
-        state_2 = bool(state2)
-        if delay_ms < 3:
-            delay_ms = 3
-
-        def perform_pulse():
-            try:
-                with nidaqmx.Task() as task:
-                    # Add both lines to the task
-                    task.do_channels.add_do_chan(f"{self.device_name}/port0/line{line1}")
-                    task.do_channels.add_do_chan(f"{self.device_name}/port0/line{line2}")
-
-                    # Set the initial state of both lines
-                    initial_state = [state_1, not state_2]  # Convert to boolean
-                    task.write(initial_state)  # Set initial states
-
-                    # Busy-wait loop for the delay (in milliseconds)
-                    start_time = time.perf_counter()
-                    while (time.perf_counter() - start_time) < ((delay_ms - 2) / 1000.0):
-                        pass  # Wait precisely for the delay
-
-                    # Switch to the target state after the delay
-                    task.write([state_1, state_2])  # Ensure all states are boolean
-                    self.logger.message(
-                        f"Pulsed line {line1} to {'High' if state1 else 'Low'} and line {line2}"
-                        f" to {'High' if state2 else 'Low'} after {delay_ms}ms delay."
-                    )
-            except Exception as e:
-                self.logger.message(f"Error during pulse operation: {e}")
-
-        pulse_thread = threading.Thread(target=perform_pulse)
-        pulse_thread.start()
-        pulse_thread.join()
-
-
 
     def close(self):
         """Close the NI device."""

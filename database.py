@@ -1,4 +1,5 @@
 import mysql.connector
+import time
 from mysql.connector import Error
 import random
 from datetime import datetime
@@ -11,7 +12,7 @@ class PrintLoger:
     def __init__(self):
         self.info = "logger"
 
-    def message(self, message):
+    def message(self, message, type=None):
         print(f"{self.info} - {message}")
 
 
@@ -72,20 +73,40 @@ class Logger:
                 # Optionally update a text widget or print the message
                 if self.text_widget is not None and update_info_desk:
                     self.text_widget.after(0, self._update_text_widget, f"[{timestamp}] {log_level.upper()}: {message}\n")
+                    time.sleep(0.01)
             except Exception as e:
                 pass
 
-    def _update_text_widget(self, formatted_message):
+    def _update_text_widget(self, formatted_message, max_lines=1000):
         try:
+            # Make the widget editable
             self.text_widget.config(state=tk.NORMAL)
+
+            # Insert the new log message at the end
             self.text_widget.insert(tk.END, formatted_message)
+
+            # Determine the number of lines currently in the text widget
+            line_count = int(float(self.text_widget.index('end')))
+
+            # If the line count exceeds 'max_lines', remove the oldest lines
+            if line_count > max_lines:
+                # Calculate how many lines need to be removed
+                lines_to_remove = line_count - max_lines
+
+                # Delete from the first line up to the number of lines to remove
+                self.text_widget.delete('1.0', f'{lines_to_remove}.0')
+
+            # Re-disable the text widget to prevent user edits
             self.text_widget.config(state=tk.DISABLED)
+
+            # Scroll to the bottom so the newest message is visible
             self.text_widget.see(tk.END)
         except Exception as e:
             print(f"Error updating text widget: {e}")
 
     def close(self):
         # Stop the logging thread by adding a None message to the queue
+        self.logger_running = False
         self.log_queue.put(None)
         self.log_thread.join()
 

@@ -7,6 +7,10 @@ from ReportsAndScriptRun import ScriptRunnerApp
 from BarLine import *
 import tkinter as tk
 import threading
+import sys
+import gc
+
+
 
 
 def round_to_nearest_10(n):
@@ -250,6 +254,7 @@ class RightClickMenu(tk.LabelFrame):
 
 
 
+
 class DraggableRightClickMenu(RightClickMenu):
     """A label frame that can be dragged and resized, and shows a context menu on right-click."""
 
@@ -339,7 +344,8 @@ class DraggableRightClickMenu(RightClickMenu):
 
                 # Apply new position
                 self.place(x=self.rounded_x, y=self.rounded_y)
-                self.logger.message(f"Dragging '{self.cget('text')}' to ({self.rounded_x}, {self.rounded_y})")
+                self.logger.message(message=f"Dragging '{self.cget('text')}' to ({self.rounded_x}, {self.rounded_y})",
+                                    update_info_desk=False)
 
     def stop_action(self, event):
         """Reset states and update the database after moving or resizing."""
@@ -369,13 +375,16 @@ class DraggableRightClickMenu(RightClickMenu):
                 self.moving = False
                 self.config(cursor="arrow")
 
+
+
 class DataDraggableRightClickMenu(DraggableRightClickMenu):
     """A draggable label frame that includes a combobox and a toggle button."""
 
     def __init__(self, main_root, parent_info, values, log, gen_id="0000"):
         super().__init__(main_root, parent_info, values, log, gen_id=gen_id)
-        self.reverse = 1
         self.data_info = None
+        self.reverse = 1
+        self.text_var = tk.StringVar()  # Create a StringVar to manage the label's text
         self.low_bit = values["minBit"]
         self.high_bit = values["maxBit"]
         self.low_byte = values["minByte"]
@@ -383,12 +392,12 @@ class DataDraggableRightClickMenu(DraggableRightClickMenu):
         self.init()
 
     def init(self):
-        self.data_info = tk.Label(self, text="")
+        self.data_info = tk.Label(self, textvariable=self.text_var)
         self.data_info.place(x=2, y=0)
+
+        # Correct byte ordering if low_byte > high_byte
         if self.low_byte > self.high_byte:
-            temp = self.low_byte
-            self.low_byte = self.high_byte
-            self.high_byte = temp
+            self.low_byte, self.high_byte = self.high_byte, self.low_byte
             self.reverse = -1
 
 
@@ -470,9 +479,6 @@ class ComPortRightClickMenu(DraggableRightClickMenu):
         self.logger.message(f"Selected value: {selected_value}")
         # Add any additional functionality you need on selection
 
-    def update_all_data_label(self, packet):
-        for data_label in self.data_list:
-            data_label.data_info.config(text=packet)
 
     def on_com_click(self):
         """Callback function when the button is clicked."""
@@ -482,7 +488,6 @@ class ComPortRightClickMenu(DraggableRightClickMenu):
             self.combobox.config(state="normal")  # Enable the combobox
             self.is_started = False
             self.port.disconnect()
-            self.update_all_data_label("")
         else:
             answer = self.port.connect()
             if not answer:
@@ -515,7 +520,7 @@ class ComPortRightClickMenu(DraggableRightClickMenu):
 
     def update_data_labels(self, data=None):
         time.sleep(1)
-        while self.is_started and self.main_root.winfo_exists and self.data_list:
+        while self.is_started and self.main_root.running and self.data_list:
             try:
                 self.data = self.port.continuous_read()
                 if self.data is None:
@@ -527,27 +532,36 @@ class ComPortRightClickMenu(DraggableRightClickMenu):
 
             except Exception as e:
                 pass
+        return 0
 
     def _update_data_labels(self):
-        try:
-            for packet in self.data_list:
-                thread = threading.Thread(target=self._update_label, args=(packet,))
-                thread.start()
-        except Exception as e:
-            pass
+        threads = []
+        for data_label in self.data_list:
+            # threads.append(threading.Thread(target=self._update_label, args=(data_label,)))
+            # threads[-1].start()
+            self._update_label(label=data_label)
+
+
 
     def _update_label(self, label):
-        if self.update_flag:
-            time.sleep(self.frame_rate)
-            return None
+        try:
+            if self.update_flag:
+                time.sleep(self.frame_rate)
+                return None
 
-        self.update_flag = True
-        list_bytes = self.data[label.low_byte:1 + label.high_byte]
-        if label.reverse < 0:
-            list_bytes = list_bytes[::-1]
-        data = extract_bits(list_bytes, label.low_bit, label.high_bit)
-        label.data_info.config(text=data)
-        self.update_flag = False
+            self.update_flag = True
+            list_bytes = self.data[label.low_byte:1 + label.high_byte]
+            if label.reverse < 0:
+                list_bytes = list_bytes[::-1]
+            data = extract_bits(list_bytes, label.low_bit, label.high_bit)
+            # Update only if data has changed to reduce redundant updates
+            if label.text_var.get() != data:
+                label.text_var.set(data)
+            self.update_flag = False
+            return "Done"
+        except Exception as e:
+            pass
+        print("_update_label Done")
 
 
 class ComTransmitRightClickMenu(DraggableRightClickMenu):
@@ -810,24 +824,30 @@ class SetupLoader:
 
 
 def on_closing(root_main):
-    root_main.winfo_exists = False
+    root_main.running = False
     root_main.logger.logger_running = False
-    for _, ports in root_main.comport_list.items():
-        ports.is_started = False
-        for update_thread in ports.threads:
-            if update_thread.is_alive():
-                update_thread.join()
+    for _, port in root_main.comport_list.items():
+        try:
+            port.is_started = True
+            port.on_com_click()
+            port.port.disconnect()
+            root_main.update_idletasks()  # Process all pending events
+            root_main.update()
+        except:
+            pass
+
+    time.sleep(0.5)
     root_main.destroy()
+
+
 
 
 def lab_runner(gui_name=None):
     root_main = tk.Tk()
-    root_main.ver = '1.3'
-    root_main.winfo_exists = True
+    root_main.ver = '1.4'
+    root_main.running = True
     root_main.change_mode = False
     root_main.comport_list = {}
-
-
 
     root_main.protocol("WM_DELETE_WINDOW", lambda: on_closing(root_main))
 
@@ -841,10 +861,9 @@ def lab_runner(gui_name=None):
         root_main.gui_name = loader_db.find_data(table_name='main_gui')[0]['last_gui']
     else:
         root_main.gui_name = gui_name
+
     root_main.title(f"Project {root_main.gui_name} ver {root_main.ver}")
-
     root_main.logger = Logger(f"{root_main.gui_name}_logs")
-
     db_gui = Database(f"{root_main.gui_name}_conf", root_main.logger)
 
     root_main.loader = SetupLoader(root_main, db_gui, root_main.logger, root_main.gui_name)
@@ -852,7 +871,13 @@ def lab_runner(gui_name=None):
     db_gui.logger = root_main.loader.logger
     MenuBar(root_main, db_gui, root_main.gui_name)
     # root_main.attributes('-alpha', 0.95)
+    def periodic_gc():
+        gc.collect()
+        root_main.after(5000, periodic_gc)  # 5 seconds interval
+
+    periodic_gc()  # Initiate the periodic garbage collection cycle
     root_main.mainloop()
+
 
 
 if __name__ == '__main__':

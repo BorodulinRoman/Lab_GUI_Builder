@@ -502,7 +502,7 @@ class FeatureWindow:
     def save_as_csv(self, features):
         features_data = []
         for item_name in features:
-            data = self.database.find_data(table_name="init_test", num_id=item_name, feature="StepName")
+            data = self.database.find_data(table_name="init_test", feature_info=item_name, feature="StepName")
             for d in data:
                 features_data.append(d)
         df = pd.DataFrame(features_data)

@@ -1,3 +1,5 @@
 pyinstaller --onefile Empty.pyw
 
 pyinstaller Empty.pyw
+
+.venv\Scripts\python.exe Empty.pyw
