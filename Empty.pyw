@@ -55,6 +55,8 @@ class RightClickMenu(tk.LabelFrame):
         11ext menu based on the current state."""
         self.menu = Menu(self, tearoff=0)
         if self.root.change_mode:
+            if 'DataDraggableRightClickMenu' in self.element["class"]:
+                self.menu.add_command(label='Add State', command=self.state_builder_for_data)
             self.menu.add_command(label='Info', command=self.get_info)
             self.menu.add_command(label='Disable Change Mode', command=self.disable_change_mode)
             if self.gen_id not in [0, 1, 2, 3, 4]:
@@ -134,7 +136,12 @@ class RightClickMenu(tk.LabelFrame):
                                         lambda values: self.create_new_widget_with_settings(values, x, y, cls))
 
     def add_functions(self):
-        self.add_window.open_new_window(name="Add Functions")
+        self.add_window.open_new_window(labels={"id": self.element["id"]}, name="Add Functions", add_functions=True,
+                                        callback=lambda values: self._function(values))
+
+    def state_builder_for_data(self):
+        self.add_window.open_new_window(labels={"id": self.element["id"]}, name="Add State", add_functions=True,
+                                        callback=lambda values: self._function(values))
 
     def get_coms_data(self):
         dic_ids = {}
@@ -179,6 +186,24 @@ class RightClickMenu(tk.LabelFrame):
         self.add_window.open_new_window(label, boxs, "Create New Button transmit box",
                                         lambda values: self.create_new_widget_with_settings(values, x, y, cls, dic_ids))
 
+    def _function(self,  values, functions=None):
+        if functions is None:
+            functions = {}
+            if "function_name" and "function_info" in values.keys():
+                print(values)
+                for i, val in enumerate(values["function_name"]):
+
+                    functions[val] = values["function_info"][i]
+                del values["function_name"]
+                del values["function_info"]
+
+        if functions:
+            self.db.switch_database(f"{self.gui_name}_conf")
+            for func_name, func_data in functions.items():
+                self.db.add_element({"id": values["id"],
+                                     "function_name": func_name,
+                                     "function_info": func_data})
+
     def create_new_widget_with_settings(self, values, x, y, cls, dict_ids=None):
         com_id = 0
         functions = {}
@@ -214,12 +239,7 @@ class RightClickMenu(tk.LabelFrame):
             elif cls is DataDraggableRightClickMenu:
                 values["Type"] = "Data"
             values["id"] = self.db.add_element(values, int(int(com_id)/10000) * 10000)
-            if functions:
-                self.db.switch_database(f"{self.gui_name}_conf")
-                for func_name, func_data in functions.items():
-                    self.db.add_element({"id": values["id"],
-                                         "function_name": func_name,
-                                         "function_info": func_data})
+            self._function(values,functions)
             frame = self.root.loader.create_frame(values, self)
             frame.place(x=values["x"], y=values["y"])
 
@@ -392,12 +412,22 @@ class DataDraggableRightClickMenu(DraggableRightClickMenu):
         self.sign = values["sign"]
         self.factor = values["factor"]
         self.type = values["type_number"]
+        self.functions = self.db.find_data('transmit_com', int(values["id"]))
+        self.convert_text = {}
         self.init()
 
     def init(self):
         self.data_info = tk.Label(self, textvariable=self.text_var)
         self.data_info.place(x=2, y=0)
 
+        try:
+            self.db.switch_database(f"{self.gui_name}_conf")
+            for data in self.functions:
+                self.convert_text[data["function_info"]] = data["function_name"]
+            self.element['convert_data'] = self.convert_text
+
+        except Exception as e:
+            pass
         # Correct byte ordering if low_byte > high_byte
         if self.low_byte > self.high_byte:
             self.low_byte, self.high_byte = self.high_byte, self.low_byte
@@ -562,6 +592,9 @@ class ComPortRightClickMenu(DraggableRightClickMenu):
                 if data >= 1 << (bit_length - 1):
                     data -= 1 << bit_length
                 data = data * label.factor
+
+            if data in label.convert_text.keys():
+                data = label.convert_text[data]
 
             if label.text_var.get() != data:
                 label.text_var.set(data)
@@ -858,7 +891,7 @@ def lab_runner(gui_name=None, root_main=None):
         pass
 
     root_main = tk.Tk()
-    root_main.ver = '1.4'
+    root_main.ver = '1.41'
     root_main.running = True
     root_main.change_mode = False
     root_main.comport_list = {}

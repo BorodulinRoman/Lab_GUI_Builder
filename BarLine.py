@@ -10,6 +10,8 @@ from database import init_database
 
 class AddDataWindow:
     def __init__(self, frame, database, gui_name):
+        self.function_combo = None
+        self.name = None
         self.gui_name = gui_name
         self.callback = None
         self.frame = frame
@@ -22,9 +24,10 @@ class AddDataWindow:
 
     def open_new_window(self, labels=None, boxs=None, name="Add packet label", callback=None, add_functions=False):
         self.callback = callback
+        self.name = name
         self.addkey = True
         if labels is None:
-            return 0
+            labels = {}
 
         # Create a new window
         self.new_window = tk.Toplevel(self.frame)
@@ -37,39 +40,42 @@ class AddDataWindow:
         # Count the number of blocks (OptionMenus and Entries)
         total_blocks = len(boxs) + len([label for label in labels if label != "location"])
         window_height = 60 + (total_blocks * 60)
-        self.new_window.geometry(f"300x{window_height}")
+        try:
+            # OptionMenu for scopes
+            for box_name, box in boxs.items():
+                if box is None:
+                    continue
+                self.port_var[box_name] = tk.StringVar()
+                self.port_var[box_name].set(box_name)
+                if not len(box):
+                    box = ["None"]
 
-        # OptionMenu for scopes
-        for box_name, box in boxs.items():
-            if box is None:
-                continue
-            self.port_var[box_name] = tk.StringVar()
-            self.port_var[box_name].set(box_name)
-            if not len(box):
-                box = ["None"]
+                temp_box = tk.OptionMenu(self.new_window, self.port_var[box_name], *box)
+                temp_box.pack(pady=(10, 0))
+        except Exception as e:
+            print(e)
 
-            temp_box = tk.OptionMenu(self.new_window, self.port_var[box_name], *box)
-            temp_box.pack(pady=(10, 0))
+        try:
+            # Create Entry widgets for each label except "location"
+            for idx, (label, some_data) in enumerate(self.labels.items()):
+                if some_data is None or label in ["location", "id"]:
+                    continue
 
-        # Create Entry widgets for each label except "location"
-        for idx, (label, some_data) in enumerate(self.labels.items()):
-            if some_data is None:
-                continue
-            if label == "location":
-                continue
+                lbl = tk.Label(self.new_window, text=label)
+                lbl.pack(pady=(10, 0))
 
-            lbl = tk.Label(self.new_window, text=label)
-            lbl.pack(pady=(10, 0))
+                entry = tk.Entry(self.new_window)
+                entry.insert(0, some_data)
+                entry.pack(pady=(0, 10))
 
-            entry = tk.Entry(self.new_window)
-            entry.insert(0, some_data)
-            entry.pack(pady=(0, 10))
-
-            self.labels[label] = entry
+                self.labels[label] = entry
+        except Exception as e:
+            print(e)
 
         # Add "+" button if add_functions flag is True
         if add_functions:
             # Frame to hold "Add" and "Remove" buttons side by side
+            window_height += 100
             button_frame = tk.Frame(self.new_window)
             button_frame.pack(pady=(10, 0))
 
@@ -83,6 +89,7 @@ class AddDataWindow:
             self.function_combo = ttk.Combobox(self.new_window, values=list(self.functions.keys()))
             self.function_combo.pack(pady=(10, 0))
 
+        self.new_window.geometry(f"300x{window_height}")
 
         ok_button = tk.Button(self.new_window, text="OK", command=self.on_ok)
         ok_button.pack(pady=10)
@@ -91,12 +98,12 @@ class AddDataWindow:
         function_window = tk.Toplevel(self.new_window)
         function_window.title("Add Function")
 
-        function_name_label = tk.Label(function_window, text="Function Name:")
+        function_name_label = tk.Label(function_window, text=f"{self.name} Name:")
         function_name_label.pack(pady=(10, 0))
         function_name_entry = tk.Entry(function_window)
         function_name_entry.pack(pady=(0, 10))
 
-        function_data_label = tk.Label(function_window, text="Function Data:")
+        function_data_label = tk.Label(function_window, text=f"{self.name} Data:")
         function_data_label.pack(pady=(10, 0))
         function_data_entry = tk.Entry(function_window)
         function_data_entry.pack(pady=(0, 10))
@@ -116,8 +123,8 @@ class AddDataWindow:
                 self.labels["function_info"] = []
 
             # Add the function name and data to labels
-            self.labels["function_name"].append(function_name)
-            self.labels["function_info"].append(function_data)
+            self.labels["function_name"].append(str(function_name))
+            self.labels["function_info"].append(str(function_data))
 
             # Update ComboBox values
             self.function_combo['values'] = self.labels["function_name"]
@@ -159,6 +166,7 @@ class AddDataWindow:
             self.callback(self.labels)
         else:
             self.database.switch_database(f"{self.gui_name}_conf")
+
             self.database.add_element(self.labels)
 
 

@@ -1,0 +1,3 @@
+StepName,Description,Min,Max,ResultStatus,Message,TestStart
+COUNTER3,test_1_run_scope20241205130746,0,ffff,0,Problem with response: 'NoneType' object is not subscriptable,13:07:48.303
+COUNTER3,test_1_run_scope20241211215325,0,ffff,2,0xaa2d,21:53:27.734

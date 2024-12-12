@@ -1,0 +1,8 @@
+11:00:20:595553-info: Error with VISA resource INSTR: VI_ERROR_RSRC_NFOUND (-1073807343): Insufficient location information or the requested device or resource is not present in the system.
+11:00:20:602550-info: Error with VISA resource INSTR: VI_ERROR_RSRC_NFOUND (-1073807343): Insufficient location information or the requested device or resource is not present in the system.
+11:00:20:608694-info: Error with VISA resource INSTR: VI_ERROR_RSRC_NFOUND (-1073807343): Insufficient location information or the requested device or resource is not present in the system.
+11:00:20:613696-info: Error with VISA resource INSTR: VI_ERROR_RSRC_NFOUND (-1073807343): Insufficient location information or the requested device or resource is not present in the system.
+11:00:20:618695-info: Error initializing PicoScope devices: module 'picosdk' has no attribute 'discover_devices'
+11:00:22:447240-info: Connected to VISA device: ASRL3::INSTR
+11:00:22:576484-info: Button clicked! Current combobox selection: select or set
+11:00:22:584251-info: Switched to database: loader_info
