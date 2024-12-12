@@ -1,0 +1,3 @@
+StepName,Description,Min,Max,ResultStatus,Message,TestStart
+test_name4,test_1_run_scope20241205130746,1,1,0,Problem with response: 'NoneType' object is not subscriptable,13:07:48.304
+test_name4,test_1_run_scope20241211215325,1,1,3,0x0,21:53:27.744
