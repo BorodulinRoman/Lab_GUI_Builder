@@ -22,7 +22,7 @@ def is_port_in_use(port_name):
         return True  # Port is already in use or cannot be accessed
 
 
-def extract_bits(lst, low, high, format_type='decimal'):
+def extract_bits(lst, low, high, format_type='DEC'):
     # Convert hex strings to integers
     int_list = [int(hex_str, 16) for hex_str in lst]
 
@@ -36,9 +36,9 @@ def extract_bits(lst, low, high, format_type='decimal'):
         # Extract bits
         extracted_bits = (combined_value & mask) >> low
         # Format the result
-        if format_type == 'binary':
+        if format_type == 'BIN':
             result = bin(extracted_bits)
-        elif format_type == 'hexadecimal':
+        elif format_type == 'HEX':
             result = hex(extracted_bits)
         else:
             result = str(extracted_bits)
@@ -51,9 +51,9 @@ def extract_bits(lst, low, high, format_type='decimal'):
         for val in int_list:
             extracted_bits = (val & mask) >> low
             # Format the result
-            if format_type == 'binary':
+            if format_type == 'BIN':
                 formatted_result = bin(extracted_bits)
-            elif format_type == 'hexadecimal':
+            elif format_type == 'HEX':
                 formatted_result = hex(extracted_bits)
             else:
                 formatted_result = str(extracted_bits)

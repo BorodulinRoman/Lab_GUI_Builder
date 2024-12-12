@@ -210,6 +210,39 @@ class Database:
         except Error as e:
             self.logger.message(f"Failed to add data to {table_name}: {e}")
 
+    def add_missing_columns(self, table_name, columns):
+        """
+        Adds missing columns to a MySQL table if they don't exist.
+
+        :param table_name: Name of the table
+        :param columns: Dictionary with column names and SQL definitions
+        """
+        try:
+            # Get existing columns
+            self.cursor.execute(f"""
+                SELECT COLUMN_NAME 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_NAME = %s 
+                  AND TABLE_SCHEMA = %s;
+            """, (table_name, self.database))
+
+            existing_columns = {row[0] for row in self.cursor.fetchall()}
+
+            # Add missing columns
+            for col_name, col_def in columns.items():
+                if col_name not in existing_columns:
+                    alter_query = f"ALTER TABLE {table_name} ADD COLUMN {col_name} {col_def};"
+                    self.logger.message(f"Adding missing column: {alter_query}")
+                    self.cursor.execute(alter_query)
+
+            self.connection.commit()
+            self.logger.message("Missing columns added successfully.")
+
+        except mysql.connector.Error as err:
+            self.logger.message(f"Error adding missing columns: {err}")
+
+
+
     def get_all_table_names(self):
         try:
             # Execute the query to get all table names
@@ -479,6 +512,14 @@ def init_database(data_base_name):
                "minBit": "INT"}
 
     db.create_table("frs_info", columns)
+
+    columns_to_add = {
+        'factor': 'FLOAT DEFAULT 1',
+        'sign': 'BOOLEAN DEFAULT FALSE',
+        'type_number': "VARCHAR(255) DEFAULT 'HEX'"
+    }
+
+    db.add_missing_columns('frs_info', columns_to_add)
 
     columns = {"id": "INT AUTO_INCREMENT PRIMARY KEY",
                "Type": "VARCHAR(255)",

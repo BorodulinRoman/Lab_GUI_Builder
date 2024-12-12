@@ -594,8 +594,9 @@ class MenuBar:
         self.database.add_data_to_table('main_gui', {"last_gui": values['gui_names']})
 
         from Empty import lab_runner
+        # self.root.destroy()
+        lab_runner(values['gui_names'], self.root)
         self.root.destroy()
-        lab_runner(values['gui_names'])
 
     def copy_setup(self):
         self.logger.message("New Setup")

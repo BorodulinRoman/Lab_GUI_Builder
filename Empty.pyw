@@ -1,5 +1,4 @@
 import time
-from datetime import datetime
 from tkinter import Menu, messagebox
 from DeviceManager import DeviceManager, extract_bits, ScopeUSB
 from database import Database, Logger, init_database, init_loader
@@ -7,10 +6,7 @@ from ReportsAndScriptRun import ScriptRunnerApp
 from BarLine import *
 import tkinter as tk
 import threading
-import sys
 import gc
-
-
 
 
 def round_to_nearest_10(n):
@@ -151,7 +147,11 @@ class RightClickMenu(tk.LabelFrame):
 
     def packet_label(self, x, y, cls):
         dic_ids = self.get_coms_data()
-        label = {'label_name': 'New Packet', 'maxByte': 0, 'minByte': 0, 'maxBit': 0, 'minBit': 0}
+        label = {'label_name': 'New Packet',
+                 "factor": 1, "sign": 0,
+                 'maxByte': 0, 'minByte': 0,
+                 'maxBit': 0, 'minBit': 0,
+                 "type_number": "HEX/DEC/BIN"}
         boxs = {"Dimension": ['130x40', '300x40', '600x40'], 'info_table': list(dic_ids.keys())}
 
         self.add_window.open_new_window(label, boxs, "Create New Widget",
@@ -191,6 +191,9 @@ class RightClickMenu(tk.LabelFrame):
                 except:
                     pass
         try:
+            if "type_number" in values.keys() :
+                if values["type_number"].upper() not in ["HEX", "BIN", "DEC"]:
+                    values["type_number"] = "HEX"
             if "function_name" and "function_info" in values.keys():
                 for i, val in enumerate(values["function_name"]):
                     functions[val] = values["function_info"][i]
@@ -251,8 +254,6 @@ class RightClickMenu(tk.LabelFrame):
             self.logger.message(f"Label id '{self.gen_id}' location: ({self.winfo_x()}, {self.winfo_y()})")
         else:
             self.logger.message(f"No element found with id: {self.gen_id}")
-
-
 
 
 class DraggableRightClickMenu(RightClickMenu):
@@ -376,7 +377,6 @@ class DraggableRightClickMenu(RightClickMenu):
                 self.config(cursor="arrow")
 
 
-
 class DataDraggableRightClickMenu(DraggableRightClickMenu):
     """A draggable label frame that includes a combobox and a toggle button."""
 
@@ -389,6 +389,9 @@ class DataDraggableRightClickMenu(DraggableRightClickMenu):
         self.high_bit = values["maxBit"]
         self.low_byte = values["minByte"]
         self.high_byte = values["maxByte"]
+        self.sign = values["sign"]
+        self.factor = values["factor"]
+        self.type = values["type_number"]
         self.init()
 
     def init(self):
@@ -541,20 +544,25 @@ class ComPortRightClickMenu(DraggableRightClickMenu):
             # threads[-1].start()
             self._update_label(label=data_label)
 
-
-
-    def _update_label(self, label):
+    def _update_label(self, label: DataDraggableRightClickMenu):
         try:
             if self.update_flag:
                 time.sleep(self.frame_rate)
                 return None
-
             self.update_flag = True
             list_bytes = self.data[label.low_byte:1 + label.high_byte]
             if label.reverse < 0:
                 list_bytes = list_bytes[::-1]
-            data = extract_bits(list_bytes, label.low_bit, label.high_bit)
+            data = extract_bits(list_bytes, label.low_bit, label.high_bit, label.type)
             # Update only if data has changed to reduce redundant updates
+
+            if label.sign and label.type == 'DEC':
+                bit_length = label.high_bit - label.low_bit
+                data = int(data)
+                if data >= 1 << (bit_length - 1):
+                    data -= 1 << bit_length
+                data = data * label.factor
+
             if label.text_var.get() != data:
                 label.text_var.set(data)
             self.update_flag = False
@@ -823,36 +831,41 @@ class SetupLoader:
         return frame
 
 
-def on_closing(root_main):
-    root_main.running = False
-    root_main.logger.logger_running = False
-    for _, port in root_main.comport_list.items():
-        try:
-            port.is_started = True
-            port.on_com_click()
-            port.port.disconnect()
-            root_main.update_idletasks()  # Process all pending events
-            root_main.update()
-        except:
-            pass
+def lab_runner(gui_name=None, root_main=None):
+    def on_closing():
+        root_main.running = False
+        root_main.logger.logger_running = False
+        for _, port in root_main.comport_list.items():
+            try:
+                port.is_started = True
+                port.on_com_click()
+                port.port.disconnect()
+                root_main.update_idletasks()  # Process all pending events
+                root_main.update()
+            except:
+                pass
 
-    time.sleep(0.5)
-    root_main.destroy()
+        time.sleep(0.5)
+        root_main.destroy()
 
+    def periodic_gc():
+        gc.collect()
+        root_main.after(5000, periodic_gc)  # 5 seconds interval
 
+    try:
+        on_closing()
+    except:
+        pass
 
-
-def lab_runner(gui_name=None):
     root_main = tk.Tk()
     root_main.ver = '1.4'
     root_main.running = True
     root_main.change_mode = False
     root_main.comport_list = {}
-
-    root_main.protocol("WM_DELETE_WINDOW", lambda: on_closing(root_main))
-
+    root_main.protocol("WM_DELETE_WINDOW", lambda: on_closing())
     try:
         loader_db = Database('loader_info')
+        init_loader(loader_db.find_data(table_name='main_gui')[0]['last_gui'])
     except:
         init_loader()
         loader_db = Database('loader_info')
@@ -871,13 +884,9 @@ def lab_runner(gui_name=None):
     db_gui.logger = root_main.loader.logger
     MenuBar(root_main, db_gui, root_main.gui_name)
     # root_main.attributes('-alpha', 0.95)
-    def periodic_gc():
-        gc.collect()
-        root_main.after(5000, periodic_gc)  # 5 seconds interval
 
     periodic_gc()  # Initiate the periodic garbage collection cycle
     root_main.mainloop()
-
 
 
 if __name__ == '__main__':
