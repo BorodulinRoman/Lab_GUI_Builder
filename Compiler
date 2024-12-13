@@ -1,5 +1,5 @@
 pyinstaller --onefile Empty.pyw
 
 pyinstaller Empty.pyw
-
+pyinstaller MEL_GUI.pyw
 .venv\Scripts\python.exe Empty.pyw

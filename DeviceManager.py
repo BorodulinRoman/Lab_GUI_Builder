@@ -257,7 +257,7 @@ class DeviceManager:
                 if self.response:
                     packet = self.response.popleft()
                     response = [packet[i:i+2] for i in range(0, len(packet), 2)]
-                    #self.logger.message(f"{response}", update_info_desk=False)
+                    self.logger.message(f"{response}", update_info_desk=False)
                     return response
                 else:
                     return None

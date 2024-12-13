@@ -35,23 +35,24 @@ class AddDataWindow:
 
         self.labels = labels
         if boxs is None:
-            boxs = {}
+            boxs = []
 
         # Count the number of blocks (OptionMenus and Entries)
         total_blocks = len(boxs) + len([label for label in labels if label != "location"])
         window_height = 60 + (total_blocks * 60)
         try:
-            # OptionMenu for scopes
-            for box_name, box in boxs.items():
-                if box is None:
-                    continue
-                self.port_var[box_name] = tk.StringVar()
-                self.port_var[box_name].set(box_name)
-                if not len(box):
-                    box = ["None"]
+            for box in boxs:
+                # OptionMenu for scopes
+                for box_name, box in box.items():
+                    if box is None:
+                        continue
+                    self.port_var[box_name] = tk.StringVar()
+                    self.port_var[box_name].set(box_name)
+                    if not len(box):
+                        box = ["None"]
 
-                temp_box = tk.OptionMenu(self.new_window, self.port_var[box_name], *box)
-                temp_box.pack(pady=(10, 0))
+                    temp_box = tk.OptionMenu(self.new_window, self.port_var[box_name], *box)
+                    temp_box.pack(pady=(10, 0))
         except Exception as e:
             print(e)
 
@@ -528,6 +529,7 @@ class FeatureWindow:
 
 class MenuBar:
     def __init__(self, root, database, gui_name):
+        self.options = []
         self.logger = database.logger
         self.menubar = tk.Menu(root)
         self.root = root
@@ -553,9 +555,9 @@ class MenuBar:
         self.database.switch_database("loader_info")
         # List of options
 
-        options = [option['gui_names'] for option in self.database.find_data(table_name='all_gui', feature='gui_names')]
+        self.options = [option['gui_names'] for option in self.database.find_data(table_name='all_gui', feature='gui_names')]
 
-        for option in options:
+        for option in self.options:
             self.load_setup_menu.add_command(
                 label=option,
                 command=lambda opt=option: self.load_setup_option(opt)
@@ -592,7 +594,7 @@ class MenuBar:
         init_database(values['gui_names'])
         self.open_gui(values)
 
-    def open_gui(self,values):
+    def open_gui(self, values):
         last_guis = self.database.find_data(table_name='main_gui', feature="last_gui")
         self.database.switch_database("loader_info")
         for last in last_guis:
@@ -602,17 +604,18 @@ class MenuBar:
         self.database.add_data_to_table('main_gui', {"last_gui": values['gui_names']})
 
         from Empty import lab_runner
-        # self.root.destroy()
-        lab_runner(values['gui_names'], self.root)
-        self.root.destroy()
+        lab_runner(gui_name=None, root_main=self.root)
 
     def copy_setup(self):
-        self.logger.message("New Setup")
+        self.logger.message("Copy Setup")
         self.database.switch_database("loader_info")
-        self.add_window.open_new_window(labels={'gui_names': ""}, callback=lambda values: self._copy_setup(values))
+        self.add_window.open_new_window(labels={'gui_names': ""}, boxs=[{"Setup to Copy": self.options}],
+                                        callback=lambda values: self._copy_setup(values))
 
-    def _copy_setup(self,values):
-        print(values)
+    def _copy_setup(self, values):
+        init_database(values['gui_names'], values["Setup to Copy"])
+        self.database.add_data_to_table('all_gui', {"gui_names": values['gui_names']})
+        self.open_gui({"gui_names": values['gui_names']})
 
     def load_setup(self):
         self.logger.message("Load Setup")

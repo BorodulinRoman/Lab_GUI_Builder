@@ -7,6 +7,7 @@ from queue import Queue
 import threading
 import tkinter as tk
 
+
 # database
 class PrintLoger:
     def __init__(self):
@@ -129,6 +130,31 @@ def create_schema(host, user, passwd, schema_name):
     except Error as e:
         print(f"Failed to create schema '{schema_name}': {e}")
 
+
+# Python database copy function with commit
+def copy_schema(host, user, passwd, source_schema, target_schema):
+    try:
+        connection = mysql.connector.connect(
+            host=host,
+            user=user,
+            passwd=passwd
+        )
+
+        if connection.is_connected():
+            cursor = connection.cursor()
+            cursor.execute(f"CREATE DATABASE IF NOT EXISTS {target_schema}")
+            cursor.execute(f"SHOW TABLES FROM {source_schema}")
+            tables = cursor.fetchall()
+
+            for (table,) in tables:
+                print(f"Copying {table}...")
+                cursor.execute(f"CREATE TABLE {target_schema}.{table} LIKE {source_schema}.{table}")
+                cursor.execute(f"INSERT INTO {target_schema}.{table} SELECT * FROM {source_schema}.{table}")
+                connection.commit()
+                print(f"Table '{table}' copied.")
+
+    except Error as e:
+        print(f"Error: {e}")
 
 class Database:
     def __init__(self, database, logger=None, host="localhost", user="root", passwd="Aa123456"):
@@ -467,12 +493,18 @@ def init_loader(data_base_name='old'):
     if not db.find_data(table_name='all_gui', feature_info='OLD', feature='gui_names'):
         data_all = {"gui_names": data_base_name}
         db.add_data_to_table("all_gui", data_all)
-
+    db.disconnect()
     init_database(data_base_name)
 
 
-def init_database(data_base_name):
-    create_schema("localhost", "root", "Aa123456", f"{data_base_name}_conf")
+def init_database(data_base_name, copy=None):
+    if copy is None:
+        create_schema("localhost", "root", "Aa123456", f"{data_base_name}_conf")
+    else:
+        copy_schema("localhost", "root", "Aa123456",
+                    f"{copy}_conf",
+                    f"{data_base_name}_conf")
+
     create_schema("localhost", "root", "Aa123456", f"{data_base_name}_reports_list")
     create_schema("localhost", "root", "Aa123456", f"{data_base_name}_logs")
     create_schema("localhost", "root", "Aa123456", f"{data_base_name}_setup")
@@ -684,6 +716,7 @@ def init_database(data_base_name):
     }
     db.add_data_to_table("init_test", init_test)
     db.disconnect()
+    return data_base_name
 
 
 # Example usage
