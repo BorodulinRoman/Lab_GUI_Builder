@@ -10,16 +10,23 @@ import tkinter as tk
 
 # database
 class PrintLoger:
-    def __init__(self):
+    def __init__(self, loading_window=None):
         self.info = "logger"
+        self.loading_window = loading_window
 
     def message(self, message, type=None):
-        print(f"{self.info} - {message}")
+        if self.loading_window is not None:
+            self.loading_window.text_var.set(message)
+            time.sleep(0.1)
+        else:
+            print(f"{self.info} - {message}")
+            self.loading_window = None
 
 
 class Logger:
-    def __init__(self, name):
+    def __init__(self, name, loading_window=None):
         self.logger_running = True
+        self.loading_window = loading_window
         self.db = Database(name)
         self.table_name = datetime.now().strftime(f"{name}%y%d%H%M")
         self.log_queue = Queue()
@@ -45,13 +52,23 @@ class Logger:
     def message(self, message, log_level="info", update_info_desk=True):
         # Convert the message to a string to handle exceptions and other non-string types
         message = str(message)
-        # Add the log message to the queue
+
+        try:
+            if self.loading_window is not None:
+                self.loading_window.text_var.set(message)
+                #time.sleep(0.1)
+        except Exception as e:
+            print(e)
+            self.loading_window = None
+        print(message)        # Add the log message to the queue
         self.log_queue.put((message, log_level, update_info_desk))
 
     def _process_logs(self):
         while self.logger_running:
             message, log_level, update_info_desk = self.log_queue.get()
+            print(message, log_level, update_info_desk)
             if message is None:
+                time.sleep(0.1)
                 break
 
             # Get the current time for the log entry
@@ -64,10 +81,8 @@ class Logger:
                 "log_level": log_level,
                 "message": message
             }
-
             # Add the log entry to the database
             self.db.add_data_to_table(self.table_name, log_data)
-
             # Mark the queue task as done
             self.log_queue.task_done()
             try:
@@ -156,11 +171,12 @@ def copy_schema(host, user, passwd, source_schema, target_schema):
     except Error as e:
         print(f"Error: {e}")
 
+
 class Database:
-    def __init__(self, database, logger=None, host="localhost", user="root", passwd="Aa123456"):
+    def __init__(self, database, logger=None, loading_window=None, host="localhost", user="root", passwd="Aa123456"):
         if logger is not None:
             self.logger = logger
-        self.logger = PrintLoger()
+        self.logger = PrintLoger(loading_window)
         self.cursor = None
         self.host = host
         self.user = user
@@ -267,8 +283,6 @@ class Database:
         except mysql.connector.Error as err:
             self.logger.message(f"Error adding missing columns: {err}")
 
-
-
     def get_all_table_names(self):
         try:
             # Execute the query to get all table names
@@ -323,12 +337,13 @@ class Database:
                 sql = f"SELECT * FROM {table_name}"
             else:
                 sql = f"SELECT * FROM {table_name} WHERE {feature} = '{feature_info}'"
-            print(sql)
+
+            self.logger.message(f"Database {sql}")
             self.cursor.execute(sql)
             columns = self.cursor.column_names
             records = self.cursor.fetchall()
             result = [dict(zip(columns, row)) for row in records]
-            # self.logger.message(f"Data found in {table_name}: {result}")
+            self.logger.message(f"Data found in {table_name}: {result}")
 
             return result
         except Error as e:
@@ -475,10 +490,10 @@ def remove_database_info(db, data_base_name="gui"):
         db.delete_table(table)
 
 
-def init_loader(data_base_name='old'):
+def init_loader(data_base_name='old', loading_window=None):
     create_schema("localhost", "root", "Aa123456", "loader_info")
 
-    db = Database(host="localhost", user="root", passwd="Aa123456", database=f"loader_info")
+    db = Database(host="localhost",loading_window=loading_window, user="root", passwd="Aa123456", database=f"loader_info")
     db.connect()
 
     columns = {"last_gui": "VARCHAR(255)"}

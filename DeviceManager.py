@@ -169,6 +169,7 @@ class DeviceManager:
             self.logger.message("No device to disconnect")
 
     def write(self, command):
+        print(command)
         """Send a command to the connected device (VISA or NI)."""
         if "ASRL" in self.device_name and self.device:
             try:
@@ -181,47 +182,6 @@ class DeviceManager:
             self.ni_controller.write(command)
         else:
             self.logger.message("No device connected to send command")
-
-    def continuous_read_old(self):
-        """Read response from the connected device."""
-        if "ASRL" in self.device_name and self.device:
-            try:
-                if self.device.bytes_in_buffer > self.packet_size * 3:
-                    response = self.device.read_bytes(self.device.bytes_in_buffer)
-                    temp_packet = ''
-                    temp_response = str(response.hex()).split(self.header)
-
-                    if not temp_response:
-                        return None
-
-                    for i, packet in enumerate(temp_response):
-                        if i == 0:
-                            temp_packet = packet
-                            continue
-
-                        data = temp_packet[-self.start_byte * 2:] + self.header + packet[:-self.start_byte * 2]
-                        temp_packet = packet
-
-                        if len(data) == self.packet_size * 2:
-                            self.response.append(data)
-
-                response = None
-                for packet in self.response:
-                    response = [packet[i:i + 2] for i in range(0, len(packet), 2)]
-                    #self.logger.message(message=f"{response}", update_info_desk=False)
-
-                remove_data = len(self.response)
-                for i in range(remove_data):
-                    self.response.pop(0)
-
-                return response
-
-            except Exception as e:
-                return None
-        else:
-            time.sleep(1)
-            # self.logger.message("No device connected to read from", 'ERROR')
-            return None
 
     def continuous_read(self):
         """Read response from the connected device."""
@@ -268,6 +228,7 @@ class DeviceManager:
         else:
             time.sleep(1)
             return None
+
 
 class ScopeUSB:
     def __init__(self, logger):
@@ -423,6 +384,7 @@ class NI6009Controller:
             self.logger.message(f"Failed to process command '{command}': {str(e)}")
 
     def process_relay_command(self, command):
+        self.logger.message(f"Send {command}")
         """Process RELAY command strings and control digital outputs."""
         try:
             _, *relay_params = command.split(',')
@@ -441,7 +403,7 @@ class NI6009Controller:
 
                     l, s, t = relay.split('&')
                     lines.append(l)
-                    states.append(not bool(s))
+                    states.append(bool(int(s) == 0))
                     if int(t) > 3:
                         times.append((int(t)-2) / 1000.0)
                     else:
@@ -450,6 +412,7 @@ class NI6009Controller:
 
                 #line2, state2 = map(int, relay_params[1].split('&'))
                 #delay_ms = int(relay_params[2].strip())
+
                 self.pulse_output_multy(lines, states, times)
                 #self.pulse_output(line1, state1 == 1, line2, state2 == 1, delay_ms)
             else:
@@ -491,9 +454,24 @@ class NI6009Controller:
                             line = int(line) % 10
                         task.do_channels.add_do_chan(f"{self.device_name}/port{port_line}/line{line}")
 
+                    temp_states = states.copy()
+                    zero_stopper = 0
                     for i, state in enumerate(states):  # Use enumerate here
-                        states[i] = not state
-                        task.write(states)  # Set target states
+                        if i < zero_stopper:
+                            continue
+
+                        temp_states[i] = not state
+                        for j in range(i, len(states)):
+                            zero_stopper = j + 1
+                            if float(times[j]) == 0:
+                                if j+1 < len(states):
+                                    temp_states[j+1] = not state
+                                else:
+                                    break
+                            else:
+                                break
+
+                        task.write(temp_states)  # Set target states
 
                         # Delay to allow state stabilization
 
@@ -501,11 +479,10 @@ class NI6009Controller:
                         while (time.perf_counter() - start_time) < times[i]:
                             pass  # Wait for the maximum delay
 
-                    self.logger.message(
-                        f"Pulsed lines {port_line}{line} to states {states} with delays {times}ms."
-                    )
             except Exception as e:
-                self.logger.message(f"Error during pulse operation: {e}")
+                print(e)
+                pass
+
 
 
 
@@ -524,25 +501,25 @@ class NI6009Controller:
 
 
 
-# if __name__ == "__main__":
-#     class Logger:
-#         def message(self, msg):
-#             print(msg)
-#
-#
-#     logger = Logger()
-#     dev = DeviceManager(logger)
-#     dev.device_name = dev.find_devices()[0]
-#     print(dev.device_name)
-#     dev.connect()
-#     while 1:
-#         # Example RELAY commands
-#         time.sleep(.1)
-#         dev.write("RELAY, 0, 1")  # Set line 0 to High
-#         dev.write("RELAY, 1, 1")  # Set line 0 to Low
-#         dev.write("RELAY, 2, 1")  # Set line 0 to Low
-#         time.sleep(.1)
-#
-#         dev.write("RELAY, 0&0&10, 1&0&0, 2&0&0")
-#
-#     dev.close()
+if __name__ == "__main__":
+    class Logger:
+        def message(self, msg):
+            print(msg)
+
+
+    logger = Logger()
+    dev = DeviceManager(logger)
+    dev.device_name = dev.find_devices()[0]
+    print(dev.device_name)
+    dev.connect()
+    while 1:
+        # Example RELAY commands
+        time.sleep(.1)
+        dev.write("RELAY, 0, 1")  # Set line 0 to High
+        dev.write("RELAY, 1, 1")  # Set line 0 to Low
+        dev.write("RELAY, 2, 1")  # Set line 0 to Low
+        time.sleep(.1)
+
+        dev.write("RELAY, 0&0&10, 1&0&0, 2&0&0")
+
+    dev.close()

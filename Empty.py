@@ -493,6 +493,8 @@ class ComPortRightClickMenu(DraggableRightClickMenu):
         if com_info["last_conn_info"] != "None" and com_info["last_conn_info"] in self.port.find_devices():
             self.on_com_click()
             self.combobox.set(self.port.device_name)
+        else:
+            self.port.device_name = "select or set"
 
         self.button.pack(side=tk.LEFT, padx=5, pady=5)
         self.config(width=self.width, height=self.height)
@@ -515,33 +517,39 @@ class ComPortRightClickMenu(DraggableRightClickMenu):
         # Add any additional functionality you need on selection
 
 
+
     def on_com_click(self):
+        print(self.port.device_name)
         """Callback function when the button is clicked."""
+        if self.port.device_name == "select or set":
+            self.logger.message("Select Valid port!")
+            return None
+        try:
+            if self.is_started:
+                self.button.config(text="Start", fg="black", font=("Arial", 10))
+                self.combobox.config(state="normal")  # Enable the combobox
+                self.is_started = False
+                self.port.disconnect()
+            else:
+                answer = self.port.connect()
+                if not answer:
+                    self.logger.message("Port in use")
+                    messagebox.showerror("Connection Error!", f"Port in use")
+                    return False
+                self.is_started = True
+                process = threading.Thread(target=self.update_data_labels)
+                process.start()
 
-        if self.is_started:
-            self.button.config(text="Start", fg="black", font=("Arial", 10))
-            self.combobox.config(state="normal")  # Enable the combobox
-            self.is_started = False
-            self.port.disconnect()
-        else:
-            answer = self.port.connect()
-            if not answer:
-                self.logger.message("Port in use")
-                messagebox.showerror("Connection Error!", f"Port in use")
-                return False
-            self.is_started = True
-            process = threading.Thread(target=self.update_data_labels)
-            process.start()
+                self.db.switch_database(f"{self.gui_name}_conf")
+                com_info = self.db.find_data("com_info", self.gen_id)[0]
+                com_info["last_conn_info"] = self.port.device_name
+                self.db.update(com_info)
+                self.button.config(text="Stop", fg="red", font=("Arial", 10))
+                self.combobox.config(state="disabled")  # Disable the combobox
 
-            self.db.switch_database(f"{self.gui_name}_conf")
-            com_info = self.db.find_data("com_info", self.gen_id)[0]
-            com_info["last_conn_info"] = self.port.device_name
-            self.db.update(com_info)
-            self.button.config(text="Stop", fg="red", font=("Arial", 10))
-            self.combobox.config(state="disabled")  # Disable the combobox
-
-            # self.update_all_data_label("------")
-
+                # self.update_all_data_label("------")
+        except:
+            pass
 
         # Send data if type is function
         if self.val_list and callable(self.combobox.get()):
@@ -723,12 +731,12 @@ class ButtonTransmitRightClickMenu(DraggableRightClickMenu):
 
 
 class SetupLoader:
-    def __init__(self, root, database, log, gui_name):
+    def __init__(self, root, database, log, gui_name, loading_window=None):
         self.scope_name = None
         self.script = None
         self.db = database
         self.root = root
-        self.logger_setup = Logger(f'{gui_name}_setup')
+        self.logger_setup = Logger(f'{gui_name}_setup', loading_window=loading_window)
         self.logger = log
         self.gui_name = gui_name
         self.elements_dict = {}
@@ -863,8 +871,6 @@ class SetupLoader:
 
         return frame
 
-# Assuming these classes and functions are defined elsewhere in your code:
-# from your_module import Database, init_loader, Logger, MenuBar, SetupLoader
 
 def center_window(window, width, height):
     screen_width = window.winfo_screenwidth()
@@ -872,6 +878,7 @@ def center_window(window, width, height):
     x = (screen_width - width) // 2
     y = (screen_height - height) // 2
     window.geometry(f"{width}x{height}+{x}+{y}")
+
 
 def rotate_loading_circle(canvas, angle_iter):
     angle = next(angle_iter)
@@ -884,17 +891,23 @@ def rotate_loading_circle(canvas, angle_iter):
     )
     canvas.after(100, rotate_loading_circle, canvas, angle_iter)
 
+
 def main_ell_gui(root_main):
     """Create a loading window with a rotating loader.
        DO NOT call mainloop() here. Just return the loading_window."""
     loading_window = tk.Toplevel(root_main)
     loading_window.title("Loading...")
-    loading_window.attributes("-alpha", 0.8)
+    loading_window.attributes("-alpha", 0.0)  # Start fully transparent for fade-in
     center_window(loading_window, 400, 300)
     loading_window.overrideredirect(True)
 
     # Load your logo image
-    logo_image = Image.open(f"info/loader_png/MEL_GUI_{random.randint(1, 9)}.png").resize((400, 300), Image.Resampling.LANCZOS)
+    logo_path = f"info/loader_png/MEL_GUI_{random.randint(1, 9)}.png"
+    try:
+        logo_image = Image.open(logo_path).resize((400, 300), Image.Resampling.LANCZOS)
+    except FileNotFoundError:
+        # Handle missing image gracefully
+        logo_image = Image.new("RGBA", (400, 300), (0, 0, 0, 255))  # Black placeholder
     logo_photo = ImageTk.PhotoImage(logo_image)
 
     canvas = tk.Canvas(loading_window, width=400, height=300, highlightthickness=0)
@@ -902,16 +915,39 @@ def main_ell_gui(root_main):
     # Keep a reference so the image isn't garbage collected
     loading_window.logo_photo = logo_photo
 
+    # Create a StringVar to manage the label's text
+    loading_window.text_var = tk.StringVar(value="MAROMIM ELECTRONICS LAB GUI")
+
+    # Add "Hello World" label at the bottom
+    hello_label = tk.Label(
+        loading_window,
+        textvariable=loading_window.text_var,
+        font=("Arial", 12)
+    )
+    hello_label.pack(side=tk.BOTTOM, pady=10)
+
     # Start the rotating animation
     angle_iter = cycle(range(0, 360, 10))
     rotate_loading_circle(canvas, angle_iter)
     canvas.pack()
 
-    return loading_window
+    # Implement fade-in effect
+    def fade_in(step=0.05):
+        current_alpha = loading_window.attributes("-alpha")
+        if current_alpha < 0.8:
+            loading_window.attributes("-alpha", current_alpha + step)
+            loading_window.after(50, fade_in)
+        else:
+            loading_window.attributes("-alpha", 0.8)  # Ensure final alpha
 
+    fade_in()
+
+    return loading_window
 
 def lab_runner(gui_name=None, root_main=None):
     def on_close():
+        if not hasattr(root_main, 'running') or not root_main.running:
+            return
         root_main.running = False
         root_main.logger.logger_running = False
         for _, port in root_main.comport_list.items():
@@ -921,17 +957,19 @@ def lab_runner(gui_name=None, root_main=None):
                 port.port.disconnect()
                 root_main.update_idletasks()  # Process all pending events
                 root_main.update()
-            except:
-                pass
+            except Exception as e:
+                print(f"Error closing port: {e}")
 
         time.sleep(0.5)
         root_main.destroy()
-    try:
-        on_close()
-    except:
-        pass
-    # Create the main Tk window
 
+    try:
+        if root_main:
+            on_close()
+    except Exception as e:
+        print(f"Error during on_close: {e}")
+
+    # Create the main Tk window
     root_main = tk.Tk()
     root_main.withdraw()  # Hide main window until loading is done
 
@@ -940,52 +978,71 @@ def lab_runner(gui_name=None, root_main=None):
 
     # Background task to do initialization
     def initialization_task():
-        # Simulate some setup time
-        time.sleep(5)
-
-        # Set up main application values
-        root_main.ver = '1.5'
-        root_main.running = True
-        root_main.change_mode = False
-        root_main.comport_list = {}
-        root_main.protocol("WM_DELETE_WINDOW", lambda: on_close())
-
-        # Attempt loading settings from DB
         try:
-            loader_db = Database('loader_info')
-            init_loader(loader_db.find_data(table_name='main_gui')[0]['last_gui'])
-        except:
-            init_loader()
-            loader_db = Database('loader_info')
+            # Simulate some setup time
 
-        if gui_name is None:
-            root_main.gui_name = loader_db.find_data(table_name='main_gui')[0]['last_gui']
-        else:
-            root_main.gui_name = gui_name
+            # Example of updating the loading window's text
+            loading_window.text_var.set("Loading modules...")
+            time.sleep(1)  # Simulate time between updates
 
-        root_main.title(f"Project {root_main.gui_name} ver {root_main.ver}")
-        root_main.logger = Logger(f"{root_main.gui_name}_logs")
-        db_gui = Database(f"{root_main.gui_name}_conf", root_main.logger)
+            # Set up main application values
+            root_main.ver = '1.53'
+            root_main.running = True
+            root_main.change_mode = False
+            root_main.comport_list = {}
+            root_main.protocol("WM_DELETE_WINDOW", lambda: on_close())
 
-        root_main.loader = SetupLoader(root_main, db_gui, root_main.logger, root_main.gui_name)
-        root_main.loader.load_setup()
-        db_gui.logger = root_main.loader.logger
-        MenuBar(root_main, db_gui, root_main.gui_name)
+            # Attempt loading settings from DB
+            try:
+                loading_window.text_var.set("Load database modules...")
+                loader_db = Database('loader_info', loading_window)
+                init_loader(loader_db.find_data(table_name='main_gui')[0]['last_gui'], loading_window)
+            except:
+                loading_window.text_var.set("Init new database modules...")
+                init_loader(loading_window)
+                loader_db = Database('loader_info', loading_window)
 
-        # Once done, destroy loading window and show main window
-        # All UI updates must happen in the main thread using `root_main.after()`
-        def finish_loading():
-            # Destroy loading screen
-            loading_window.destroy()
-            # Show main window
-            root_main.deiconify()
+            if gui_name is None:
+                root_main.gui_name = loader_db.find_data(table_name='main_gui')[0]['last_gui']
+            else:
+                root_main.gui_name = gui_name
+            loading_window.text_var.set("Loading Database and Logger...")
+            root_main.title(f"Project {root_main.gui_name} ver {root_main.ver}")
+            root_main.logger = Logger(f"{root_main.gui_name}_logs", loading_window)
+            db_gui = Database(f"{root_main.gui_name}_conf", root_main.logger)
+            loading_window.text_var.set("Initializing components...")
+            time.sleep(1)  # Simulate time between updates
+            root_main.loader = SetupLoader(root_main, db_gui, root_main.logger, root_main.gui_name)
+            root_main.loader.load_setup()
+            db_gui.logger = root_main.loader.logger
+            MenuBar(root_main, db_gui, root_main.gui_name)
+        except Exception as e:
+            print("Error in initialization_task:", e)
+        finally:
+            # Once done, destroy loading window and show main window
+            # All UI updates must happen in the main thread using `root_main.after()`
 
-        root_main.after(0, finish_loading)
+            def finish_loading():
+                # Implement fade-out effect
+                def fade_out(current_alpha=0.8, step=0.05):
+                    if current_alpha > 0.0:
+                        loading_window.attributes("-alpha", current_alpha - step)
+                        loading_window.after(50, lambda: fade_out(current_alpha - step))
+                    else:
+                        loading_window.destroy()
+                        root_main.deiconify()
+
+                fade_out()
+
+            root_main.after(0, finish_loading)
 
     # Start initialization in a background thread
-    init_thread = threading.Thread(target=initialization_task)
+    init_thread = threading.Thread(target=initialization_task, daemon=True)
     init_thread.start()
 
     # Start the main event loop
     root_main.mainloop()
+
+    return loading_window  # Return the loading_window for external access if needed
+
 
