@@ -2,6 +2,7 @@
 
 
 MSPMsg_t receivedMsgACU;
+
 MSPMsg_t receivedMsgMaster;
 
 // Track the last time (in ms) a valid Master packet was received.
@@ -97,13 +98,13 @@ void setupGPIOs(void)
     // Configure IN GPIOs
     GPIO_setPinConfig(GPIO_1_GPIO1);  // MISO_MCU1
     GPIO_setPinConfig(GPIO_24_GPIO24); // P3V3_GOOD
-    //GPIO_setPinConfig(GPIO_29_GPIO29); // P5V_SAFETY_GOOD_ISO (if needed)
+    GPIO_setPinConfig(GPIO_29_GPIO29); // P5V_SAFETY_GOOD_ISO (if needed)
 
     GPIO_setDirectionMode(MISO_MCU1, GPIO_DIR_MODE_IN);
     GPIO_setDirectionMode(P3V3_GOOD, GPIO_DIR_MODE_IN);
-    //GPIO_setDirectionMode(P5V_SAFETY_GOOD_ISO, GPIO_DIR_MODE_IN);
+    GPIO_setDirectionMode(P5V_SAFETY_GOOD_ISO, GPIO_DIR_MODE_IN);
 
     GPIO_setQualificationMode(MISO_MCU1, GPIO_QUAL_ASYNC);
     GPIO_setQualificationMode(P3V3_GOOD, GPIO_QUAL_ASYNC);
-    //GPIO_setQualificationMode(P5V_SAFETY_GOOD_ISO, GPIO_QUAL_ASYNC);
+    GPIO_setQualificationMode(P5V_SAFETY_GOOD_ISO, GPIO_QUAL_ASYNC);
 }

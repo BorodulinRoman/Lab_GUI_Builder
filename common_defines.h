@@ -7,6 +7,7 @@
 #include "device.h"
 #include "driverlib.h"
 
+#define IDENT_TX_MSG_LENGTH 9
 #define RX_MSG_LENGTH 41
 #define TX_MSG_LENGTH 41
 #define SCI_FIFO_LEVEL_EMPTY  SCI_FIFO_RX0
@@ -94,7 +95,8 @@ struct MSPMsg_t {
     uint8_t flag;          // Usually 0
     uint8_t function_msb;     // Function code (little-endian)
     uint8_t function_lsb;     // Function code (little-endian)
-    uint16_t payloadSize;  // Should be MSP_PAYLOAD_SIZE (32)
+    uint8_t payloadSize;  // Should be MSP_PAYLOAD_SIZE (32)
+    uint8_t empty;  // Should be MSP_PAYLOAD_SIZE (32)
     uint8_t payload[MSP_PAYLOAD_SIZE]; // Payload data
     uint8_t crc;           // 8-bit CRC computed over bytes 0..37 -> crc is 38
 };

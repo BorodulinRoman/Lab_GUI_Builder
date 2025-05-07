@@ -35,9 +35,16 @@ uint8_t computeCRC_MSP(const MSPMsg_t *msg)
     crc = crc8_dvb_s1(crc, msg->function_msb);
     crc = crc8_dvb_s1(crc, msg->function_lsb);
 
+
+
     // Process payloadSize (2 bytes, little-endian split)
-    crc = crc8_dvb_s1(crc, (uint8_t)((msg->payloadSize >> 8) & 0xFF)); // MSB
-    crc = crc8_dvb_s1(crc, (uint8_t)(msg->payloadSize & 0xFF));      // LSB
+    crc = crc8_dvb_s1(crc, msg->payloadSize);      // LSB
+    crc = crc8_dvb_s1(crc, msg->empty); // MSB
+
+
+    //    txBuf[idx++] = (uint8_t)(transmitMsgMaster.payloadSize & 0xFF);
+    //    txBuf[idx++] = (uint8_t)((transmitMsgMaster.payloadSize >> 8) & 0xFF);
+    //
 
 
     // Process payload (32 bytes)

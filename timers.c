@@ -104,18 +104,16 @@ __interrupt void systemTimerISR(void)
 
     //accelerometer_readXYZ();
 
-    // Every 10 ms, trigger master transmission
-    if(masterCounter >= 10)
-    {
+    // Every 100 ms, trigger master transmission
+    if (masterCounter >= 100) {
         masterCounter = 0;
-        uartMsgTxMaster();
+        masterTxDue   = true;
     }
 
-    // Every 100 ms, trigger ACU transmission
-    if(acuTxCounter >= 100)
-    {
+    /* 100 ms */
+    if (acuTxCounter >= 150) {
         acuTxCounter = 0;
-        uartMsgTxACU();
+        acuTxDue   = true;
     }
 
     // Clear Timer2 overflow flag and acknowledge the PIE group.

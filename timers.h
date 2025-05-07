@@ -9,7 +9,8 @@
 // Global variables
 extern volatile uint32_t systemTimeCounter; // System time counter in milliseconds
 extern volatile bool systemTimeElapsed;     // Flag indicating if the maximum time has elapsed
-
+extern volatile bool masterTxDue;
+extern volatile bool acuTxDue;
 // System Timer APIs (using Timer2)
 // Initializes the system timer (Timer2) with a 1 ms tick.
 void initSystemTimer(void);

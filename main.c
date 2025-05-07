@@ -1,20 +1,20 @@
-/******************************************************************************
- * File:    main.c
- * Device:  TMS320F280015x (or similar)
- *
- * Purpose:
- *   - Initializes system, SCIA (Master), and SCIB (ACU).
- *   - Uses Timer2 to count system time with a 1 ms tick.
- *   - Every 10 ms, Timer2 ISR triggers master transmission via uartMsgTxMaster().
- *   - Every 100 ms, Timer2 ISR triggers ACU transmission via uartMsgTxACU(), but only if enabled.
- *   - ACU transmission is enabled after 1000 seconds (1,000,000 ms).
- *   - When systemTimeCounter reaches 60,000 ms (60 seconds), a flag is set.
- *   - The main loop can check flags and process data as needed.
- *
- * Note:
- *   - Timer0 and Timer1 functionalities have been removed to consolidate timing on Timer2.
- *   - Both uartMsgTxMaster() and uartMsgTxACU() are triggered from the Timer2 ISR.
- ******************************************************************************/
+//******************************************************************************
+// * File:    main.c
+// * Device:  TMS320F280015x (or similar)
+// *
+// * Purpose:
+// *   - Initializes system, SCIA (Master), and SCIB (ACU).
+// *   - Uses Timer2 to count system time with a 1 ms tick.
+// *   - Every 10 ms, Timer2 ISR triggers master transmission via uartMsgTxMaster().
+// *   - Every 100 ms, Timer2 ISR triggers ACU transmission via uartMsgTxACU(), but only if enabled.
+// *   - ACU transmission is enabled after 1000 seconds (1,000,000 ms).
+// *   - When systemTimeCounter reaches 60,000 ms (60 seconds), a flag is set.
+// *   - The main loop can check flags and process data as needed.
+// *
+// * Note:
+// *   - Timer0 and Timer1 functionalities have been removed to consolidate timing on Timer2.
+// *   - Both uartMsgTxMaster() and uartMsgTxACU() are triggered from the Timer2 ISR.
+// ******************************************************************************/
 
 #include "device.h"
 #include "driverlib.h"
@@ -36,7 +36,8 @@ volatile bool filtred_comOkACU = false;
 volatile bool filtred_hvCup_safe = false;
 volatile bool filtred_hvCup_armed = false;
 volatile bool filtred_comOkI2C = false;
-
+volatile bool masterTxDue = false;
+volatile bool acuTxDue    = false;
 void defaultFiltersAndTimers(void)
 {
     SystemTime = 0;
@@ -52,13 +53,17 @@ void defaultFiltersAndTimers(void)
 
 void main(void)
 {
+
     Current_state = PBIT;
     //---------------------------------------------------------------------
     // 1) Basic device init (clocks, watchdog, GPIOs)
     //---------------------------------------------------------------------
+    SysCtl_disableWatchdog();
+    Board_init();
     Device_init();
     Device_initGPIO();
     setupGPIOs();
+
     //---------------------------------------------------------------------
     // 2) Initialize interrupt module & vector table
     //---------------------------------------------------------------------
@@ -73,6 +78,7 @@ void main(void)
     // 4) Initialize UART modules for Master (SCIA) and ACU (SCIB)
     //---------------------------------------------------------------------
     uartConfigMaster();  // Master: SCIC pins: 6=RX, 4=TX
+
     uartConfigACU();     // ACU:    SCIB pins: 13=RX, 12=TX
     //accelerometer_init();
     stopGclk();
@@ -101,6 +107,15 @@ void main(void)
     while(1)
     {
 
+
+        if (masterTxDue) {
+            masterTxDue = false;
+            uartMsgTxMaster();
+        }
+        if (acuTxDue) {
+            acuTxDue = false;
+            uartMsgTxACU();
+        }
         SystemTime = getSystemTime();
 
         switch (Current_state)
@@ -119,8 +134,8 @@ void main(void)
                 if(!filtred_comOkMaster){
                     filtred_comOkMaster = checkComOkMaster(FILTER_PROTOCOL);
                 }
-                //TODO Change !filtred_comOkMaster -> filtred_comOkMaster
-                if(filtred_p3v3_ok && !filtred_comOkMaster && filtred_safety_pin){
+
+                if(filtred_p3v3_ok && filtred_comOkMaster && filtred_safety_pin){
                     Current_state = IDNTIF_RFM_FLIGHT_MODULE;
                     filtred_safety_pin = true;
                     defaultFiltersAndTimers();
@@ -199,14 +214,13 @@ void main(void)
            {
                // Send status each 1 sec (1Hz) -> Receive message 3.4.2.2 #39899128 from state.
                // Send OSD message with function 0x3004 updating payload "ready for remove safety pin".
-               ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-               //filtred_safety_pin = gpio_stability_filter(FILTER_GPIO, FILTER_ACCURACY, P5V_SAFETY_GOOD_ISO, false);
-               ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-               ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+               filtred_safety_pin = gpio_stability_filter(FILTER_GPIO, FILTER_ACCURACY, P5V_SAFETY_GOOD_ISO, false);
+
                //if(!filtred_comOkI2C){
                //    filtred_comOkI2C = checkComOkI2C(FILTER_PROTOCOL);
                //}
-               ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
                if(!filtred_comOkACU){
                    filtred_comOkACU = checkComOkACU(FILTER_PROTOCOL);
                }
@@ -232,9 +246,8 @@ void main(void)
            {
                // Send status each 1 sec (1Hz) -> Receive message 3.4.2.2 #39899128 from state.
                // Send OSD message with function 0x3004 updating payload "ready for remove safety pin".
-               ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-               //filtred_safety_pin = gpio_stability_filter(FILTER_GPIO, 70, P5V_SAFETY_GOOD_ISO, false);
-               ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+               filtred_safety_pin = gpio_stability_filter(FILTER_GPIO, FILTER_ACCURACY, P5V_SAFETY_GOOD_ISO, false);
+
                if (filtred_safety_pin){
                    Current_state = READY_FOR_SAFETY_PIN; // Transition to READY_FOR_SAFETY_PIN
                    defaultFiltersAndTimers();
@@ -259,9 +272,7 @@ void main(void)
            case WAIT_FOR_ARM: // 6: Waiting for Arm Command
            {
                // Send status each 1 sec (1Hz) -> Receive message 3.4.2.2 #39899128 from state.
-               ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-               //filtred_safety_pin = gpio_stability_filter(FILTER_GPIO, 70, P5V_SAFETY_GOOD_ISO, false);
-               ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+               filtred_safety_pin = gpio_stability_filter(FILTER_GPIO, FILTER_ACCURACY, P5V_SAFETY_GOOD_ISO, false);
                if (filtred_safety_pin){
                    Current_state = READY_FOR_SAFETY_PIN;
                    defaultFiltersAndTimers();
@@ -332,9 +343,7 @@ void main(void)
 
                filtred_p3v3_ok = gpio_stability_filter(FILTER_GPIO, FILTER_ACCURACY, P3V3_GOOD, true);
 
-               ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-               //filtred_safety_pin = gpio_stability_filter(FILTER_GPIO, 70, P5V_SAFETY_GOOD_ISO, false);
-               ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+               filtred_safety_pin = gpio_stability_filter(FILTER_GPIO, FILTER_ACCURACY, P5V_SAFETY_GOOD_ISO, false);
                //TODO add acc if enabled
                //TODO add DIASARM if DISARMD COMMAND or 15 Sec no communication with ACU
 
@@ -394,7 +403,8 @@ void main(void)
 
            case FAIL_SAFE: // 12: Fail Safe / Emergency State
            {
-               Current_state = FAIL_SAFE;
+               //Current_state = FAIL_SAFE;
+               Current_state = PBIT;
                GPIO_writePin(SW1_2EN, 0);
                GPIO_writePin(GCLK_TO_MCU2, 0);
                GPIO_writePin(TRIG_P, 0);
@@ -435,5 +445,4 @@ void main(void)
            } // end switch
     }
 }
-
 

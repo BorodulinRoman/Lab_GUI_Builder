@@ -17,7 +17,7 @@
 #define ACU_DEVICE_PIN_SCITXDB  12
 #define ACU_DEVICE_CFG_SCIRXDB  GPIO_13_SCIB_RX
 #define ACU_DEVICE_CFG_SCITXDB  GPIO_12_SCIB_TX
-#define mySCI_BASE               SCIB_BASE
+#define mySCI_BASE              SCIB_BASE
 
 
 extern volatile uint8_t rxBufferACU[RX_MSG_LENGTH];

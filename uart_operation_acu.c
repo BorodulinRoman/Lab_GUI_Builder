@@ -142,8 +142,8 @@ void uartConfigACU(void)
     SCI_enableInterrupt(mySCI_BASE, SCI_INT_RXFF | SCI_INT_TXFF);
 
     // 7) Register ISR handlers.
-    Interrupt_register(INT_SCIB_RX, scibRxISR);
-    Interrupt_register(INT_SCIB_TX, scibTxISR);
+    Interrupt_register(INT_SCIB_RX, &scibRxISR);
+    Interrupt_register(INT_SCIB_TX, &scibTxISR);
 
     // 8) Enable interrupts in PIE.
     Interrupt_enable(INT_SCIB_RX);
@@ -152,9 +152,6 @@ void uartConfigACU(void)
     // 9) Enable the SCI module.
     SCI_enableModule(mySCI_BASE);
 
-    // 10) Enable CPU interrupts.
-    EINT;
-    ERTM;
 }
 
 // Builds the payload for the ACU message.
@@ -282,7 +279,7 @@ void uartMsgTxACU(void)
     msg.flag = 0;
 
     acuBuildPayload(&msg);
-
+    msg.empty = 0;
     msg.function_msb = (uint8_t)((functionTX >> 8) & 0xFF);
     msg.function_lsb = (uint8_t)(functionTX & 0xFF);
 
@@ -321,23 +318,19 @@ void uartMsgRxACU(void)
         receivedMsgACU.function_lsb  = rxBufferACU[5];
 
         // 2) Parse payload size (two bytes, little-endian)
-        receivedMsgACU.payloadSize = (uint16_t)rxBufferACU[6] | ((uint16_t)rxBufferACU[7] << 8);
-
-
-        // 4) Copy the payload bytes
+        receivedMsgACU.payloadSize = (uint16_t)rxBufferACU[6];
+        receivedMsgMaster.empty = (uint16_t)rxBufferMaster[7];
+        uint16_t i;
+        for(i = 0; i < receivedMsgACU.payloadSize; i++)
         {
-            uint16_t i;
-            for(i = 0; i < receivedMsgACU.payloadSize; i++)
-            {
-                receivedMsgACU.payload[i] = rxBufferACU[8 + i];
-            }
+            receivedMsgACU.payload[i] = rxBufferACU[8 + i];
         }
 
         // 5) Copy the CRC (assuming after payload, i.e. [payloadSize + 8])
         receivedMsgACU.crc = rxBufferACU[receivedMsgACU.payloadSize + 8];
 
         // 6) Validate the header & type
-        if(  (receivedMsgACU.start  == MSP_START_CHAR) && (receivedMsgACU.header == MSP_HEADER_CHAR) && (receivedMsgACU.type   == MSP_TYPE_RECEIVE) )
+        if(  (receivedMsgACU.start  == MSP_START_CHAR) && (receivedMsgACU.header == MSP_HEADER_CHAR))
         {
 
             if(  (Current_state == IDNTIF_RFM_FLIGHT_MODULE) && (acuLogic1ID == 0) && (acuLogic2ID == 0) )
@@ -375,8 +368,9 @@ void uartMsgRxACU(void)
         }
 
         // Clear the "new data" flag
-        newDataReceivedACU = false;
+
     }
+    newDataReceivedACU = false;
 }
 
 
@@ -405,23 +399,37 @@ __interrupt void scibRxISR(void)
 
     if (intStatus & SCI_INT_RXFF)
     {
+
         static volatile uint16_t rxIndexACULocal = 0;
         while (SCI_getRxFIFOStatus(mySCI_BASE) != SCI_FIFO_RX0)
         {
-            uint16_t received = SCI_readCharNonBlocking(mySCI_BASE);
-            if (rxIndexACULocal < RX_MSG_LENGTH)
-            {
-                rxBufferACU[rxIndexACULocal++] = (uint8_t)received;
-            }
-            else
-            {
-                rxIndexACULocal = 0;
-            }
-            if (rxIndexACULocal == RX_MSG_LENGTH)
-            {
-                uartMsgRxACU();
-                newDataReceivedACU = true;
-                rxIndexACULocal = 0;
+            uint8_t  received = (uint8_t) SCI_readCharNonBlocking(mySCI_BASE);
+            rxBufferACU[rxIndexACULocal++] = (uint8_t)received;
+
+            switch(rxIndexACULocal){
+                case IDENT_TX_MSG_LENGTH:
+                    if(rxBufferACU[0] != MSP_START_CHAR || rxBufferACU[1] != MSP_HEADER_CHAR || rxBufferACU[2] != MSP_TYPE_RECEIVE){
+                        rxIndexACULocal = 0;
+                    }
+                    else if( rxBufferACU[6] == 0){
+                        uartMsgRxACU();
+                        newDataReceivedACU = true;
+                        rxIndexACULocal = 0;
+                    }
+                    break;
+                case RX_MSG_LENGTH:
+                    if( rxBufferACU[6] == 32){
+                        uartMsgRxACU();
+                        newDataReceivedACU = true;
+                        rxIndexACULocal = 0;
+                  }
+                  break;
+
+                default:
+                    if (rxIndexACULocal > 41){
+                        rxIndexACULocal = 0;
+                    }
+                    break;
             }
         }
     }
@@ -429,6 +437,7 @@ __interrupt void scibRxISR(void)
     SCI_clearInterruptStatus(mySCI_BASE, SCI_INT_RXFF);
     Interrupt_clearACKGroup(INTERRUPT_ACK_GROUP9);
 }
+
 
 __interrupt void scibTxISR(void)
 {
